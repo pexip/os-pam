@@ -1,8 +1,9 @@
 Source: pam
 Section: libs
 Priority: optional
-Uploaders: Sam Hartman <hartmans@debian.org>, Roger Leigh <rleigh@debian.org>
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Pexip-Original-Uploaders: Sam Hartman <hartmans@debian.org>, Roger Leigh <rleigh@debian.org>
+Maintainer: Pexip AS <packaging@pexip.com>
+XSBC-Pexip-Original-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
 XSBC-Original-Maintainer: Steve Langasek <vorlon@debian.org>
 Standards-Version: 3.9.1
 Build-Depends: libcrack2-dev (>= 2.8), bzip2, debhelper (>= 8.9.4), quilt (>= 0.48-1), flex, libfl-dev, libdb-dev, libselinux1-dev [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64 !netbsd-i386], po-debconf
@@ -11,6 +12,7 @@ Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
 Vcs-Bzr: https://code.launchpad.net/~ubuntu-core-dev/pam/ubuntu
 Homepage: http://pam.sourceforge.net/
+XS-Pexip-Upstream: http://archive.ubuntu.com/ubuntu/ precise
 
 Package: libpam0g
 Priority: required
