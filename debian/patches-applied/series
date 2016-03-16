@@ -28,3 +28,6 @@ lib_security_multiarch_compat
 pam_umask_usergroups_from_login.defs.patch
 pam_env-fix-overflow.patch
 pam_env-fix-dos.patch
+cve-2013-7041.patch
+cve-2014-2583.patch
+cve-2015-3238.patch

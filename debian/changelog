@@ -1,3 +1,32 @@
+pam (1.1.3-7ubuntu2.2) precise-security; urgency=medium
+
+  * SECURITY REGRESSION: multiarch update issue (LP: #1558114)
+    - debian/patches-applied/cve-2015-3238.patch: removed manpage changes
+      so they don't get regenerated during build.
+    - CVE-2015-3238
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 16 Mar 2016 13:32:15 -0400
+
+pam (1.1.3-7ubuntu2.1) precise-security; urgency=medium
+
+  * SECURITY UPDATE: pam_userdb case-insensitive search issue
+    - debian/patches-applied/cve-2013-7041.patch: fix password hash
+      comparison in modules/pam_userdb/pam_userdb.c.
+    - CVE-2013-7041
+  * SECURITY UPDATE: directory traversal issue in pam_timestamp
+    - debian/patches-applied/cve-2014-2583.patch: fix potential directory
+      traversal issue in modules/pam_timestamp/pam_timestamp.c.
+    - CVE-2014-2583
+  * SECURITY UPDATE: username enumeration via large passwords
+    - debian/patches-applied/cve-2015-3238.patch: limit password size to
+      prevent a helper function hang in modules/pam_exec/pam_exec.8.xml,
+      modules/pam_exec/pam_exec.c, modules/pam_unix/pam_unix.8.xml,
+      modules/pam_unix/pam_unix_passwd.c, modules/pam_unix/passverify.c,
+      modules/pam_unix/passverify.h, modules/pam_unix/support.c.
+    - CVE-2015-3238
+
+ -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 15 Mar 2016 15:31:29 -0400
+
 pam (1.1.3-7ubuntu2) precise; urgency=low
 
   * No-change rebuild with gzip 1.4-1ubuntu2 to get multiarch-clean
