@@ -41,6 +41,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <syslog.h>
 #include <pwd.h>
 #include <shadow.h>
@@ -52,7 +53,11 @@
 
 /* indicate that the following groups are defined */
 
-#define PAM_SM_ACCOUNT
+#ifdef PAM_STATIC
+# include "pam_unix_static.h"
+#else
+# define PAM_SM_ACCOUNT
+#endif
 
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
@@ -116,7 +121,12 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
     if (geteuid() == 0) {
       /* must set the real uid to 0 so the helper will not error
          out if pam is called from setuid binary (su, sudo...) */
-      setuid(0);
+      if (setuid(0) == -1) {
+          pam_syslog(pamh, LOG_ERR, "setuid failed: %m");
+          printf("-1\n");
+          fflush(stdout);
+          _exit(PAM_AUTHINFO_UNAVAIL);
+      }
     }
 
     /* exec binary helper */
@@ -137,7 +147,8 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
     if (child > 0) {
       char buf[32];
       int rc=0;
-      rc=waitpid(child, &retval, 0);  /* wait for helper to complete */
+      /* wait for helper to complete: */
+      while ((rc=waitpid(child, &retval, 0)) < 0 && errno == EINTR);
       if (rc<0) {
 	pam_syslog(pamh, LOG_ERR, "unix_chkpwd waitpid returned %d: %m", rc);
 	retval = PAM_AUTH_ERR;
@@ -178,8 +189,8 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
  * account management module.
  */
 
-PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags,
-				int argc, const char **argv)
+int
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	unsigned int ctrl;
 	const void *void_uname;
@@ -291,17 +302,3 @@ PAM_EXTERN int pam_sm_acct_mgmt(pam_handle_t * pamh, int flags,
 
 	return retval;
 }
-
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_unix_acct_modstruct = {
-    "pam_unix_acct",
-    NULL,
-    NULL,
-    pam_sm_acct_mgmt,
-    NULL,
-    NULL,
-    NULL,
-};
-#endif

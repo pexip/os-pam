@@ -54,11 +54,9 @@ my %md5sums = (
 	'session' => [
 		'240fb92986c885b327cdb21dd641da8c',
 		'4a25673e8b36f1805219027d3be02cd2',
-		'73144a2f4e609a922a51e301cd66a57e',
 	],
 	'session-noninteractive' => [
 		'ad2b78ce1498dd637ef36469430b6ac6',
-		'a20e8df3469bfe25c13a3b39161b30f0',
 	],
 );
 
@@ -688,7 +686,7 @@ sub parse_pam_profile
 		} else {
 			chomp;
 			s/^\s+//;
-			$profile{$fieldname} .= "\n$_";
+			$profile{$fieldname} .= "\n$_" if ($_);
 			$profile{$fieldname} =~ s/^[\n\s]+//;
 		}
 	}

@@ -11,17 +11,18 @@ created files.
 The PAM module tries to get the umask value from the following places in the
 following order:
 
-  ● umask= argument
+  • umask= argument
 
-  ● umask= entry of the users GECOS field
+  • umask= entry in the user's GECOS field
 
-  ● pri= entry of the users GECOS field
+  • UMASK= entry from /etc/default/login
 
-  ● ulimit= entry of the users GECOS field
+  • UMASK entry from /etc/login.defs
 
-  ● UMASK= entry from /etc/default/login
-
-  ● UMASK entry from /etc/login.defs
+The GECOS field is split on comma ',' characters. The module also in addition
+to the umask= entry recognizes pri= entry, which sets the nice priority value
+for the session, and ulimit= entry, which sets the maximum size of files the
+processes in the session can create.
 
 OPTIONS
 

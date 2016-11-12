@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2008 Thorsten Kukuk
- * Author: Thorsten Kukuk <kukuk@suse.de>
+ * Copyright (c) 2008, 2012 Thorsten Kukuk
+ * Author: Thorsten Kukuk <kukuk@thkukuk.de>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -103,6 +103,9 @@ parse_option (pam_handle_t *pamh, const char *argv, options_t *options)
 }
 
 
+/* This module saves the current crypted password in /etc/security/opasswd
+   and then compares the new password with all entries in this file. */
+
 PAM_EXTERN int
 pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -155,10 +158,6 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
   if (pwd == NULL)
     return PAM_USER_UNKNOWN;
 
-  /* Ignore root if not enforced */
-  if (pwd->pw_uid == 0 && !options.enforce_for_root)
-    return PAM_SUCCESS;
-
   if ((strcmp(pwd->pw_passwd, "x") == 0)  ||
       ((pwd->pw_passwd[0] == '#') &&
        (pwd->pw_passwd[1] == '#') &&
@@ -168,15 +167,15 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
       if (spw == NULL)
 	return PAM_USER_UNKNOWN;
 
-      retval = save_old_password (pamh, user, pwd->pw_uid, spw->sp_pwdp,
-				  options.remember, options.debug);
+      retval = save_old_pass (pamh, user, pwd->pw_uid, spw->sp_pwdp,
+			      options.remember, options.debug);
       if (retval != PAM_SUCCESS)
 	return retval;
     }
   else
     {
-      retval = save_old_password (pamh, user, pwd->pw_uid, pwd->pw_passwd,
-				  options.remember, options.debug);
+      retval = save_old_pass (pamh, user, pwd->pw_uid, pwd->pw_passwd,
+			      options.remember, options.debug);
       if (retval != PAM_SUCCESS)
 	return retval;
     }
@@ -187,11 +186,12 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
     {
       retval = pam_get_authtok (pamh, PAM_AUTHTOK, &newpass, NULL);
       if (retval != PAM_SUCCESS && retval != PAM_TRY_AGAIN)
-	return retval;
+	{
+	  if (retval == PAM_CONV_AGAIN)
+	    retval = PAM_INCOMPLETE;
+	  return retval;
+	}
       tries++;
-
-      if (newpass == NULL || retval == PAM_TRY_AGAIN)
-	continue;
 
       if (options.debug)
 	{
@@ -201,25 +201,27 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
 	    pam_syslog (pamh, LOG_DEBUG, "got no auth token");
 	}
 
-      if (retval != PAM_SUCCESS || newpass == NULL)
-	{
-	  if (retval == PAM_CONV_AGAIN)
-	    retval = PAM_INCOMPLETE;
-	  return retval;
-	}
+      if (newpass == NULL || retval == PAM_TRY_AGAIN)
+	continue;
 
       if (options.debug)
 	pam_syslog (pamh, LOG_DEBUG, "check against old password file");
 
-      if (check_old_password (pamh, user, newpass,
-			      options.debug) != PAM_SUCCESS)
+      if (check_old_pass (pamh, user, newpass,
+			  options.debug) != PAM_SUCCESS)
 	{
-	  pam_error (pamh,
-		     _("Password has been already used. Choose another."));
-	  newpass = NULL;
-	  /* Remove password item, else following module will use it */
-          pam_set_item (pamh, PAM_AUTHTOK, (void *) NULL);
-	  continue;
+	  if (getuid() || options.enforce_for_root ||
+	      (flags & PAM_CHANGE_EXPIRED_AUTHTOK))
+	    {
+	      pam_error (pamh,
+		         _("Password has been already used. Choose another."));
+	      newpass = NULL;
+	      /* Remove password item, else following module will use it */
+	      pam_set_item (pamh, PAM_AUTHTOK, (void *) NULL);
+	    }
+	  else
+	    pam_info (pamh,
+		       _("Password has been already used."));
 	}
     }
 
@@ -230,8 +232,7 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc, const char **argv)
       return PAM_MAXTRIES;
     }
 
-  /* Remember new password */
-  return pam_set_item (pamh, PAM_AUTHTOK, newpass);
+  return PAM_SUCCESS;
 }
 
 

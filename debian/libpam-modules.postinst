@@ -17,16 +17,6 @@ then
 	touch /etc/environment
 fi
 
-# Add PATH to /etc/environment if it's not present there or in
-# /etc/security/pam_env.conf
-if [ "$1" = "configure" ] && (dpkg --compare-versions 0.79-3ubuntu6 ge "$2" || [ "$2" = "" ]); then
-	if ! grep -qs ^PATH /etc/security/pam_env.conf; then
-		if ! grep -qs ^PATH /etc/environment; then
-			echo 'PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games"' >> /etc/environment
-		fi
-	fi
-fi
-
 if dpkg --compare-versions "$2" lt-nl 1.1.2-1 \
    && grep -q 'pam_unix.*\bmin=[0-9]\+' /etc/pam.d/common-password
 then

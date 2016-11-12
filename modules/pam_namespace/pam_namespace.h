@@ -1,5 +1,5 @@
 /******************************************************************************
- * A module for Linux-PAM that will set the default namespace after 
+ * A module for Linux-PAM that will set the default namespace after
  * establishing a session via PAM.
  *
  * (C) Copyright IBM Corporation 2005
@@ -74,6 +74,18 @@
 #define CLONE_NEWNS 0x00020000 /* Flag to create new namespace */
 #endif
 
+/* mount flags for mount_private */
+#ifndef MS_REC
+#define MS_REC (1<<14)
+#endif
+#ifndef MS_PRIVATE
+#define MS_PRIVATE (1<<18)
+#endif
+#ifndef MS_SLAVE
+#define MS_SLAVE (1<<19)
+#endif
+
+
 /*
  * Module defines
  */
@@ -93,9 +105,10 @@
 #define PAMNS_GEN_HASH        0x00002000 /* Generate md5 hash for inst names */
 #define PAMNS_IGN_CONFIG_ERR  0x00004000 /* Ignore format error in conf file */
 #define PAMNS_IGN_INST_PARENT_MODE  0x00008000 /* Ignore instance parent mode */
-#define PAMNS_NO_UNMOUNT_ON_CLOSE  0x00010000 /* no unmount at session close */
+#define PAMNS_UNMOUNT_ON_CLOSE  0x00010000 /* Unmount at session close */
 #define PAMNS_USE_CURRENT_CONTEXT  0x00020000 /* use getcon instead of getexeccon */
 #define PAMNS_USE_DEFAULT_CONTEXT  0x00040000 /* use get_default_context instead of getexeccon */
+#define PAMNS_MOUNT_PRIVATE   0x00080000 /* Make the polydir mounts private */
 
 /* polydir flags */
 #define POLYDIR_EXCLUSIVE     0x00000001 /* polyinstatiate exclusively for override uids */
@@ -103,6 +116,7 @@
 #define POLYDIR_NOINIT        0x00000004 /* no init script */
 #define POLYDIR_SHARED        0x00000008 /* share context/level instances among users */
 #define POLYDIR_ISCRIPT       0x00000010 /* non default init script */
+#define POLYDIR_MNTOPTS       0x00000020 /* mount options for tmpfs mount */
 
 
 #define NAMESPACE_MAX_DIR_LEN 80
@@ -125,9 +139,9 @@ enum polymethod {
 /*
  * Depending on the application using this namespace module, we
  * may need to unmount priviously bind mounted instance directory.
- * Applications such as login and sshd, that establish a new 
+ * Applications such as login and sshd, that establish a new
  * session unmount of instance directory is not needed. For applications
- * such as su and newrole, that switch the identity, this module 
+ * such as su and newrole, that switch the identity, this module
  * has to unmount previous instance directory first and re-mount
  * based on the new indentity. For other trusted applications that
  * just want to undo polyinstantiation, only unmount of previous
@@ -151,6 +165,7 @@ struct polydir_s {
     uid_t *uid;				/* list of override uids */
     unsigned int flags;			/* polydir flags */
     char *init_script;			/* path to init script */
+    char *mount_opts;			/* mount options for tmpfs mount */
     uid_t owner;			/* user which should own the polydir */
     gid_t group;			/* group which should own the polydir */
     mode_t mode;			/* mode of the polydir */
@@ -173,4 +188,3 @@ struct instance_data {
     uid_t ruid;			/* The uid of the requesting user */
     unsigned long flags;	/* Flags for debug, selinux etc */
 };
-

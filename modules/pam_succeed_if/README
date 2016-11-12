@@ -5,8 +5,9 @@ pam_succeed_if — test account characteristics
 DESCRIPTION
 
 pam_succeed_if.so is designed to succeed or fail authentication based on
-characteristics of the account belonging to the user being authenticated. One
-use is to select whether to load other modules based on this test.
+characteristics of the account belonging to the user being authenticated or
+values of other PAM items. One use is to select whether to load other modules
+based on this test.
 
 The module should be given one or more conditions as module arguments, and
 authentication will succeed only if all of the conditions are met.
@@ -42,7 +43,8 @@ audit
 
 Conditions are three words: a field, a test, and a value to test for.
 
-Available fields are user, uid, gid, shell, home and service:
+Available fields are user, uid, gid, shell, home, ruser, rhost, tty and service
+:
 
 field < number
 

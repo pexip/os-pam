@@ -1,7 +1,7 @@
 /* pam_session.c - PAM Session Management */
 
 /*
- * $Id: pam_session.c,v 1.6 2006/07/24 15:47:40 kukuk Exp $
+ * $Id$
  */
 
 #include "pam_private.h"
@@ -24,7 +24,7 @@ int pam_open_session(pam_handle_t *pamh, int flags)
 
 #ifdef HAVE_LIBAUDIT
     retval = _pam_auditlog(pamh, PAM_OPEN_SESSION, retval, flags);
-#endif                                                                                
+#endif
     return retval;
 }
 

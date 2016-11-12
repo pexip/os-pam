@@ -1,87 +1,147 @@
-pam (1.1.3-7ubuntu2.3) precise-security; urgency=medium
+pam (1.1.8-3.1+deb8u2) jessie; urgency=medium
 
-  * SECURITY REGRESSION: multiarch update issue (LP: #1558597)
-    - debian/patches-applied/cve-2015-3238.patch: Readd the manpage XML
-      changes and also add the regenerated man pages to the patch. It is
-      required to add the regenerated man pages to the patch because the build
-      dependencies to regenerate the man pages are only installed during i386
-      builds.
-    - debian/patches-applied/pam_umask_usergroups_from_login.defs.patch: Add
-      the changes after regenerating pam_umask.8 to the patch for the reasons
-      mentioned above.
+  * Non-maintainer upload.
+  * debian/patches-applied/pam-loginuid-in-containers: Updated with the version
+    from Ubuntu, this should fix logins in containers (Closes: #726661)
 
- -- Tyler Hicks <tyhicks@canonical.com>  Thu, 17 Mar 2016 13:14:44 -0500
+ -- Evgeni Golov <evgeni@debian.org>  Sat, 12 Nov 2016 08:38:19 +0100
 
-pam (1.1.3-7ubuntu2.2) precise-security; urgency=medium
+pam (1.1.8-3.1+deb8u1) jessie; urgency=medium
 
-  * SECURITY REGRESSION: multiarch update issue (LP: #1558114)
-    - debian/patches-applied/cve-2015-3238.patch: removed manpage changes
-      so they don't get regenerated during build.
-    - CVE-2015-3238
+  * Non-maintainer upload.
+  * Fix CVE-2015-3238: DoS/user enumeration due to blocking pipe in pam_unix
+    module (Closes: #789986)
 
- -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Wed, 16 Mar 2016 13:32:15 -0400
+ -- Tianon Gravi <tianon@debian.org>  Wed, 06 Jan 2016 17:25:53 -0800
 
-pam (1.1.3-7ubuntu2.1) precise-security; urgency=medium
+pam (1.1.8-3.1) unstable; urgency=high
 
-  * SECURITY UPDATE: pam_userdb case-insensitive search issue
-    - debian/patches-applied/cve-2013-7041.patch: fix password hash
-      comparison in modules/pam_userdb/pam_userdb.c.
-    - CVE-2013-7041
-  * SECURITY UPDATE: directory traversal issue in pam_timestamp
-    - debian/patches-applied/cve-2014-2583.patch: fix potential directory
-      traversal issue in modules/pam_timestamp/pam_timestamp.c.
-    - CVE-2014-2583
-  * SECURITY UPDATE: username enumeration via large passwords
-    - debian/patches-applied/cve-2015-3238.patch: limit password size to
-      prevent a helper function hang in modules/pam_exec/pam_exec.8.xml,
-      modules/pam_exec/pam_exec.c, modules/pam_unix/pam_unix.8.xml,
-      modules/pam_unix/pam_unix_passwd.c, modules/pam_unix/passverify.c,
-      modules/pam_unix/passverify.h, modules/pam_unix/support.c.
-    - CVE-2015-3238
+  * Non-maintainer upload by the Security Team.
+  * Fix CVE-2013-7041: case-insensitive comparison used for verifying
+    passwords in the pam_userdb module (closes: #731368).
+  * Fix CVE-2014-2583: multiple directory traversal issues in the
+    pam_timestamp module (closes: 757555)
 
- -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 15 Mar 2016 15:31:29 -0400
+ -- Michael Gilbert <mgilbert@debian.org>  Sat, 09 Aug 2014 09:50:42 +0000
 
-pam (1.1.3-7ubuntu2) precise; urgency=low
+pam (1.1.8-3) unstable; urgency=low
 
-  * No-change rebuild with gzip 1.4-1ubuntu2 to get multiarch-clean
-    compression of manpages.  LP: #871083.
+  * debian/rules: On hurd, link libpam explicitly with -lpthread since glibc
+    will not dynamically switch between the libc stubs and the libpthread
+    implementations on this architecture.  Thanks to Samuel Thibault for the
+    patch.  Closes: #743891.
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 08 Feb 2012 17:15:39 -0800
+ -- Steve Langasek <vorlon@debian.org>  Mon, 07 Apr 2014 17:49:38 -0700
 
-pam (1.1.3-7ubuntu1) precise; urgency=low
+pam (1.1.8-2) unstable; urgency=medium
 
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - debian/libpam0g.postinst: the init script for 'samba' is now named
-      'smbd' in Ubuntu, so fix the restart handling.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/pam_umask_usergroups_from_login.defs.patch:
-      Deprecate pam_unix' explicit "usergroups" option and instead read it
-      from /etc/login.def's "USERGROUP_ENAB" option if umask is only defined
-      there. This restores compatibility with the pre-PAM behaviour of login.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/local/common-session{,-noninteractive}: Enable pam_umask by
-      default, now that the umask setting is gone from /etc/profile.
-    - debian/local/pam-auth-update: Add the new md5sums for pam_umask addition.
-    - Build-depend on libfl-dev in addition to flex, for cross-building
-      support.
+  * Mark the libaudit-dev build-dependency linux-any, since it's not
+    available on non-Linux archs.  Closes: #737035.
 
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 28 Jan 2012 11:36:07 -0800
+ -- Steve Langasek <vorlon@debian.org>  Thu, 13 Feb 2014 15:02:00 -0800
+
+pam (1.1.8-1) unstable; urgency=medium
+
+  * New upstream release.
+    - includes upstream changes to pam_exec.  Closes: #670147.
+    - adds support for newer hashing algorithms to pam_userdb.
+      Closes: #671740.
+    - fixes handling of 'quiet' argument to pam_listfile, to match the
+      documentation.  Closes: #592219.
+    - fixes handling of @users@@hosts netgroup syntax in access.conf.
+      Closes: #681223.
+    - fixes installation of the /etc/security/namespace.d directory.
+      Closes: #710998.
+    - 027_pam_limits_better_init_allow_explicit_root: support for reading
+      /proc/1/limits is upstream, this patch now only handles the policy
+      of resetting limits by default and not applying glob limits to root.
+    - debian/patches/fix-manpage-crud: drop, manpages now being generated
+      upstream with a newer, fixed xsltproc.
+    - debian/patches/pam_env-fix-overflow.patch, pam_env-fix-dos.patch,
+      glibc-2_16-compilation-fix.patch, sys-types-include.patch: drop,
+      included upstream.
+  * Add build-dependency on pkg-config.
+  * Ensure autogenerated files are after source files in all relevant patches,
+    so that regenerating documentation doesn't cause build skew.
+  * Drop the --disable-regenerate-docu argument, restoring the HTML manuals
+    to the libpam-doc package.  Closes: #700485.
+  * No need to override dh_compress in debian/rules, it already handles .html
+    files correctly.
+  * debian/libpam-cracklib.prerm: use $DPKG_MAINTSCRIPT_PACKAGE_COUNT to avoid
+    prematurely removing the PAM config when the package is installed for
+    multiple architectures.  Closes: #647428.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 16 Jan 2014 00:38:42 +0000
+
+pam (1.1.3-11) unstable; urgency=low
+
+  [ Wookey ]
+  * Disable libaudit for stage1 bootstrap.
+
+  [ Steve Langasek ]
+  * debian/patches-applied/pam-loginuid-in-containers: pam_loginuid:
+    Ignore failure in user namespaces.
+  * Use [linux-any] in build-deps, instead of hard-coding a list of
+    non-Linux archs.  Closes: #634516.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 14 Jan 2014 03:33:31 +0000
+
+pam (1.1.3-10) unstable; urgency=low
+
+  * Fix pam-auth-update handling of trailing blank lines in the fields of
+    profiles.  LP: #1160288.
+  * Reintroduce libaudit support now that libaudit has been multiarched.
+    Closes: #699159.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 20 Oct 2013 15:30:46 -0700
+
+pam (1.1.3-9) unstable; urgency=low
+
+  * Revert libaudit support for now, because libaudit isn't multiarched yet
+    in unstable so this regresses cross-installability.  Reopens bug
+    #699159.
+  * Add an or'ed dependency on cdebconf, which also implements the
+    xloadtemplatefile extension that prevents us from depending on just
+    'debconf-2.0'.  Thanks to Régis Boudin <regis@boudin.name> for the info.
+    Closes: #677278.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 12 Feb 2013 23:06:30 +0000
+
+pam (1.1.3-8) unstable; urgency=low
+
+  * Confirm NMU for bug #611136; thanks to Michael Gilbert.
+    - As a side effect, there will no longer be errors from reading the
+      .pam_environment twice since we are now reading it 0 times.
+      LP: #955032.
+  * Adjust the pam_env documentation to match the module behavior resulting
+    from the previous security upload.  Closes: #693995.
+  * debian/rules: never regenerate manpages at build time; this may cause
+    build skew that breaks the world in a multiarch context.  LP: #1095887.
+  * debian/patches-applied/glibc-2_16-compilation-fix.patch: fix missing
+    include causing build failure with eglibc 2.16.  Thanks to Daniel
+    Schepler <dschepler@gmail.com>.  Closes: #693450.
+  * Ditch autoconf patch in favor of a build-dependency on dh-autoreconf,
+    which will let us keep up-to-date with newer autotools.  In the present
+    instance, this gets us aarch64 support.
+  * Install pam_timestamp_check - and while we're at it, move the manpage
+    to the correct binary package.  Closes: #648695.
+  * Update lintian overrides to suppress some noise about hardening and
+    manpages.
+  * Enable audit support, by popular demand.  This should have no major
+    impact unless you're also running auditd; but I reserve the right to
+    disable this again in the event that this causes a performance hit or
+    breaks upgrades (since the dependency is pulled into libpam, not just
+    into pam_tty_audit).  Closes: #699159, LP: #937005.
+
+ -- Steve Langasek <vorlon@debian.org>  Tue, 12 Feb 2013 05:36:29 +0000
+
+pam (1.1.3-7.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix cve-2010-4708: user-configurable .pam_environment allows
+    administrator-level changes without root access (closes: #611136).
+
+ -- Michael Gilbert <mgilbert@debian.org>  Sun, 29 Apr 2012 02:23:26 -0400
 
 pam (1.1.3-7) unstable; urgency=low
 
@@ -110,49 +170,6 @@ pam (1.1.3-7) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 28 Jan 2012 10:57:49 -0800
 
-pam (1.1.3-6ubuntu1) precise; urgency=low
-
-  * Merge from Debian unstable.  Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - debian/libpam0g.postinst: the init script for 'samba' is now named
-      'smbd' in Ubuntu, so fix the restart handling.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/pam_umask_usergroups_from_login.defs.patch:
-      Deprecate pam_unix' explicit "usergroups" option and instead read it
-      from /etc/login.def's "USERGROUP_ENAB" option if umask is only defined
-      there. This restores compatibility with the pre-PAM behaviour of login.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/local/common-session{,-noninteractive}: Enable pam_umask by
-      default, now that the umask setting is gone from /etc/profile.
-    - debian/local/pam-auth-update: Add the new md5sums for pam_umask addition.
-  * Dropped changes, included in Debian:
-    - debian/patches-applied/update-motd: set a sane umask before calling
-      run-parts, and restore the old mask afterwards, so /run/motd gets
-      consistent permissions.
-    - debian/patches-applied/update-motd: new module option for pam_motd,
-      'noupdate', which suppresses the call to run-parts /etc/update-motd.d.
-    - debian/libpam0g.postinst: drop kdm from the list of services to
-      restart.
-  * Build-depend on libfl-dev in addition to flex, for cross-building
-    support.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 07 Nov 2011 21:15:00 -0800
-
 pam (1.1.3-6) unstable; urgency=low
 
   * debian/patches-applied/hurd_no_setfsuid: we don't want to check all
@@ -179,59 +196,6 @@ pam (1.1.3-6) unstable; urgency=low
     when called outside of a maintainer script.  LP: #882794.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 06 Nov 2011 19:43:14 -0800
-
-pam (1.1.3-5ubuntu2) precise; urgency=low
-
-  * Rebuild with dpkg 1.16.1.1ubuntu2 to restore large file support.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 01 Nov 2011 16:59:55 -0400
-
-pam (1.1.3-5ubuntu1) precise; urgency=low
-
-  * Merge from Debian unstable.  Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/libpam0g.postinst: drop kdm from the list of services to
-      restart.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - debian/local/common-session{,-noninteractive}: Enable pam_umask by
-      default, now that the umask setting is gone from /etc/profile.
-    - debian/local/pam-auth-update: Add the new md5sums for pam_umask addition.
-    - add debian/patches-applied/pam_umask_usergroups_from_login.defs.patch:
-      Deprecate pam_unix' explicit "usergroups" option and instead read it
-      from /etc/login.def's "USERGROUP_ENAB" option if umask is only defined
-      there. This restores compatibility with the pre-PAM behaviour of login.
-      (Closes: #583958)
-  * Dropped changes, included in Debian:
-    - debian/patches-applied/CVE-2011-3148.patch
-    - debian/patches-applied/CVE-2011-3149.patch
-    - debian/patches-applied/update-motd: updated to use clean environment
-      and absolute paths in modules/pam_motd/pam_motd.c.
-  * debian/libpam0g.postinst: the init script for 'samba' is now named 'smbd'
-    in Ubuntu, so fix the restart handling.
-  * debian/patches-applied/update-motd: set a sane umask before calling
-    run-parts, and restore the old mask afterwards, so /run/motd gets
-    consistent permissions.  LP: #871943.
-  * debian/patches-applied/update-motd: new module option for pam_motd,
-    'noupdate', which suppresses the call to run-parts /etc/update-motd.d.
-    LP: #805423.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sun, 30 Oct 2011 09:45:00 -0600
 
 pam (1.1.3-5) unstable; urgency=low
 
@@ -287,64 +251,6 @@ pam (1.1.3-3) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 24 Sep 2011 20:08:56 +0000
 
-pam (1.1.3-2ubuntu2.1) oneiric-security; urgency=low
-
-  * SECURITY UPDATE: possible code execution via incorrect environment file
-    parsing (LP: #874469)
-    - debian/patches-applied/CVE-2011-3148.patch: correctly count leading
-      whitespace when parsing environment file in modules/pam_env/pam_env.c.
-    - CVE-2011-3148
-  * SECURITY UPDATE: denial of service via overflowed environment variable
-    expansion (LP: #874565)
-    - debian/patches-applied/CVE-2011-3149.patch: when overflowing, exit
-      with PAM_BUF_ERR in modules/pam_env/pam_env.c.
-    - CVE-2011-3149
-  * SECURITY UPDATE: code execution via incorrect environment cleaning
-    - debian/patches-applied/update-motd: updated to use clean environment
-      and absolute paths in modules/pam_motd/pam_motd.c.
-    - CVE-2011-XXXX
-
- -- Marc Deslauriers <marc.deslauriers@ubuntu.com>  Tue, 18 Oct 2011 09:33:47 -0400
-
-pam (1.1.3-2ubuntu1) oneiric; urgency=low
-
-  * Merge with Debian to get bug fix for unknown kernel rlimits. Remaining
-    changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/libpam0g.postinst: drop kdm from the list of services to
-      restart.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - debian/local/common-session{,-noninteractive}: Enable pam_umask by
-      default, now that the umask setting is gone from /etc/profile.
-    - debian/local/pam-auth-update: Add the new md5sums for pam_umask addition.
-    - add debian/patches-applied/pam_umask_usergroups_from_login.defs.patch:
-      Deprecate pam_unix' explicit "usergroups" option and instead read it
-      from /etc/login.def's "USERGROUP_ENAB" option if umask is only defined
-      there. This restores compatibility with the pre-PAM behaviour of login.
-      (Closes: #583958)
-  * Dropped changes:
-    - debian/patches-applied/027_pam_limits_better_init_allow_explicit_root:
-      no need to bump the hard limit for number of file descriptors any more
-      since we read kernel limits directly now.
-
- -- Kees Cook <kees@ubuntu.com>  Thu, 18 Aug 2011 16:41:18 -0500
-
 pam (1.1.3-2) unstable; urgency=low
 
   [ Kees Cook ]
@@ -360,73 +266,6 @@ pam (1.1.3-2) unstable; urgency=low
     nice level by default is unexpected behavior.  Closes: #594377.
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 21 Jun 2011 11:41:12 -0700
-
-pam (1.1.3-1ubuntu3) oneiric; urgency=low
-
-  [ Steve Langasek ]
-  * debian/patches/pam_motd-legal-notice: use pam_modutil_gain/drop_priv
-    common helper functions, instead of hand-rolled uid-setting code.
-
-  [ Martin Pitt ]
-  * debian/local/common-session{,-noninteractive}: Enable pam_umask by
-    default, now that the umask setting is gone from /etc/profile.
-    (LP: #253096, UbuntuSpec:umask-to-0002)
-  * debian/local/pam-auth-update: Add the new md5sum of above files.
-  * Add debian/patches-applied/pam_umask_usergroups_from_login.defs.patch:
-    Deprecate pam_unix' explicit "usergroups" option and instead read it from
-    /etc/login.def's "USERGROUP_ENAB" option if umask is only defined there.
-    This restores compatibility with the pre-PAM behaviour of login.
-    (Closes: #583958)
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Fri, 24 Jun 2011 11:07:57 +0200
-
-pam (1.1.3-1ubuntu2) oneiric; urgency=low
-
-  * debian/patches-applied/update-motd-manpage-ref: refresh patch to apply
-    cleanly against new upstream.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 04 Jun 2011 14:20:17 -0700
-
-pam (1.1.3-1ubuntu1) oneiric; urgency=low
-
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/027_pam_limits_better_init_allow_explicit_root:
-      bump the hard limit for number of file descriptors, to keep pace with
-      the changes in the kernel.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/libpam0g.postinst: drop kdm from the list of services to
-      restart.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - New patch, lib_security_multiarch_compat, which lets us reuse the
-      upstream --enable-isadir functionality to support a true path for
-      module lookups; this way we don't have to force a hard transition to
-      multiarch, but can support resolving modules in both the multiarch and
-      non-multiarch directories.
-    - build for multiarch, splitting our executables out of libpam-modules
-      into a new package, libpam-modules-bin, so that modules can be
-      co-installable between architectures.
-  * Dropped changes:
-    - bumping the service restart version in libpam0g.postinst to ensure
-      servers don't fail to find the pam modules in the new paths; the min
-      version requirement upstream is higher than this now.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 04 Jun 2011 14:04:19 -0700
 
 pam (1.1.3-1) unstable; urgency=low
 
@@ -445,46 +284,6 @@ pam (1.1.3-1) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 04 Jun 2011 03:10:50 -0700
 
-pam (1.1.2-3ubuntu1) oneiric; urgency=low
-
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/027_pam_limits_better_init_allow_explicit_root:
-      bump the hard limit for number of file descriptors, to keep pace with
-      the changes in the kernel.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-    - debian/libpam0g.postinst: drop kdm from the list of services to
-      restart.
-    - debian/libpam0g.postinst: check if gdm is actually running before
-      trying to reload it.
-    - New patch, lib_security_multiarch_compat, which lets us reuse the
-      upstream --enable-isadir functionality to support a true path for
-      module lookups; this way we don't have to force a hard transition to
-      multiarch, but can support resolving modules in both the multiarch and
-      non-multiarch directories.
-    - build for multiarch, splitting our executables out of libpam-modules
-      into a new package, libpam-modules-bin, so that modules can be
-      co-installable between architectures.
-    - bumping the service restart version in libpam0g.postinst to ensure
-      servers don't fail to find the pam modules in the new paths.
-  * bump debhelper build-dep for final multiarch support.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 20 May 2011 12:53:24 -0700
-
 pam (1.1.2-3) unstable; urgency=low
 
   [ Kees Cook ]
@@ -502,92 +301,6 @@ pam (1.1.2-3) unstable; urgency=low
       (closes: #622786)
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 01 May 2011 01:49:11 -0700
-
-pam (1.1.2-2ubuntu8) natty; urgency=low
-
-  * Check if gdm is actually running before trying to reload it. (LP: #745532)
-
- -- Stéphane Graber <stgraber@ubuntu.com>  Mon, 11 Apr 2011 21:57:36 -0400
-
-pam (1.1.2-2ubuntu7) natty; urgency=low
-
-  * debian/patches-applied/027_pam_limits_better_init_allow_explicit_root:
-    bump the hard limit for number of file descriptors, to keep pace with
-    the changes in the kernel.  Fortunately this shadowing should all go
-    away next cycle when we can start to grab defaults directly from /proc.
-    LP: #663090
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 05 Apr 2011 13:02:02 -0700
-
-pam (1.1.2-2ubuntu6) natty; urgency=low
-
-  * debian/libpam0g.postinst: according to Kubuntu developers, kdm no longer
-    keeps libpam loaded persistently at runtime, so it's not necessary to
-    force a kdm restart on ABI bump.  Which is good, since restarting kdm
-    now seems to also log users out of running sessions, which we rather
-    want to avoid.  LP: #744944.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 29 Mar 2011 13:16:26 -0700
-
-pam (1.1.2-2ubuntu5) natty; urgency=low
-
-  * Force a service restart on upgrade to the new libpam0g, to ensure
-    servers don't fail to find the pam modules in the new paths.
-  * libpam-modules should also Pre-Depend: on the multiarch-aware libpam0g,
-    for the same reason.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 22 Mar 2011 02:19:51 -0700
-
-pam (1.1.2-2ubuntu4) natty; urgency=low
-
-  * Build for multiarch; FFe LP: #733501.
-  * Split our executables out of libpam-modules into a new package,
-    libpam-modules-bin, so that modules can be co-installable between
-    architectures.
-  * New patch, lib_security_multiarch_compat, which lets us reuse the
-    upstream --enable-isadir functionality to support a true path for module
-    lookups; this way we don't have to force a hard transition to multiarch,
-    but can support resolving modules in both the multiarch and
-    non-multiarch directories.
-  * Build-Depend on the multiarchified debhelper.
-  * Add Pre-Depends: ${misc:Pre-Depends} for multiarch-support.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 18 Mar 2011 00:12:26 -0700
-
-pam (1.1.2-2ubuntu3) natty; urgency=low
-
-  * Er, but let's get this patch applying cleanly.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 21 Feb 2011 16:10:11 -0800
-
-pam (1.1.2-2ubuntu2) natty; urgency=low
-
-  * debian/patches/update-motd-manpage-ref: patch the manpage too, not just
-    the xml source.
-
- -- Steve Langasek <vorlon@debian.org>  Mon, 21 Feb 2011 15:47:27 -0800
-
-pam (1.1.2-2ubuntu1) natty; urgency=low
-
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 17 Feb 2011 16:15:47 -0800
 
 pam (1.1.2-2) unstable; urgency=low
 
@@ -647,32 +360,6 @@ pam (1.1.1-7) UNRELEASED; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Nov 2010 16:53:46 -0800
 
-pam (1.1.1-6.1ubuntu1) natty; urgency=low
-
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-  * Dropped changes:
-    - libpam-modules depend on base-files (>= 5.0.0ubuntu6): 5.0.0ubuntu20
-      is in 10.04 LTS and this is an essential package, so no more need for
-      the versioned dependency.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 15 Feb 2011 23:36:47 -0800
-
 pam (1.1.1-6.1) unstable; urgency=low
 
   * Non-maintainer upload.
@@ -710,38 +397,6 @@ pam (1.1.1-5) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 05 Sep 2010 12:42:34 -0700
 
-pam (1.1.1-4ubuntu2) maverick-security; urgency=low
-
-  * SECURITY UPDATE: root privilege escalation via symlink following.
-    - debian/patches-applied/pam_motd-legal-notice: drop privs for work.
-    - CVE-2010-0832
-
- -- Kees Cook <kees@ubuntu.com>  Mon, 25 Oct 2010 06:40:32 -0700
-
-pam (1.1.1-4ubuntu1) maverick; urgency=low
-
-  * Merge from Debian unstable, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's
-      not present there or in /etc/security/pam_env.conf. (should send to
-      Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent
-      showing it again.
-    - debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-      for update-motd, with some best practices and notes of explanation.
-    - debian/patches/update-motd-manpage-ref: add a reference in pam_motd(8)
-      to update-motd(5)
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 16 Aug 2010 19:12:35 -0700
-
 pam (1.1.1-4) unstable; urgency=low
 
   * debian/patches/conditional_module,_conditional_man: if we don't have the
@@ -760,40 +415,6 @@ pam (1.1.1-4) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 15 Aug 2010 21:53:46 -0700
 
-pam (1.1.1-3ubuntu2) maverick; urgency=low
-
-  * Trigger a rebuild, applying changes from 1.1.1-2ubuntu2 which
-    were previously not committed to bzr
-
- -- Dustin Kirkland <kirkland@ubuntu.com>  Thu, 13 May 2010 10:04:23 +0200
-
-pam (1.1.1-3ubuntu1) maverick; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-  * Dropped changes:
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade - upgrades to maverick are
-      only supported from lucid, so this delta can be dropped.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: 'missingok' option
-      is obsoleted by 10.04 LTS and no longer needs to be supported for
-      upgrades.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 13 May 2010 00:39:44 +0200
-
 pam (1.1.1-3) unstable; urgency=low
 
   * pam-auth-update: fix a bug in our handling of module options when the
@@ -804,41 +425,6 @@ pam (1.1.1-3) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 25 Apr 2010 05:53:44 -0700
 
-pam (1.1.1-2ubuntu2) lucid; urgency=low
-
-  * debian/update-motd.5, debian/libpam-modules.manpages: add a manpage
-    for update-motd, with some best practices and notes of explanation,
-    LP: #562566
-  * debian/patches/update-motd-manpage-ref: add a reference in pam_mod(8)
-    to update-motd(5), LP: #552175
-
- -- Dustin Kirkland <kirkland@ubuntu.com>  Tue, 13 Apr 2010 16:58:12 -0500
-
-pam (1.1.1-2ubuntu1) lucid; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 18 Feb 2010 12:04:18 +0000
-
 pam (1.1.1-2) unstable; urgency=low
 
   * Document the new symbols added in 1.1.1 in debian/libpam0g.symbols, and
@@ -846,31 +432,6 @@ pam (1.1.1-2) unstable; urgency=low
     Closes: #568480.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 17 Feb 2010 23:21:23 -0800
-
-pam (1.1.1-1ubuntu1) lucid; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade.
-
- -- Steve Langasek <vorlon@debian.org>  Mon, 01 Feb 2010 09:55:02 -0800
 
 pam (1.1.1-1) unstable; urgency=low
 
@@ -898,47 +459,6 @@ pam (1.1.1-1) unstable; urgency=low
     LP: #356766.
 
  -- Steve Langasek <vorlon@debian.org>  Mon, 01 Feb 2010 02:04:33 -0800
-
-pam (1.1.0-4ubuntu3) lucid; urgency=low
-
-  * Brown paper bag: remove the right patch from the series file.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 10 Dec 2009 23:09:03 -0800
-
-pam (1.1.0-4ubuntu2) lucid; urgency=low
-
-  * "Rebase" Ubuntu patches to apply them last in the series.
-  * Drop patch ubuntu-regression_fix_securetty, superseded by the more
-    precise fix in pam_securetty_tty_check_before_user_check.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 10 Dec 2009 22:52:20 -0800
-
-pam (1.1.0-4ubuntu1) lucid; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 05 Nov 2009 21:33:15 -0800
 
 pam (1.1.0-4) unstable; urgency=low
 
@@ -989,36 +509,6 @@ pam (1.1.0-3) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Mon, 07 Sep 2009 18:47:45 -0700
 
-pam (1.1.0-2ubuntu1) karmic; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade.
-  * Changes merged in Debian:
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 04 Sep 2009 01:11:48 -0700
-
 pam (1.1.0-2) unstable; urgency=low
 
   [ Steve Langasek ]
@@ -1045,42 +535,7 @@ pam (1.1.0-2) unstable; urgency=low
   * debian/local/common-password, debian/pam-configs/unix: switch from "md5"
     to "sha512" as password crypt default.
 
- -- Steve Langasek <vorlon@debian.org>  Mon, 31 Aug 2009 14:21:27 -0700 
-
-pam (1.1.0-1ubuntu1) karmic; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-    - debian/local/common-{auth,account,password}.md5sums: include the
-      Ubuntu-specific intrepid,jaunty md5sums for use during the
-      common-session-noninteractive upgrade.
-  * Dropped changes, superseded upstream:
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 26 Aug 2009 00:40:14 -0700
+ -- Steve Langasek <vorlon@debian.org>  Mon, 31 Aug 2009 14:21:27 -0700
 
 pam (1.1.0-1) unstable; urgency=low
 
@@ -1125,42 +580,6 @@ pam (1.1.0-1) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 25 Aug 2009 20:35:26 -0700
 
-pam (1.0.1-11ubuntu1) karmic; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-  * debian/local/pam-auth-update: prune some more md5sums from intrepid
-    pre-release versions, reducing the Ubuntu delta some
-  * debian/local/common-{auth,account,password}.md5sums: include the
-    Ubuntu-specific intrepid,jaunty md5sums for use during the
-    common-session-noninteractive upgrade.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sun, 23 Aug 2009 20:14:58 -0700
-
 pam (1.0.1-11) unstable; urgency=low
 
   * debian/libpam-runtime.postinst: bump the --force version check to
@@ -1187,37 +606,6 @@ pam (1.0.1-11) unstable; urgency=low
     - Russian, thanks to Yuri Kozlov <yuray@komyakino.ru> (closes: #541094)
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 23 Aug 2009 18:07:11 -0700
-
-pam (1.0.1-10ubuntu1) karmic; urgency=low
-
-  * Merge from Debian, remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-    - Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-      run-parts does the right thing in /etc/update-motd.d.
-    - debian/patches-applied/pam_motd-legal-notice: display the contents of
-      /etc/legal once, then set a flag in the user's homedir to prevent showing
-      it again.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 07 Aug 2009 09:50:02 +0100
 
 pam (1.0.1-10) unstable; urgency=high
 
@@ -1255,51 +643,6 @@ pam (1.0.1-10) unstable; urgency=high
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 06 Aug 2009 17:54:32 +0100
 
-pam (1.0.1-9ubuntu3) karmic; urgency=low
-
-  * Make libpam-modules depend on base-files (>= 5.0.0ubuntu6), to ensure
-    run-parts does the right thing in /etc/update-motd.d.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 15 Jul 2009 23:55:50 -0700
-
-pam (1.0.1-9ubuntu2) karmic; urgency=low
-
-  [ Dustin Kirkland ]
-  * debian/patches/update-motd: run the update-motd scripts in pam_motd;
-    render update-motd obsolete, LP: #399071
-  * debian/patches-applied/pam_motd-legal-notice: display the contents of
-    /etc/legal once, then set a flag in the user's homedir to prevent showing
-    it again.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 15 Jul 2009 20:41:52 -0700
-
-pam (1.0.1-9ubuntu1) jaunty; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 20 Mar 2009 19:12:10 -0700
-
 pam (1.0.1-9) unstable; urgency=low
 
   * Move the pam module packages to section 'admin'.
@@ -1332,56 +675,6 @@ pam (1.0.1-8) unstable; urgency=low
     Closes: #472629.
 
  -- Steve Langasek <vorlon@debian.org>  Fri, 20 Mar 2009 18:15:07 -0700
-
-pam (1.0.1-7ubuntu1) jaunty; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-  * Dropped changes, merged in Debian:
-    - debian/local/pam-auth-update (et al): new interface for managing
-      /etc/pam.d/common-*, using drop-in config snippets provided by module
-      packages.
-    - New patch dont_freeze_password_chain, cherry-picked from upstream:
-      don't always follow the same path through the password stack on
-      the PAM_UPDATE_AUTHTOK pass as was used in the PAM_PRELIM_CHECK
-      pass; this Linux-PAM deviation from the original PAM spec causes a
-      number of problems, in particular causing wrong return values when
-      using the refactored pam-auth-update stack.  LP: #303515, #305882.
-    - debian/patches/027_pam_limits_better_init_allow_explicit_root:
-      Add documentation to the patch showing how to set limits for root.
-  * Bump the libpam-cracklib dependency on libpam-runtime to 1.0.1-6,
-    reducing the delta with Debian.
-  * Drop upgrade handling code from libpam-runtime.postinst that's only
-    needed when upgrading from 1.0.1-2ubuntu1, a superseded intrepid
-    pre-release version of the package.
-  * pam-auth-update: swap out known md5sums from intrepid pre-release versions
-    with the md5sums from the released intrepid version
-  * pam-auth-update: drop some md5sums that will only be seen on upgrade from
-    pre-intrepid versions; skipping over the 8.10 final release is not
-    supported, and upgrading via 8.10 means those config files will be
-    replaced so the old md5sums will never be seen again.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 03 Mar 2009 17:34:19 -0800
 
 pam (1.0.1-7) unstable; urgency=low
 
@@ -1416,67 +709,6 @@ pam (1.0.1-6) unstable; urgency=low
     packages.
 
  -- Steve Langasek <vorlon@debian.org>  Sat, 28 Feb 2009 13:36:57 -0800
-
-pam (1.0.1-5ubuntu2) jaunty; urgency=low
-
-  * New patch dont_freeze_password_chain, cherry-picked from upstream:
-    don't always follow the same path through the password stack on
-    the PAM_UPDATE_AUTHTOK pass as was used in the PAM_PRELIM_CHECK
-    pass; this Linux-PAM deviation from the original PAM spec causes a
-    number of problems, in particular causing wrong return values when
-    using the refactored pam-auth-update stack.  LP: #303515, #305882.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 27 Feb 2009 16:20:24 -0800
-
-pam (1.0.1-5ubuntu1) jaunty; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/pam-auth-update (et al): new interface for managing
-      /etc/pam.d/common-*, using drop-in config snippets provided by module
-      packages.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-  * Bump the version numbers referenced in the config files, again, as pam
-    has revved in Debian and moved the bar.
-  * pam-auth-update: If /var/lib/pam/seen is absent, treat this the same
-    as a present but empty file; thanks to Greg Price for the patch.
-    LP: #294513.
-  * pam-auth-update: Ignore removed profiles when detecting an empty set
-    of currently-enabled modules.  Thanks to Greg Price for this as well.
-  * debian/control: libpam-runtime needs a versioned dependency on
-    debconf, because it uses the x_loadtemplatefile extension that's 
-    not supported by debconf versions before hardy.  LP: #295135.
-  * pam-auth-update: trim leading whitespace from multiline fields when
-    parsing PAM profiles.  LP: #295441.
-  * pam-auth-update: factor out the duplicate code used for returning
-    the lines for a given module
-
-  [ Jonathan Marsden ]
-  * debian/patches/027_pam_limits_better_init_allow_explicit_root:
-    Add to patch, documenting how to set limits for root user.
-    Include an example.  Alters limits.conf, limits.conf.5.xml,
-    and limits.conf.5 .  (LP: #65244)
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 08 Jan 2009 20:26:25 +0000
 
 pam (1.0.1-5) unstable; urgency=low
 
@@ -1513,111 +745,6 @@ pam (1.0.1-5) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Tue, 06 Jan 2009 00:05:13 -0800
 
-pam (1.0.1-4ubuntu5.4) jaunty; urgency=low
-
-  * No-change upload to jaunty to fix publication on armel.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 18 Nov 2008 14:09:00 +0000
-
-pam (1.0.1-4ubuntu5.3) intrepid-updates; urgency=low
-
-  * No-change upload of 1.0.1-4ubuntu5.1 to -updates. -proposed package was
-    copied while some ports were not built yet.
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 11 Nov 2008 14:50:12 +0100
-
-pam (1.0.1-4ubuntu5.2) intrepid-proposed; urgency=low
-
-  * No-change rebuild because the archive admin (me) copied the package
-    to jaunty too soon.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 05 Nov 2008 20:28:11 +0000
-
-pam (1.0.1-4ubuntu5.1) intrepid-proposed; urgency=low
-
-  * Allow passwords to change on expired accounts, by passing
-    new_authtok_reqd return codes immediately (LP: #291091).
-
- -- Kees Cook <kees@ubuntu.com>  Wed, 05 Nov 2008 09:31:45 -0800
-
-pam (1.0.1-4ubuntu5) intrepid; urgency=low
-
-  * debian/libpam0g.postinst: change 'cupsys' to 'cups' in the list of
-    default desktop services that are ignored in deciding whether to prompt
-    for service restarts on upgrade.  Partially addresses LP #278117.
-  * debian/libpam0g.postinst: also filter out samba, which may be installed
-    on the desktop to enable filesharing.
-  * debian/libpam-cracklib.prerm, debian/libpam-runtime.prerm: add the
-    ubiquitous debhelper tokens (currently a no-op)
-  * pam-auth-update: Use -Initial only for the first profile, even when
-    there's no explicit -Initial config for that first profile
-  * fix common-session/common-password to use the same overall stack
-    structure as auth/account, so that we get the correct behavior when
-    all password modules fail.  LP: #272232.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 15 Oct 2008 18:11:13 -0700
-
-pam (1.0.1-4ubuntu4) intrepid; urgency=low
-
-  * Fix a bug in the parser that caused spewing of errors when there
-    were more lines in the config file following the managed block.
-    LP: #270328.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 23 Sep 2008 06:34:56 +0000
-
-pam (1.0.1-4ubuntu3) intrepid; urgency=low
-
-  * Fix up the code that saves state to /var/lib/pam, so that it matches
-    what's expected by the code which later compares the saved and active
-    profiles in the case that there are both primary and additional
-    modules present.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 16 Sep 2008 06:49:56 +0000
-
-pam (1.0.1-4ubuntu2) intrepid; urgency=low
-
-  * Brown paper bag bug: fix a missing comma in pam-auth-update.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 13 Sep 2008 08:55:32 +0000
-
-pam (1.0.1-4ubuntu1) intrepid; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/pam-auth-update (et al): new interface for managing
-      /etc/pam.d/common-*, using drop-in config snippets provided by module
-      packages.
-    - debian/local/common-password, debian/pam-configs/unix: switch from
-      "md5" to "sha512" as password crypt default.
-  * Bump the version numbers referenced in the config files, again, as pam
-    has revved in Debian and moved the bar.
-  * debian/pam-config/*: refine the password profiles to use a 'primary'
-    block, to better parallel the auth structure.
-  * Drop '-Final' from the field names in /usr/share/pam-configs, supporting
-    these field names for backwards compatibility only
-  * Bump the dependency version requirement to 1.0.1-4ubuntu1 for the above
-    change
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 13 Sep 2008 08:55:19 +0000
-
 pam (1.0.1-4) unstable; urgency=high
 
   * High-urgency upload for RC bugfix.
@@ -1640,88 +767,6 @@ pam (1.0.1-4) unstable; urgency=high
 
  -- Steve Langasek <vorlon@debian.org>  Thu, 28 Aug 2008 22:59:23 -0700
 
-pam (1.0.1-3ubuntu5) intrepid; urgency=low
-
-  [ Steve Langasek ]
-  * Never remove the .pam-old files; just avoid creating them if --force isn't
-    set.
-  * Add a manpage for pam-auth-update.
-  * Automatically upgrade the boilerplate for /etc/pam.d/common-* if we
-    detect that they have not been locally modified.
-
-  [ Kees Cook ]
-  * debian/local/common-password, debian/pam-configs/unix: switch from "md5"
-    to "sha512" as password crypt default.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 26 Aug 2008 06:33:07 +0000
-
-pam (1.0.1-3ubuntu4) intrepid; urgency=low
-
-  * If two profiles have the same Priority, sort by the profile name to
-    ensure a complete sort so we can filter out all the duplicates from the
-    list and not write out broken configs.  LP: #260371.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Fri, 22 Aug 2008 17:33:14 +0000
-
-pam (1.0.1-3ubuntu3) intrepid; urgency=low
-
-  * s/pam-auth-config/pam-auth-update/ in the source, I can't seem to get
-    this name consistent to save my life - I'm starting to think I named it
-    wrong...
-  * Fix the regex used when suppressing jump counts when reading the saved
-    config, so that we don't clobber module options with numbers in them.
-  * If the target doesn't already exist, don't try to copy it.
-  * Filter the config list to exclude configs that no longer exist.
-    LP: #260122.
-  * Avoid unnecessary sort/grep in the case where we already have a sorted
-    list.
-  * Implement pam-auth-update --remove, for use in package prerms when called
-    with "remove".
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 21 Aug 2008 15:38:37 -0700
-
-pam (1.0.1-3ubuntu2) intrepid; urgency=high
-
-  * debian/local/common-session: the session stack needs to be handled the
-    same way as the password stack, with the possibility of zero primary
-    modules; required to fix build failures on the Ubuntu buildds due to
-    su not being able to open sessions by default.  LP: #259867.
-  * debian/libpam-runtime.postinst: when upgrading from the broken
-    1.0.1-2ubuntu1 version, manually edit /etc/pam.d/common-session to
-    recover.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 20 Aug 2008 13:27:10 -0700
-
-pam (1.0.1-3ubuntu1) intrepid; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-    - debian/local/pam-auth-update (et al): new interface for managing
-      /etc/pam.d/common-*, using drop-in config snippets provided by module
-      packages.
-  * Remove spurious 'conflict' with a non-existent module, which was added
-    just as an example
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 20 Aug 2008 11:58:35 -0700
-
 pam (1.0.1-3) unstable; urgency=high
 
   * 055_pam_unix_nullok_secure: don't call _pammodutil_tty_secure with a NULL
@@ -1730,40 +775,6 @@ pam (1.0.1-3) unstable; urgency=high
     Closes: #495806.
 
  -- Steve Langasek <vorlon@debian.org>  Wed, 20 Aug 2008 11:55:47 -0700
-
-pam (1.0.1-2ubuntu1) intrepid; urgency=low
-
-  * Merge from Debian unstable
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam-runtime.postinst,
-      debian/local/common-{auth,password}{,.md5sums}:
-      Use the new 'missingok' option by default for pam_smbpass in case
-      libpam-smbpass is not installed (LP: #216990); must use "requisite"
-      rather than "required" to prevent "pam_smbpass migrate" from firing in
-      the event of an auth failure; md5sums updated accordingly.
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - Change Vcs-Bzr to point at the Ubuntu branch.
-  * debian/local/pam-auth-update (et al): new interface for managing
-    /etc/pam.d/common-*, using drop-in config snippets provided by module
-    packages.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Wed, 20 Aug 2008 09:17:28 +0000
 
 pam (1.0.1-2) unstable; urgency=low
 
@@ -1788,49 +799,6 @@ pam (1.0.1-2) unstable; urgency=low
     about NULL password + insecure tty, but I don't think this is critical.
 
  -- Steve Langasek <vorlon@debian.org>  Fri, 08 Aug 2008 10:47:26 -0700
-
-pam (1.0.1-1ubuntu1) intrepid; urgency=low
-
-  * Merge from Debian unstable
-  * Dropped changes:
-    - Linux-PAM/modules/pam_selinux/pam_selinux.8: Ubuntu pam_selinux manpage
-      is 2 years newer than Debian's, contains a number of character escaping
-      fixes plus content updates
-    - debian/patches-applied/ubuntu-pam_selinux_seusers: patch pam_selinux to
-      correctly support seusers (backported from changes in PAM 0.99.8).  
-    - debian/rules: install unix_chkpwd setgid shadow instead of setuid root.
-      The nis package handles overriding this as necessary.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Bound RLIMIT_NICE
-      from below as well as from above. Fix off-by-one error when converting
-      RLIMIT_NICE to the range of values used by the kernel.
-  * Remaining changes:
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf. (should send to Debian).
-    - debian/libpam-runtime.postinst,
-      debian/local/common-{auth,password}{,.md5sums}:
-      Use the new 'missingok' option by default for pam_smbpass in case
-      libpam-smbpass is not installed (LP: #216990); must use "requisite"
-      rather than "required" to prevent "pam_smbpass migrate" from firing in
-      the event of an auth failure; md5sums updated accordingly.
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running.
-    - debian/patches-applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-regression_fix_securetty: prompt for
-      password on bad username.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-  * Refresh patch ubuntu-no-error-if-missingok for the new upstream version.
-  * Change Vcs-Bzr to point at the new Ubuntu branch.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 28 Jul 2008 20:58:26 +0000
 
 pam (1.0.1-1) unstable; urgency=low
 
@@ -1947,69 +915,6 @@ pam (0.99.7.1-7) unstable; urgency=medium
 
  -- Steve Langasek <vorlon@debian.org>  Mon, 21 Jul 2008 11:49:59 -0700
 
-pam (0.99.7.1-6ubuntu2) intrepid; urgency=low
-
-  * debian/libpam-modules.postinst: revert addition of ~/bin to the end of the
-    default PATH set in /etc/environment as it was pointed out by Colin
-    Watson that getenv() does not properly expand '~'
-
- -- Jamie Strandboge <jamie@ubuntu.com>  Tue, 24 Jun 2008 06:29:40 -0400
-
-pam (0.99.7.1-6ubuntu1) intrepid; urgency=low
-
-  * Merge from debian unstable
-  * Dropped changes:
-    - Linux-PAM/modules/pam_limits/README,
-      Linux-PAM/modules/pam_selinux/README: Ubuntu versions had some
-      insignificant character differences, dropping in favor of Debian
-      versions; pam_selinux documentation has dropped "multiple", and added
-      "select_context", and "use_current_range" as options.
-    - debian/control, debian/local/common-session{,md5sums}: use
-      libpam-foreground for session management.
-    - Build using db4.5 instead of db4.6.
-  * Remaining changes:
-    - Linux-PAM/modules/pam_selinux/pam_selinux.8: Ubuntu pam_selinux manpage
-      is 2 years newer than Debian's, contains a number of character escaping
-      fixes plus content updates; (should send to Debian).
-    - debian/control: Maintainer updated.
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf; add ~/bin to PATH
-      (LP: #64064); (should send to Debian).
-    - debian/libpam-runtime.postinst,
-      debian/local/common-{auth,password}{,.md5sums}:
-      Use the new 'missingok' option by default for pam_smbpass in case
-      libpam-smbpass is not installed (LP: #216990); must use "requisite"
-      rather than "required" to prevent "pam_smbpass migrate" from firing in
-      the event of an auth failure; md5sums updated accordingly.
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running (LP: #141309).
-    - debian/applied/series: Ubuntu patches are as below ...
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-      module option 'missingok' which will suppress logging of errors by
-      libpam if the module is not found.
-    - debian/patches-applied/ubuntu-pam_selinux_seusers: patch pam_selinux to
-      correctly support seusers (backported from changes in PAM 0.99.8).  
-      Without this patch login will not get correct security context when 
-      using libselinux >= 1.27.2 (LP: #187822).
-    - debian/patches-applied/ubuntu-regression_fix_securetty: securetty's
-      earlier behavior would correctly prompt for password on bad usernames
-      (LP: #139075).
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits. Bound
-      RLIMIT_NICE from below as well as from above. Fix off-by-one error when
-      converting RLIMIT_NICE to the range of values used by the kernel.
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - debian/rules: install unix_chkpwd setgid shadow instead of setuid root.
-      The nis package handles overriding this as necessary.
-  * Alphabetized this merge changelog entry by filename (easier reading
-    against Ubuntu patch).
-
- -- Dustin Kirkland <kirkland@ubuntu.com>  Fri, 20 Jun 2008 10:32:00 -0500
-
 pam (0.99.7.1-6) unstable; urgency=low
 
   * Debconf translations:
@@ -2035,98 +940,6 @@ pam (0.99.7.1-6) unstable; urgency=low
     <undefined@pobox.com> for the catch.  Closes: #446327.
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 16 Mar 2008 02:06:28 -0700
-
-pam (0.99.7.1-5ubuntu8) intrepid; urgency=low
-
-  * debian/libpam-modules.postinst: Add ~/bin to the end of the default PATH
-    set in /etc/environment (LP: #64064).
-
- -- Dustin Kirkland <kirkland@ubuntu.com>  Thu, 19 Jun 2008 12:52:48 -0500
-
-pam (0.99.7.1-5ubuntu7) intrepid; urgency=low
-
-  * debian/patches-applied/ubuntu-no-error-if-missingok: add a new, magic
-    module option 'missingok' which will suppress logging of errors by
-    libpam if the module is not found.
-  * debian/local/common-{auth,password}, debian/libpam-runtime.postinst:
-    Use the new 'missingok' option by default for pam_smbpass, to
-    correct the problem of very loud logging introduced in the previous
-    upload when libpam-smbpass is not installed.  LP: #216990.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 22 Apr 2008 18:53:37 +0000
-
-pam (0.99.7.1-5ubuntu6) hardy; urgency=low
-
-  * debian/local/common-{auth,password}, debian/libpam-runtime.postinst:
-    Add pam_smbpass as an optional module in the stack, to keep NTLM
-    passwords (for filesharing) in sync with the main system passwords on a
-    best-effort basis.  LP: #208419.
-
- -- Steve Langasek <steve.langasek@ubuntu.com>  Tue, 08 Apr 2008 18:21:40 +0000
-
-pam (0.99.7.1-5ubuntu5) hardy; urgency=low
-
-  * debian/local/common-session: Drop libpam-foreground. It's gone for good,
-    and we do not want this in the PAM config for new installations, since it
-    just spams syslog with error messages. (LP: #198714)
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Tue, 11 Mar 2008 11:22:11 +0100
-
-pam (0.99.7.1-5ubuntu4) hardy; urgency=low
-
-  * ubuntu-pam_selinux_seusers: patch pam_selinux to correctly support
-    seusers (backported from changes in PAM 0.99.8).  Without this patch
-    login will not get correct security context when using libselinux
-    >= 1.27.2 (LP: #187822).
-
- -- Caleb Case <ccase@tresys.com>  Wed, 30 Jan 2008 06:39:48 -0500
-
-pam (0.99.7.1-5ubuntu3) hardy; urgency=low
-
-  * Temporarily reenable libpam-foreground in common-session again, until
-    dbus' at_console policy works with ConsoleKit.
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Thu, 29 Nov 2007 15:17:54 +0100
-
-pam (0.99.7.1-5ubuntu2) hardy; urgency=low
-
-  * debian/local/common-session{,.md5sums}, debian/control: Drop
-    libpam-foreground, superseded by ConsoleKit integration into hal.
-  * debian/control: Build against libdb4.6 again. This drops this Debian delta
-    and 4.6 is our target version in Hardy.
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Thu, 22 Nov 2007 18:56:47 +0100
-
-pam (0.99.7.1-5ubuntu1) gutsy; urgency=low
-
-  * Resynchronise with Debian. Remaining changes:
-    - debian/control, debian/local/common-session{,md5sums}: use
-      libpam-foreground for session management.
-    - debian/rules: install unix_chkpwd setgid shadow instead of setuid root.
-      The nis package handles overriding this as necessary.
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf.
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits. Bound
-      RLIMIT_NICE from below as well as from above. Fix off-by-one error when
-      converting RLIMIT_NICE to the range of values used by the kernel.
-      (Originally patch 101; converted to quilt.)
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-    - debian/patches-applied/ubuntu-regression_fix_securetty: securetty's
-      earlier behavior would correctly prompt for password on bad usernames
-      (LP: #139075).
-    - Build using db4.5 instead of db4.6.
-    - debian/libpam0g.postinst: only ask questions during update-manager when
-      there are non-default services running (LP: #141309).
-  * debian/libpam0g.postinst: don't display a debconf warning about display
-    managers that need restarting when update-manager is running, instead
-    signal to update-notifier if a reboot is required.
-
- -- Steve Langasek <vorlon@debian.org>  Fri, 28 Sep 2007 23:45:24 -0700
 
 pam (0.99.7.1-5) unstable; urgency=low
 
@@ -2171,55 +984,6 @@ pam (0.99.7.1-5) unstable; urgency=low
     cross-building support.
 
  -- Steve Langasek <vorlon@debian.org>  Fri, 28 Sep 2007 00:17:00 -0700
-
-pam (0.99.7.1-4ubuntu4) gutsy; urgency=low
-
-  * debian/libpam0g.postinst: call "reload" for all display managers
-    (LP: #139065).
-  * debian/libpam0g.postinst: only ask questions during update-manager when
-    there are non-default services running (LP: #141309).
-
- -- Kees Cook <kees@ubuntu.com>  Mon, 24 Sep 2007 15:01:29 -0700
-
-pam (0.99.7.1-4ubuntu3) gutsy; urgency=low
-
-  * ubuntu-regression_fix_securetty: securetty's earlier behavior would
-    correctly prompt for password on bad usernames (LP: #139075).
-
- -- Kees Cook <kees@ubuntu.com>  Wed, 12 Sep 2007 15:20:09 -0700
-
-pam (0.99.7.1-4ubuntu2) gutsy; urgency=low
-
-  * Build using db4.5 (instead of db4.6).  One db4.x version less on the CD.
-
- -- Matthias Klose <doko@ubuntu.com>  Wed, 12 Sep 2007 17:44:25 +0200
-
-pam (0.99.7.1-4ubuntu1) gutsy; urgency=low
-
-  * Resynchronise with Debian (LP: #43169, #14505, #80431). Remaining changes:
-    - debian/control, debian/local/common-session{,md5sums}: use
-      libpam-foreground for session management.
-    - debian/rules: install unix_chkpwd setgid shadow instead of setuid root.
-      The nis package handles overriding this as necessary.
-    - debian/libpam-modules.postinst: Add PATH to /etc/environment if it's not
-      present there or in /etc/security/pam_env.conf.
-    - debian/patches-applied/ubuntu-fix_standard_types: Use standard u_int8_t
-      type rather than __u8.
-    - debian/patches-applied/ubuntu-rlimit_nice_correction: Explicitly
-      initialise RLIMIT_NICE rather than relying on the kernel limits. Bound
-      RLIMIT_NICE from below as well as from above. Fix off-by-one error when
-      converting RLIMIT_NICE to the range of values used by the kernel.
-      (Originally patch 101; converted to quilt.)
-    - debian/patches-applied/ubuntu-user_defined_environment: Look at
-      ~/.pam_environment too, with the same format as
-      /etc/security/pam_env.conf.  (Originally patch 100; converted to quilt.)
-  * Dropped:
-    - debian/rules: bashism fixes (merged upstream).
-    - debian/control: Conflict on ancient nis (expired with Breezy).
-    - debian/libpam-runtime.postinst: check for ancient pam (expired with
-      Breezy).
-
- -- Kees Cook <kees@ubuntu.com>  Wed, 05 Sep 2007 15:18:36 -0700
 
 pam (0.99.7.1-4) unstable; urgency=low
 
@@ -2467,32 +1231,6 @@ pam (0.99.7.1-2) unstable; urgency=low
 
  -- Steve Langasek <vorlon@debian.org>  Sun, 26 Aug 2007 19:15:09 -0700
 
-pam (0.79-4ubuntu2) feisty; urgency=low
-
-  * Remove /usr/bin/X11 from default PATH (new installs only).
-
- -- Colin Watson <cjwatson@ubuntu.com>  Wed, 20 Dec 2006 16:14:37 +0000
-
-pam (0.79-4ubuntu1) feisty; urgency=low
-
-  * Resynchronise with Debian. Remaining changes:
-    - Patch 100 (renumbered from 060): Look at ~/.pam_environment too, with
-      the same format as /etc/security/pam_env.conf.
-    - Patch 101 (renumbered from 061): Explicitly initialise RLIMIT_NICE
-      rather than relying on the kernel limits. Bound RLIMIT_NICE from below
-      as well as from above. Fix off-by-one error when converting
-      RLIMIT_NICE to the range of values used by the kernel.
-    - Add PATH to /etc/environment if it's not present there or in
-      /etc/security/pam_env.conf.
-    - debian/rules: Fix a bashism.
-    - Install unix_chkpwd setgid shadow instead of setuid root. The nis
-      package handles overriding this as necessary.
-    - Use pam_foreground in the default session.
-    - Linux-PAM/libpamc/test/regress/test.libpamc.c: Use standard u_int8_t
-      type rather than __u8.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Tue, 19 Dec 2006 10:32:47 +0000
-
 pam (0.79-4) unstable; urgency=medium
 
   * Medium-urgency upload; at least one RC bugfix, but also a
@@ -2545,12 +1283,6 @@ pam (0.79-3.2) unstable; urgency=low
 
  -- Margarita Manterola <marga@debian.org>  Sat,  5 Aug 2006 02:11:22 -0300
 
-pam (0.79-3.1ubuntu1) edgy; urgency=low
-
-  * Resynchronise with Debian.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 29 Jun 2006 17:27:34 +0100
-
 pam (0.79-3.1) unstable; urgency=low
 
   * Non-maintainer upload.
@@ -2560,114 +1292,6 @@ pam (0.79-3.1) unstable; urgency=low
     glibc/libstdc++ types.  Closes: #344447.
 
  -- Roger Leigh <rleigh@debian.org>  Sun,  5 Feb 2006 21:46:59 +0000
-
-pam (0.79-3ubuntu14) dapper; urgency=low
-
-  * debian/patches-applied/061_pam_rlimits_nice_rtprio: Protect use of
-    RLIMIT_NICE in init_limits() with an #ifdef.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Fri, 12 May 2006 17:42:40 +0100
-
-pam (0.79-3ubuntu13) dapper; urgency=low
-
-  * debian/patches-applied/061_pam_rlimits_nice_rtprio: Set soft and hard
-    nice limits to 20 (= userland nice value 0) rather than unlimited by
-    default. Correct off-by-one error (the same error as in Linux 2.6.12,
-    but fixed in 2.6.13) in user<->kernel translation of nice limit.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 11 May 2006 11:29:58 +0100
-
-pam (0.79-3ubuntu12) dapper; urgency=low
-
-  * debian/control: Add libpam-foreground dependency to libpam-runtime, since
-    the default /etc/pam.d/common-session refers to it. Closes: LP#35142
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Mon, 10 Apr 2006 14:42:40 +0200
-
-pam (0.79-3ubuntu11) dapper; urgency=low
-
-  [ Dana Olson ]
-  * debian/patches-applied/061_pam_rlimits_nice_rtprio: removed glibc
-    workaround now that glibc is aware of rlimits.
-
-  [ Martin Pitt ]
-  * debian/rules: Fix bashisms.
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Thu,  6 Apr 2006 15:03:37 +0200
-
-pam (0.79-3ubuntu10) dapper; urgency=low
-
-  * debian/patches-applied/061_pam_rlimits_nice_rtprio: Support "nice" and
-    "rtprio" rlimits, new in Linux 2.6.12. Backported from upstream thanks
-    to Dana Olson and others (closes: Malone #17348).
-
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 23 Feb 2006 16:22:12 +0000
-
-pam (0.79-3ubuntu9) dapper; urgency=low
-
-  * Fix operator precedence in libpam-modules.postinst.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Thu, 16 Feb 2006 15:23:04 +0000
-
-pam (0.79-3ubuntu8) dapper; urgency=low
-
-  * Make pam_env be quiet if it can't find the user's configuration file,
-    since it's optional.
-
- -- Tollef Fog Heen <tfheen@ubuntu.com>  Sat,  4 Feb 2006 16:44:12 +0100
-
-pam (0.79-3ubuntu7) dapper; urgency=low
-
-  * Add the PATH on initial install for real this time.
-
- -- Tollef Fog Heen <tfheen@ubuntu.com>  Thu,  2 Feb 2006 20:33:42 +0100
-
-pam (0.79-3ubuntu6) dapper; urgency=low
-
-  * Changes from Roger Leigh:
-
-  * Linux-PAM/libpamc/include/security/pam_client.h,
-    Linux-PAM/libpamc/pamc_converse.c: Apply patch from
-    latest upstream version to remove redefinition of internal
-    glibc/libstdc++ types.  Closes: #344447.
-  * Linux-PAM/libpamc/test/regress/test.libpamc.c: Also switch to standard
-    types; not taken from upstream.
- 
- -- Reinhard Tartler <siretart@ubuntu.com>  Wed,  1 Feb 2006 13:14:24 +0000
-
-pam (0.79-3ubuntu5) dapper; urgency=low
-
-  * Add pam_foreground to /etc/pam.d/common-session
-
- -- Matthew Garrett <mjg59@srcf.ucam.org>  Tue, 24 Jan 2006 02:26:19 +0000
-
-pam (0.79-3ubuntu4) dapper; urgency=low
-
-  * Add PATH on initial install, too.
-
- -- Tollef Fog Heen <tfheen@ubuntu.com>  Mon, 23 Jan 2006 15:55:40 +0100
-
-pam (0.79-3ubuntu3) dapper; urgency=low
-
-  * Add PATH to /etc/environment if it's not present there or in
-    /etc/security/pam_env.conf and we are upgrading from a version which
-    didn't add it.
-
- -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue, 17 Jan 2006 15:54:01 +0100
-
-pam (0.79-3ubuntu2) dapper; urgency=low
-
-  * Look at ~/.pam_environment too.  Same format as
-    /etc/security/pam_env.conf.  The patch is recorded as
-    patches-applied/060_pam_env_per_user
-
- -- Tollef Fog Heen <tfheen@ubuntu.com>  Tue, 17 Jan 2006 15:32:55 +0100
-
-pam (0.79-3ubuntu1) dapper; urgency=low
-
-  * Resynchronise with Debian.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 21 Nov 2005 12:15:44 +0000
 
 pam (0.79-3) unstable; urgency=low
 
@@ -2748,34 +1372,6 @@ pam (0.76-23) unstable; urgency=low
   * Fix typo in pam_env.conf, Closes: #277633
 
  -- Sam Hartman <hartmans@debian.org>  Sun, 10 Jul 2005 16:42:25 -0400
-
-pam (0.76-22ubuntu3) breezy; urgency=low
-
-  * Fix pam_getenv, which never worked:
-    - Parse /etc/security/pam_env.conf using its own syntax, and then
-      /etc/environment using its own syntax rather than the syntax of
-      /etc/security/pam_env.conf.
-    - 'my $val' was used in an incorrect scope; fixed.
-    - Exit non-zero if the requested environment variable is not found.
-
- -- Colin Watson <cjwatson@ubuntu.com>  Mon, 12 Sep 2005 18:32:54 +0100
-
-pam (0.76-22ubuntu2) breezy; urgency=low
-
-  * debian/rules: Install unix_chkpwd setgid shadow instead of setuid root.
-    This only breaks when using NIS lookups, therefore the new nis package
-    dpkg-statoverrides it back to setuid root while being installed.
-    (Debian #155583, http://udu.wiki.ubuntu.com/ProactiveSecurityRoadmap)
-  * debian/control: Added conflict to nis (<< 3.13-3ubuntu1): This is the
-    version that corrects the permissions for usage with NIS.
-
- -- Martin Pitt <martin.pitt@ubuntu.com>  Fri, 17 Jun 2005 12:34:23 +0200
-
-pam (0.76-22ubuntu1) breezy; urgency=low
-
-  * Fix FTBFS with gcc-3.4 (closes: #259634). Ubuntu 9037.
-
- -- Matthias Klose <doko@ubuntu.com>  Wed,  4 May 2005 18:14:51 +0200
 
 pam (0.76-22) unstable; urgency=medium
 
@@ -3195,6 +1791,8 @@ pam (0.72-20) unstable; urgency=low
     -19 and have pam-undocumented in the wrong place
 
  -- Sam Hartman <hartmans@debian.org>  Fri,  6 Apr 2001 06:38:15 -0400
+
+
 
 pam (0.72-19) unstable; urgency=low
 
@@ -4001,4 +2599,3 @@ pam (0.56-1) unstable; urgency=low
   * Reorganization of package structure (-dev, -dbg, etc).
 
  -- Klee Dienes <klee@debian.org>  Sat, 8 Mar 1997 01:21:17 -0500
-

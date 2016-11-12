@@ -2,14 +2,13 @@ Source: pam
 Section: libs
 Priority: optional
 Uploaders: Sam Hartman <hartmans@debian.org>, Roger Leigh <rleigh@debian.org>
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
-XSBC-Original-Maintainer: Steve Langasek <vorlon@debian.org>
+Maintainer: Steve Langasek <vorlon@debian.org>
 Standards-Version: 3.9.1
-Build-Depends: libcrack2-dev (>= 2.8), bzip2, debhelper (>= 8.9.4), quilt (>= 0.48-1), flex, libfl-dev, libdb-dev, libselinux1-dev [!hurd-i386 !kfreebsd-i386 !kfreebsd-amd64 !netbsd-i386], po-debconf
+Build-Depends: libcrack2-dev (>= 2.8), bzip2, debhelper (>= 8.9.4), quilt (>= 0.48-1), flex, libdb-dev, libselinux1-dev [linux-any], po-debconf, dh-autoreconf, autopoint, libaudit-dev [linux-any], pkg-config
 Build-Depends-Indep: xsltproc, libxml2-utils, docbook-xml, docbook-xsl, w3m
 Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
-Vcs-Bzr: https://code.launchpad.net/~ubuntu-core-dev/pam/ubuntu
+Vcs-Bzr: http://bzr.debian.org/bzr/pkg-pam/debian/sid/
 Homepage: http://pam.sourceforge.net/
 
 Package: libpam0g
@@ -48,7 +47,7 @@ Priority: required
 Architecture: any
 Multi-Arch: foreign
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Replaces: libpam-modules (<< 1.1.3-2)
+Replaces: libpam-modules (<< 1.1.3-8)
 Description: Pluggable Authentication Modules for PAM - helper binaries
  This package contains helper binaries used by the standard set of PAM
  modules in the libpam-modules package.
@@ -58,7 +57,7 @@ Section: admin
 Priority: required
 Architecture: all
 Multi-Arch: foreign
-Depends: ${misc:Depends}, debconf (>= 1.5.19), libpam-modules (>= 1.0.1-6)
+Depends: ${misc:Depends}, debconf (>= 1.5.19) | cdebconf, libpam-modules (>= 1.0.1-6)
 Replaces: libpam0g-util, libpam0g-dev
 Conflicts: libpam0g-util
 Description: Runtime support for the PAM library

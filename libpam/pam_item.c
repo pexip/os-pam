@@ -1,7 +1,7 @@
 /* pam_item.c */
 
 /*
- * $Id: pam_item.c,v 1.18 2008/12/11 19:41:49 kukuk Exp $
+ * $Id$
  */
 
 #include "pam_private.h"
@@ -274,7 +274,8 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 {
     const char *use_prompt;
     int retval;
-    struct pam_message msg,*pmsg;
+    struct pam_message msg;
+    const struct pam_message *pmsg;
     struct pam_response *resp;
 
     D(("called."));
@@ -314,8 +315,8 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
     if (pamh->former.want_user) {
 	/* must have a prompt to resume with */
 	if (! pamh->former.prompt) {
-	    	    pam_syslog(pamh, LOG_ERR,
-				   "pam_get_user: failed to resume with prompt"
+	    pam_syslog(pamh, LOG_ERR,
+		       "pam_get_user: failed to resume with prompt"
 			);
 	    return PAM_ABORT;
 	}
@@ -323,7 +324,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 	/* must be the same prompt as last time */
 	if (strcmp(pamh->former.prompt, use_prompt)) {
 	    pam_syslog(pamh, LOG_ERR,
-			    "pam_get_user: resumed with different prompt");
+		       "pam_get_user: resumed with different prompt");
 	    return PAM_ABORT;
 	}
 
@@ -340,8 +341,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
     resp = NULL;
 
     retval = pamh->pam_conversation->
-	conv(1, (const struct pam_message **) &pmsg, &resp,
-	     pamh->pam_conversation->appdata_ptr);
+	conv(1, &pmsg, &resp, pamh->pam_conversation->appdata_ptr);
 
     if (retval == PAM_CONV_AGAIN) {
 	/* conversation function is waiting for an event - save state */

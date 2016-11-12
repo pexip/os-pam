@@ -68,12 +68,14 @@ ignore_instance_parent_mode
     will reduce security and isolation goals of the polyinstantiation
     mechanism.
 
-no_unmount_on_close
+unmount_on_close
 
-    For certain trusted programs such as newrole, open session is called from a
-    child process while the parent performs close session and pam end
-    functions. For these commands use this option to instruct pam_close_session
-    to not unmount the bind mounted polyinstantiated directory in the parent.
+    Explicitly unmount the polyinstantiated directories instead of relying on
+    automatic namespace destruction after the last process in a namespace
+    exits. This option should be used only in case it is ensured by other means
+    that there cannot be any processes running in the private namespace left
+    after the session close. It is also useful only in case there are multiple
+    pam session calls in sequence from the same process.
 
 use_current_context
 
@@ -86,6 +88,20 @@ use_default_context
     Useful for services which do not use pam_selinux for changing the SELinux
     context with setexeccon call. The module will use the default SELinux
     context of the user for the level and context polyinstantiation.
+
+mount_private
+
+    This option can be used on systems where the / mount point or its submounts
+    are made shared (for example with a mount --make-rshared / command). The
+    module will mark the whole directory tree so any mount and unmount
+    operations in the polyinstantiation namespace are private. Normally the
+    pam_namespace will try to detect the shared / mount point and make the
+    polyinstantiated directories private automatically. This option has to be
+    used just when only a subtree is shared and / is not.
+
+    Note that mounts and unmounts done in the private namespace will not affect
+    the parent namespace if this option is used or when the shared / mount
+    point is autodetected.
 
 DESCRIPTION
 
@@ -150,6 +166,10 @@ noinit - instance directory init script will not be executed.
 
 shared - the instance directories for "context" and "level" methods will not
 contain the user name and will be shared among all users.
+
+mntopts=value - value of this flag is passed to the mount call when the tmpfs
+mount is done. It allows for example the specification of the maximum size of
+the tmpfs instance that is created by the mount call. See mount(8) for details.
 
 The directory where polyinstantiated instances are to be created, must exist
 and must have, by default, the mode of 0000. The requirement that the instance

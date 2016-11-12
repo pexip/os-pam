@@ -1,5 +1,5 @@
 /*
- * $Id: pam_secret.c,v 1.4 2009/12/08 14:41:41 kukuk Exp $
+ * $Id$
  *
  * Copyright (c) 1999 Andrew G. Morgan <morgan@linux.kernel.org>
  */
@@ -664,6 +664,6 @@ int pam_sm_setcred(pam_handle_t *pamh, int flags,
 
     old_data = NULL;
     D(("done (%d)", retval));
-    
+
     return retval;
 }

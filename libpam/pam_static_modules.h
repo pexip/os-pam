@@ -63,7 +63,6 @@ extern struct pam_module _pam_nologin_modstruct;
 extern struct pam_module _pam_permit_modstruct;
 extern struct pam_module _pam_pwhistory_modstruct;
 extern struct pam_module _pam_rhosts_modstruct;
-extern struct pam_module _pam_rhosts_auth_modstruct;
 extern struct pam_module _pam_rootok_modstruct;
 extern struct pam_module _pam_securetty_modstruct;
 #ifdef WITH_SELINUX
@@ -81,10 +80,7 @@ extern struct pam_module _pam_timestamp_modstruct;
 extern struct pam_module _pam_tty_audit_modstruct;
 #endif
 extern struct pam_module _pam_umask_modstruct;
-extern struct pam_module _pam_unix_acct_modstruct;
-extern struct pam_module _pam_unix_auth_modstruct;
-extern struct pam_module _pam_unix_passwd_modstruct;
-extern struct pam_module _pam_unix_session_modstruct;
+extern struct pam_module _pam_unix_modstruct;
 extern struct pam_module _pam_userdb_modstruct;
 extern struct pam_module _pam_warn_modstruct;
 extern struct pam_module _pam_wheel_modstruct;
@@ -95,7 +91,9 @@ extern struct pam_module _pam_xauth_modstruct;
 
 static struct pam_module *static_modules[] = {
   &_pam_access_modstruct,
+#ifdef HAVE_LIBCRACK
   &_pam_cracklib_modstruct,
+#endif
   &_pam_debug_modstruct,
   &_pam_deny_modstruct,
   &_pam_echo_modstruct,
@@ -124,7 +122,6 @@ static struct pam_module *static_modules[] = {
   &_pam_permit_modstruct,
   &_pam_pwhistory_modstruct,
   &_pam_rhosts_modstruct,
-  &_pam_rhosts_auth_modstruct,
   &_pam_rootok_modstruct,
   &_pam_securetty_modstruct,
 #ifdef WITH_SELINUX
@@ -142,10 +139,7 @@ static struct pam_module *static_modules[] = {
   &_pam_tty_audit_modstruct,
 #endif
   &_pam_umask_modstruct,
-  &_pam_unix_acct_modstruct,
-  &_pam_unix_auth_modstruct,
-  &_pam_unix_passwd_modstruct,
-  &_pam_unix_session_modstruct,
+  &_pam_unix_modstruct,
   &_pam_userdb_modstruct,
   &_pam_warn_modstruct,
   &_pam_wheel_modstruct,

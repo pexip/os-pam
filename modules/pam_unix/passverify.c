@@ -89,17 +89,17 @@ verify_pwd_hash(const char *p, char *hash, unsigned int nullok)
 	} else {
 		if (!strncmp(hash, "$1$", 3)) {
 			pp = Goodcrypt_md5(p, hash);
-		    	if (pp && strcmp(pp, hash) != 0) {
+			if (pp && strcmp(pp, hash) != 0) {
 				_pam_delete(pp);
 				pp = Brokencrypt_md5(p, hash);
-		    	}
+			}
 		} else if (*hash != '$' && hash_len >= 13) {
-		    	pp = bigcrypt(p, hash);
-		    	if (pp && hash_len == 13 && strlen(pp) > hash_len) {
+			pp = bigcrypt(p, hash);
+			if (pp && hash_len == 13 && strlen(pp) > hash_len) {
 				_pam_overwrite(pp + hash_len);
-		    	}
+			}
 		} else {
-                	/*
+			/*
 			 * Ok, we don't know the crypt algorithm, but maybe
 			 * libcrypt knows about it? We should try it.
 			 */
@@ -424,7 +424,7 @@ PAMH_ARG_DECL(char * create_password_hash,
 	}
 #endif
 	sp = crypt(password, salt);
-	if (strncmp(algoid, sp, strlen(algoid)) != 0) {
+	if (!sp || strncmp(algoid, sp, strlen(algoid)) != 0) {
 		/* libxcrypt/libc doesn't know the algorithm, use MD5 */
 		pam_syslog(pamh, LOG_ERR,
 			   "Algo %s not supported by the crypto backend, "
@@ -432,7 +432,9 @@ PAMH_ARG_DECL(char * create_password_hash,
 			   on(UNIX_BLOWFISH_PASS, ctrl) ? "blowfish" :
 			   on(UNIX_SHA256_PASS, ctrl) ? "sha256" :
 			   on(UNIX_SHA512_PASS, ctrl) ? "sha512" : algoid);
-		memset(sp, '\0', strlen(sp));
+		if(sp) {
+		   memset(sp, '\0', strlen(sp));
+		}
 		return crypt_md5_wrapper(password);
 	}
 
@@ -448,12 +450,12 @@ unix_selinux_confined(void)
     char tempfile[]="/etc/.pwdXXXXXX";
 
     if (confined != -1)
-    	return confined;
+	return confined;
 
     /* cannot be confined without SELinux enabled */
     if (!SELINUX_ENABLED){
-       	confined = 0;
-       	return confined;
+	confined = 0;
+	return confined;
     }
 
     /* let's try opening shadow read only */
@@ -562,6 +564,7 @@ save_old_password(pam_handle_t *pamh, const char *forwho, const char *oldpass,
     int found = 0;
     struct passwd *pwd = NULL;
     struct stat st;
+    size_t len = strlen(forwho);
 #ifdef WITH_SELINUX
     security_context_t prev_context=NULL;
 #endif
@@ -629,11 +632,11 @@ save_old_password(pam_handle_t *pamh, const char *forwho, const char *oldpass,
     }
 
     while (fgets(buf, 16380, opwfile)) {
-	if (!strncmp(buf, forwho, strlen(forwho))) {
+	if (!strncmp(buf, forwho, len) && strchr(":,\n", buf[len]) != NULL) {
 	    char *sptr = NULL;
 	    found = 1;
 	    if (howmany == 0)
-	    	continue;
+		continue;
 	    buf[strlen(buf) - 1] = '\0';
 	    s_luser = strtok_r(buf, ":", &sptr);
 	    s_uid = strtok_r(NULL, ":", &sptr);

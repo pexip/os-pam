@@ -69,7 +69,6 @@ installed_services() {
 	    -e's/\bhylafax-server\b/hylafax/g' \
 	    -e's/\bpartimage-server\b/partimaged/g' \
 	    -e's/\bpostgresql-common\b/postgresql/g' \
-	    -e's/\bsamba\b/smbd/g' \
 	    -e's/\bsasl2-bin\b/saslauthd/g' \
     )
 
@@ -113,28 +112,13 @@ then
 	    echo "Checking init scripts..."
 	    services=$(installed_services "$check")
 	    if [ -n "$services" ]; then
-		db_reset libpam0g/restart-services
-		db_set libpam0g/restart-services "$services"
-		question_priority="critical"
-		# Do not prompt when we're running in the upgrade-manager
-		# and only default services need restarting.
-		nondefault_services=$(echo "$services" | sed \
-			-e's/\batd\b//g' \
-			-e's/\bcron\b//g' \
-			-e's/\bcups\b//g' \
-			-e's/\bgdm\b//g' \
-			-e's/\bsmbd\b//g' \
-			-e's/^ *//g')
-		if [ -n "$RELEASE_UPGRADE_IN_PROGRESS" ] && [ -z "$nondefault_services" ]; then
-			question_priority="medium"
-		fi
-		db_input "$question_priority" libraries/restart-without-asking || true
+		db_input critical libraries/restart-without-asking || true
 		db_go || true
 		db_get libraries/restart-without-asking
 		if [ "$RET" != true ]; then
 		    db_reset libpam0g/restart-services
 		    db_set libpam0g/restart-services "$services"
-		    db_input "$question_priority" libpam0g/restart-services || true
+		    db_input critical libpam0g/restart-services || true
 		    db_go || true
 		    db_get libpam0g/restart-services
 
@@ -155,12 +139,6 @@ then
 
 			case "$service" in
 			    gdm)
-				# If gdm isn't running, there's no need to reload it (LP: #745532)
-				if $idl status | grep -q stop/waiting; then
-					echo "  $service: not running, no reload needed."
-					continue
-				fi
-
 				echo -n "  $service: reloading..."
 				if $idl reload > /dev/null 2>&1; then
 				    echo "done."
@@ -206,14 +184,8 @@ then
 		done
 		services=$(installed_services "$dms")
 		if [ -n "$services" ]; then
-		    if [ -n "$RELEASE_UPGRADE_IN_PROGRESS" ] \
-		       && [ -x /usr/share/update-notifier/notify-reboot-required ]
-		    then
-			/usr/share/update-notifier/notify-reboot-required
-		    else
-			db_input critical libpam0g/xdm-needs-restart || true
-			db_go || true
-		    fi
+		    db_input critical libpam0g/xdm-needs-restart || true
+		    db_go || true
 		fi
 	    fi
 

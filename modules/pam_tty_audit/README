@@ -27,6 +27,13 @@ open_only
     closing the session. Using this option is necessary for some services that
     don't fork() to run the authenticated session, such as sudo.
 
+log_passwd
+
+    Log keystrokes when ECHO mode is off but ICANON mode is active. This is the
+    mode in which the tty is placed during password entry. By default,
+    passwords are not logged. This option may not be available on older kernels
+    (3.9?).
+
 NOTES
 
 When TTY auditing is enabled, it is inherited by all processes started by that
@@ -47,5 +54,6 @@ session required pam_tty_audit.so disable=* enable=root
 
 AUTHOR
 
-pam_tty_audit was written by Miloslav Trmač <mitr@redhat.com>.
+pam_tty_audit was written by Miloslav Trmač <mitr@redhat.com>. The log_passwd
+option was added by Richard Guy Briggs <rgb@redhat.com>.
 

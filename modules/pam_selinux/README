@@ -4,58 +4,66 @@ pam_selinux — PAM module to set the default security context
 
 DESCRIPTION
 
-In a nutshell, pam_selinux sets up the default security context for the next
-execed shell.
+pam_selinux is a PAM module that sets up the default SELinux security context
+for the next executed process.
 
-When an application opens a session using pam_selinux, the shell that gets
-executed will be run in the default security context, or if the user chooses
-and the pam file allows the selected security context. Also the controlling tty
-will have it's security context modified to match the users.
+When a new session is started, the open_session part of the module computes and
+sets up the execution security context used for the next execve(2) call, the
+file security context for the controlling terminal, and the security context
+used for creating a new kernel keyring.
 
-Adding pam_selinux into a pam file could cause other pam modules to change
-their behavior if the exec another application. The close and open option help
-mitigate this problem. close option will only cause the close portion of the
-pam_selinux to execute, and open will only cause the open portion to run. You
-can add pam_selinux to the config file twice. Add the pam_selinux close as the
-executes the open pass through the modules, pam_selinux open_session will
-happen last. When PAM executes the close pass through the modules pam_selinux
-close_session will happen first.
+When the session is ended, the close_session part of the module restores old
+security contexts that were in effect before the change made by the
+open_session part of the module.
+
+Adding pam_selinux into the PAM stack might disrupt behavior of other PAM
+modules which execute applications. To avoid that, pam_selinux.so open should
+be placed after such modules in the PAM stack, and pam_selinux.so close should
+be placed before them. When such a placement is not feasible, pam_selinux.so
+restore could be used to temporary restore original security contexts.
 
 OPTIONS
 
-close
-
-    Only execute the close_session portion of the module.
-
-debug
-
-    Turns on debugging via syslog(3).
-
 open
 
-    Only execute the open_session portion of the module.
+    Only execute the open_session part of the module.
+
+close
+
+    Only execute the close_session part of the module.
+
+restore
+
+    In open_session part of the module, temporarily restore the security
+    contexts as they were before the previous call of the module. Another call
+    of this module without the restore option will set up the new security
+    contexts again.
 
 nottys
 
-    Do not try to setup the ttys security context.
+    Do not setup security context of the controlling terminal.
+
+debug
+
+    Turn on debug messages via syslog(3).
 
 verbose
 
-    attempt to inform the user when security context is set.
+    Attempt to inform the user when security context is set.
 
 select_context
 
-    Attempt to ask the user for a custom security context role. If MLS is on
+    Attempt to ask the user for a custom security context role. If MLS is on,
     ask also for sensitivity level.
 
 env_params
 
     Attempt to obtain a custom security context role from PAM environment. If
-    MLS is on obtain also sensitivity level. This option and the select_context
-    option are mutually exclusive. The respective PAM environment variables are
-    SELINUX_ROLE_REQUESTED, SELINUX_LEVEL_REQUESTED, and
-    SELINUX_USE_CURRENT_RANGE. The first two variables are self describing and
-    the last one if set to 1 makes the PAM module behave as if the
+    MLS is on, obtain also sensitivity level. This option and the
+    select_context option are mutually exclusive. The respective PAM
+    environment variables are SELINUX_ROLE_REQUESTED, SELINUX_LEVEL_REQUESTED,
+    and SELINUX_USE_CURRENT_RANGE. The first two variables are self describing
+    and the last one if set to 1 makes the PAM module behave as if the
     use_current_range was specified on the command line of the module.
 
 use_current_range

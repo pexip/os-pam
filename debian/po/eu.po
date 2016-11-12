@@ -51,6 +51,11 @@ msgstr "Pantaila kudeatzailea eskuz berrabiarazi behar da"
 #. Description
 #: ../libpam0g.templates:2001
 #, fuzzy
+#| msgid ""
+#| "The kdm, wdm, and xdm display managers require a restart for the new "
+#| "version of libpam, but there are X login sessions active on your system "
+#| "that would be terminated by this restart.  You will therefore need to "
+#| "restart these services by hand before further X logins will be possible."
 msgid ""
 "The wdm and xdm display managers require a restart for the new version of "
 "libpam, but there are X login sessions active on your system that would be "
@@ -190,6 +195,7 @@ msgstr ""
 #. Description
 #: ../libpam-runtime.templates:5001
 #, fuzzy
+#| msgid "Incompatible PAM profiles selected."
 msgid "No PAM profiles have been selected."
 msgstr "PAM profil bateraezinak hautatuak."
 
