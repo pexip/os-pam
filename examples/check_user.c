@@ -1,6 +1,6 @@
 /*
-  $Id: check_user.c,v 1.2 2000/12/04 19:02:33 baggins Exp $
-  
+  $Id$
+
   This program was contributed by Shane Watts <shane@icarus.bofh.asn.au>
   slight modifications by AGM.
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     }
 
     retval = pam_start("check", user, &conv, &pamh);
-	
+
     if (retval == PAM_SUCCESS)
         retval = pam_authenticate(pamh, 0);    /* is user really user? */
 

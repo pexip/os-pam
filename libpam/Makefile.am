@@ -20,12 +20,13 @@ include_HEADERS = include/security/_pam_compat.h \
 noinst_HEADERS = pam_prelude.h pam_private.h pam_tokens.h \
 		pam_modutil_private.h pam_static_modules.h
 
-libpam_la_LDFLAGS = -no-undefined -version-info 83:0:83
+libpam_la_LDFLAGS = -no-undefined -version-info 83:1:83
 libpam_la_LIBADD = @LIBAUDIT@ $(LIBPRELUDE_LIBS) @LIBDL@
 
 if STATIC_MODULES
   libpam_la_LIBADD += $(shell ls ../modules/pam_*/*.lo) \
-	@LIBDB@ @LIBCRYPT@ @LIBNSL@ @LIBCRACK@ -lutil
+	@LIBDB@ @LIBCRYPT@ $(NIS_LIBS) @LIBCRACK@ -lutil
+  AM_CFLAGS += $(NIS_CFLAGS)
 endif
 if HAVE_VERSIONING
   libpam_la_LDFLAGS += -Wl,--version-script=$(srcdir)/libpam.map

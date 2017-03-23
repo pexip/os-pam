@@ -54,38 +54,53 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <rpc/rpc.h>
-#ifdef HAVE_RPCSVC_YP_PROT_H
-#include <rpcsvc/yp_prot.h>
-#endif
-#ifdef HAVE_RPCSVC_YPCLNT_H
-#include <rpcsvc/ypclnt.h>
-#endif
 
 #include <signal.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <sys/resource.h>
 
 #include <security/_pam_macros.h>
 
 /* indicate the following groups are defined */
 
-#define PAM_SM_PASSWORD
+#ifdef PAM_STATIC
+# include "pam_unix_static.h"
+#else
+# define PAM_SM_PASSWORD
+#endif
 
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
-#include "yppasswd.h"
 #include "md5.h"
 #include "support.h"
 #include "passverify.h"
 #include "bigcrypt.h"
 
-#if !((__GLIBC__ == 2) && (__GLIBC_MINOR__ >= 1))
+#if (HAVE_YP_GET_DEFAULT_DOMAIN || HAVE_GETDOMAINNAME) && HAVE_YP_MASTER
+# define HAVE_NIS
+#endif
+
+#ifdef HAVE_NIS
+# include <rpc/rpc.h>
+
+# if HAVE_RPCSVC_YP_PROT_H
+#  include <rpcsvc/yp_prot.h>
+# endif
+
+# if HAVE_RPCSVC_YPCLNT_H
+#  include <rpcsvc/ypclnt.h>
+# endif
+
+# include "yppasswd.h"
+
+# if !HAVE_DECL_GETRPCPORT
 extern int getrpcport(const char *host, unsigned long prognum,
 		      unsigned long versnum, unsigned int proto);
-#endif				/* GNU libc 2.1 */
+# endif				/* GNU libc 2.1 */
+#endif
 
 /*
    How it works:
@@ -102,9 +117,9 @@ extern int getrpcport(const char *host, unsigned long prognum,
 
 #define MAX_PASSWD_TRIES	3
 
+#ifdef HAVE_NIS
 static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
 {
-#if (defined(HAVE_YP_GET_DEFAULT_DOMAIN) || defined(HAVE_GETDOMAINNAME)) && defined(HAVE_YP_MASTER)
 	char *master;
 	char *domainname;
 	int port, err;
@@ -151,14 +166,8 @@ static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
 		     master, port);
 	}
 	return master;
-#else
-	if (on(UNIX_DEBUG, ctrl)) {
-	  pam_syslog(pamh, LOG_DEBUG, "getNISserver: No NIS support available");
-	}
-
-	return NULL;
-#endif
 }
+#endif
 
 #ifdef WITH_SELINUX
 
@@ -208,7 +217,7 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
 	    rlim.rlim_max = MAX_FD_NO;
 	  for (i=0; i < (int)rlim.rlim_max; i++) {
 	    if (i != STDIN_FILENO)
-	  	   close(i);
+		close(i);
 	  }
 	}
 
@@ -245,7 +254,8 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
 
 	close(fds[0]);       /* close here to avoid possible SIGPIPE above */
 	close(fds[1]);
-	rc=waitpid(child, &retval, 0);  /* wait for helper to complete */
+	/* wait for helper to complete: */
+	while ((rc=waitpid(child, &retval, 0)) < 0 && errno == EINTR);
 	if (rc<0) {
 	  pam_syslog(pamh, LOG_ERR, "unix_update waitpid failed: %m");
 	  retval = PAM_AUTHTOK_ERR;
@@ -258,7 +268,7 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
     } else {
 	D(("fork failed"));
 	close(fds[0]);
- 	close(fds[1]);
+	close(fds[1]);
 	retval = PAM_AUTH_ERR;
     }
 
@@ -276,13 +286,15 @@ static int check_old_password(const char *forwho, const char *newpass)
 	char *s_luser, *s_uid, *s_npas, *s_pas;
 	int retval = PAM_SUCCESS;
 	FILE *opwfile;
+	size_t len = strlen(forwho);
 
 	opwfile = fopen(OLD_PASSWORDS_FILE, "r");
 	if (opwfile == NULL)
 		return PAM_ABORT;
 
 	while (fgets(buf, 16380, opwfile)) {
-		if (!strncmp(buf, forwho, strlen(forwho))) {
+		if (!strncmp(buf, forwho, len) && (buf[len] == ':' ||
+			buf[len] == ',')) {
 			char *sptr;
 			buf[strlen(buf) - 1] = '\0';
 			s_luser = strtok_r(buf, ":,", &sptr);
@@ -326,6 +338,7 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
 	}
 
 	if (on(UNIX_NIS, ctrl) && _unix_comesfromsource(pamh, forwho, 0, 1)) {
+#ifdef HAVE_NIS
 	  if ((master=getNISserver(pamh, ctrl)) != NULL) {
 		struct timeval timeout;
 		struct yppasswd yppwd;
@@ -391,6 +404,13 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
 	    } else {
 		    retval = PAM_TRY_AGAIN;
 	    }
+#else
+          if (on(UNIX_DEBUG, ctrl)) {
+            pam_syslog(pamh, LOG_DEBUG, "No NIS support available");
+          }
+
+          retval = PAM_TRY_AGAIN;
+#endif
 	}
 
 	if (_unix_comesfromsource(pamh, forwho, 1, 0)) {
@@ -509,9 +529,8 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
 	return retval;
 }
 
-
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t * pamh, int flags,
-				int argc, const char **argv)
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	unsigned int ctrl, lctrl;
 	int retval;
@@ -783,7 +802,7 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t * pamh, int flags,
 		tpass = create_password_hash(pamh, pass_new, ctrl, rounds);
 		if (tpass == NULL) {
 			pam_syslog(pamh, LOG_CRIT,
-				"out of memory for password");
+				"crypt() failure or out of memory for password");
 			pass_new = pass_old = NULL;	/* tidy up */
 			unlock_pwdf();
 			return PAM_BUF_ERR;
@@ -809,17 +828,3 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t * pamh, int flags,
 
 	return retval;
 }
-
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_unix_passwd_modstruct = {
-    "pam_unix_passwd",
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    pam_sm_chauthtok,
-};
-#endif

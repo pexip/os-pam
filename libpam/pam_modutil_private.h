@@ -2,7 +2,7 @@
 #define PAMMODUTIL_PRIVATE_H
 
 /*
- * $Id: pam_modutil_private.h,v 1.2 2008/05/14 12:55:02 t8m Exp $
+ * $Id$
  *
  * Copyright (c) 2001 Andrew Morgan <morgan@kernel.org>
  */

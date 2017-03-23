@@ -32,20 +32,15 @@ Case Change Only
 Similar
 
     Is the new password too much like the old one? This is primarily controlled
-    by one argument, difok which is a number of characters that if different
-    between the old and new are enough to accept the new password, this
-    defaults to 10 or 1/2 the size of the new password whichever is smaller.
-
-    To avoid the lockup associated with trying to change a long and complicated
-    password, difignore is available. This argument can be used to specify the
-    minimum length a new password needs to be before the difok value is
-    ignored. The default value for difignore is 23.
+    by one argument, difok which is a number of character changes (inserts,
+    removals, or replacements) between the old and new password that are enough
+    to accept the new password. This defaults to 5 changes.
 
 Simple
 
-    Is the new password too small? This is controlled by 5 arguments minlen,
-    dcredit, ucredit, lcredit, and ocredit. See the section on the arguments
-    for the details of how these work and there defaults.
+    Is the new password too small? This is controlled by 6 arguments minlen,
+    maxclassrepeat, dcredit, ucredit, lcredit, and ocredit. See the section on
+    the arguments for the details of how these work and there defaults.
 
 Rotated
 
@@ -54,6 +49,10 @@ Rotated
 Same consecutive characters
 
     Optional check for same consecutive characters.
+
+Too long monotonic character sequence
+
+    Optional check for too long monotonic character sequence.
 
 Contains user name
 
@@ -93,15 +92,8 @@ retry=N
 
 difok=N
 
-    This argument will change the default of 5 for the number of characters in
-    the new password that must not be present in the old password. In addition,
-    if 1/2 of the characters in the new password are different then the new
-    password will be accepted anyway.
-
-difignore=N
-
-    How many characters should the password have before difok will be ignored.
-    The default is 23.
+    This argument will change the default of 5 for the number of character
+    changes in the new password that differentiate it from the old password.
 
 minlen=N
 
@@ -169,10 +161,37 @@ maxrepeat=N
     Reject passwords which contain more than N same consecutive characters. The
     default is 0 which means that this check is disabled.
 
+maxsequence=N
+
+    Reject passwords which contain monotonic character sequences longer than N.
+    The default is 0 which means that this check is disabled. Examples of such
+    sequence are '12345' or 'fedcb'. Note that most such passwords will not
+    pass the simplicity check unless the sequence is only a minor part of the
+    password.
+
+maxclassrepeat=N
+
+    Reject passwords which contain more than N consecutive characters of the
+    same class. The default is 0 which means that this check is disabled.
+
 reject_username
 
     Check whether the name of the user in straight or reversed form is
     contained in the new password. If it is found the new password is rejected.
+
+gecoscheck
+
+    Check whether the words from the GECOS field (usualy full name of the user)
+    longer than 3 characters in straight or reversed form are contained in the
+    new password. If any such word is found the new password is rejected.
+
+enforce_for_root
+
+    The module will return error on failed check also if the user changing the
+    password is root. This option is off by default which means that just the
+    message about the failed check is printed but root can change the password
+    anyway. Note that root is not asked for an old password so the checks that
+    compare the old and new password are not performed.
 
 use_authtok
 

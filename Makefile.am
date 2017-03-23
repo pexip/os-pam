@@ -4,23 +4,11 @@
 
 AUTOMAKE_OPTIONS = 1.9 gnu dist-bzip2 check-news
 
-if STATIC_MODULES
-SUBDIRS = modules libpam libpamc libpam_misc tests po conf doc examples xtests
-else
 SUBDIRS = libpam tests libpamc libpam_misc modules po conf doc examples xtests
-endif
 
 CLEANFILES = *~
 
-M4_FILES = m4/gettext.m4 m4/iconv.m4 m4/intlmacosx.m4 \
-	m4/japhar_grep_cflags.m4 m4/jh_path_xml_catalog.m4 \
-	m4/ld-as-needed.m4 m4/ld-no-undefined.m4 m4/ld-O1.m4 \
-	m4/lib-ld.m4 m4/lib-link.m4 m4/lib-prefix.m4 \
-	m4/libprelude.m4 m4/libtool.m4 m4/nls.m4 \
-	m4/po.m4 m4/progtest.m4
-
-EXTRA_DIST = config.rpath mkinstalldirs pgp.keys.asc CHANGELOG \
-		Copyright $(M4_FILES) Make.xml.rules
+EXTRA_DIST = pgp.keys.asc CHANGELOG ChangeLog-CVS Copyright Make.xml.rules
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -42,3 +30,20 @@ xtests:
 	make -C xtests xtests
 
 .PHONY: xtests
+
+gen_changelog_start_date = 2011-10-26
+gen-ChangeLog:
+	if test -d .git; then						\
+		( $(top_srcdir)/gitlog-to-changelog --append-dot	\
+		  --since=$(gen_changelog_start_date) &&		\
+		  echo && echo &&					\
+		  echo 'See ChangeLog-CVS for earlier changes.'		\
+		) > $(distdir)/ChangeLog.new &&				\
+		rm -f $(distdir)/ChangeLog &&				\
+		mv $(distdir)/ChangeLog.new $(distdir)/ChangeLog;	\
+	fi
+
+dist-hook: gen-ChangeLog
+.PHONY: gen-ChangeLog
+
+export TAR_OPTIONS = --owner=0 --group=0 --numeric-owner --mode=go-w,go+rX

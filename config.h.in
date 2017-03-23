@@ -47,6 +47,10 @@
    */
 #undef HAVE_DCGETTEXT
 
+/* Define to 1 if you have the declaration of `getrpcport', and to 0 if you
+   don't. */
+#undef HAVE_DECL_GETRPCPORT
+
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
 #undef HAVE_DIRENT_H
@@ -108,7 +112,7 @@
 /* Define to 1 if you have the `getutent_r' function. */
 #undef HAVE_GETUTENT_R
 
-/* Define if you have the iconv() function and it works. */
+/* Define if you have the iconv() function. */
 #undef HAVE_ICONV
 
 /* Define to 1 if you have the `inet_ntop' function. */
@@ -137,6 +141,9 @@
 
 /* Define to 1 if audit support should be compiled in. */
 #undef HAVE_LIBAUDIT
+
+/* Define to 1 if you have cracklib. */
+#undef HAVE_LIBCRACK
 
 /* Define to 1 if xcrypt support should be compiled in. */
 #undef HAVE_LIBXCRYPT
@@ -170,6 +177,9 @@
 
 /* Define to 1 if you have the <rpcsvc/yp_prot.h> header file. */
 #undef HAVE_RPCSVC_YP_PROT_H
+
+/* Define to 1 if you have the <rpc/rpc.h> header file. */
+#undef HAVE_RPC_RPC_H
 
 /* Define to 1 if you have the `ruserok_af' function. */
 #undef HAVE_RUSEROK_AF
@@ -206,6 +216,9 @@
 
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
+
+/* Define to 1 if `log_passwd' is a member of `struct audit_tty_status'. */
+#undef HAVE_STRUCT_AUDIT_TTY_STATUS_LOG_PASSWD
 
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
@@ -302,6 +315,9 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION

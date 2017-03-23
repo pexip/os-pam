@@ -30,7 +30,6 @@ login ; tty* & !ttyp* ; !root ; !Al0000-2400
 Games (configured to use PAM) are only to be accessed out of working hours.
 This rule does not apply to the user waster:
 
-
 games ; * ; !waster ; Wd0000-2400 | Wk1800-0800
 
 

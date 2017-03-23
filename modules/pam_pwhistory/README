@@ -32,7 +32,8 @@ enforce_for_root
 remember=N
 
     The last N passwords for each user are saved in /etc/security/opasswd. The
-    default is 10.
+    default is 10. Value of 0 makes the module to keep the existing contents of
+    the opasswd file unchanged.
 
 retry=N
 

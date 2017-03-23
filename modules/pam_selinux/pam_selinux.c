@@ -87,6 +87,7 @@ int send_audit_message(pam_handle_t *pamh, int success, security_context_t defau
 	int audit_fd = audit_open();
 	security_context_t default_raw=NULL;
 	security_context_t selected_raw=NULL;
+	const void *tty = NULL, *rhost = NULL;
 	rc = -1;
 	if (audit_fd < 0) {
 		if (errno == EINVAL || errno == EPROTONOSUPPORT ||
@@ -95,6 +96,8 @@ int send_audit_message(pam_handle_t *pamh, int success, security_context_t defau
 		pam_syslog(pamh, LOG_ERR, "Error connecting to audit system.");
 		return rc;
 	}
+	(void)pam_get_item(pamh, PAM_TTY, &tty);
+	(void)pam_get_item(pamh, PAM_RHOST, &rhost);
 	if (selinux_trans_to_raw_context(default_context, &default_raw) < 0) {
 		pam_syslog(pamh, LOG_ERR, "Error translating default context.");
 		default_raw = NULL;
@@ -110,7 +113,7 @@ int send_audit_message(pam_handle_t *pamh, int success, security_context_t defau
 		goto out;
 	}
 	if (audit_log_user_message(audit_fd, AUDIT_USER_ROLE_CHANGE,
-				   msg, NULL, NULL, NULL, success) <= 0) {
+				   msg, rhost, NULL, tty, success) <= 0) {
 		pam_syslog(pamh, LOG_ERR, "Error sending audit message.");
 		goto out;
 	}
@@ -142,7 +145,7 @@ query_response (pam_handle_t *pamh, const char *text, const char *def,
 		char **response, int debug)
 {
   int rc;
-  if (def) 
+  if (def)
     rc = pam_prompt (pamh, PAM_PROMPT_ECHO_ON, response, "%s [%s] ", text, def);
   else
     rc = pam_prompt (pamh, PAM_PROMPT_ECHO_ON, response, "%s ", text);
@@ -150,7 +153,7 @@ query_response (pam_handle_t *pamh, const char *text, const char *def,
   if (*response == NULL) {
     rc = PAM_CONV_ERR;
   }
-  
+
   if (rc != PAM_SUCCESS) {
     pam_syslog(pamh, LOG_WARNING, "No response to query: %s", text);
   } else  if (debug)
@@ -158,97 +161,39 @@ query_response (pam_handle_t *pamh, const char *text, const char *def,
   return rc;
 }
 
-static security_context_t
-manual_context (pam_handle_t *pamh, const char *user, int debug)
-{
-  security_context_t newcon=NULL;
-  context_t new_context;
-  int mls_enabled = is_selinux_mls_enabled();
-  char *type=NULL;
-  char *response=NULL;
-
-  while (1) {
-    if (query_response(pamh,
-		   _("Would you like to enter a security context? [N] "), NULL,
-		   &response, debug) != PAM_SUCCESS)
-	return NULL;
-
-    if ((response[0] == 'y') || (response[0] == 'Y'))
-      {
-	if (mls_enabled)
-	  new_context = context_new ("user:role:type:level");
-	else
-	  new_context = context_new ("user:role:type");
-
-	if (!new_context)
-              goto fail_set;
-
-	if (context_user_set (new_context, user))
-              goto fail_set;
-
-	_pam_drop(response);
-	/* Allow the user to enter each field of the context individually */
-	if (query_response(pamh, _("role:"), NULL, &response, debug) == PAM_SUCCESS &&
-	    response[0] != '\0') {
-	   if (context_role_set (new_context, response)) 
-              goto fail_set;
-	   if (get_default_type(response, &type)) 
-              goto fail_set;
-	   if (context_type_set (new_context, type)) 
-              goto fail_set;
-	}
-	_pam_drop(response);
-
-	if (mls_enabled)
-	  {
-	    if (query_response(pamh, _("level:"), NULL, &response, debug) == PAM_SUCCESS &&
-		response[0] != '\0') {
-	      if (context_range_set (new_context, response))
-		goto fail_set;
-	    }
-	    _pam_drop(response);
-	  }
-
-	/* Get the string value of the context and see if it is valid. */
-	if (!security_check_context(context_str(new_context))) {
-	  newcon = strdup(context_str(new_context));
-	  context_free (new_context);
-	  return newcon;
-	}
-	else
-	  send_text(pamh,_("Not a valid security context"),debug);
-
-        context_free (new_context);
-      }
-    else {
-      _pam_drop(response);
-      return NULL;
-    }
-  } /* end while */
- fail_set:
-  free(type);
-  _pam_drop(response);
-  context_free (new_context);
-  return NULL;
-}
-
 static int mls_range_allowed(pam_handle_t *pamh, security_context_t src, security_context_t dst, int debug)
 {
   struct av_decision avd;
   int retval;
-  unsigned int bit = CONTEXT__CONTAINS;
-  context_t src_context = context_new (src);
-  context_t dst_context = context_new (dst);
+  security_class_t class;
+  access_vector_t bit;
+  context_t src_context;
+  context_t dst_context;
+
+  class = string_to_security_class("context");
+  if (!class) {
+    pam_syslog(pamh, LOG_ERR, "Failed to translate security class context. %m");
+    return 0;
+  }
+
+  bit = string_to_av_perm(class, "contains");
+  if (!bit) {
+    pam_syslog(pamh, LOG_ERR, "Failed to translate av perm contains. %m");
+    return 0;
+  }
+
+  src_context = context_new (src);
+  dst_context = context_new (dst);
   context_range_set(dst_context, context_range_get(src_context));
   if (debug)
     pam_syslog(pamh, LOG_NOTICE, "Checking if %s mls range valid for  %s", dst, context_str(dst_context));
 
-  retval = security_compute_av(context_str(dst_context), dst, SECCLASS_CONTEXT, bit, &avd);
+  retval = security_compute_av(context_str(dst_context), dst, class, bit, &avd);
   context_free(src_context);
   context_free(dst_context);
   if (retval || ((bit & avd.allowed) != bit))
     return 0;
-  
+
   return 1;
 }
 
@@ -266,7 +211,7 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
 
   while (1) {
     if (query_response(pamh,
-		   _("Would you like to enter a different role or level?"), "n", 
+		   _("Would you like to enter a different role or level?"), "n",
 		   &response, debug) == PAM_SUCCESS) {
 	resp_val = response[0];
 	_pam_drop(response);
@@ -276,21 +221,22 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
     if ((resp_val == 'y') || (resp_val == 'Y'))
       {
         if ((new_context = context_new(defaultcon)) == NULL)
-    	    goto fail_set;
+	    goto fail_set;
 
 	/* Allow the user to enter role and level individually */
-	if (query_response(pamh, _("role:"), context_role_get(new_context), 
+	if (query_response(pamh, _("role:"), context_role_get(new_context),
 		       &response, debug) == PAM_SUCCESS && response[0]) {
 	  if (get_default_type(response, &type)) {
 	    pam_prompt (pamh, PAM_ERROR_MSG, NULL, _("No default type for role %s\n"), response);
 	    _pam_drop(response);
 	    continue;
 	  } else {
-	    if (context_role_set(new_context, response)) 
+	    if (context_role_set(new_context, response))
 	      goto fail_set;
 	    if (context_type_set (new_context, type))
 	      goto fail_set;
-	  } 
+	    _pam_drop(type);
+	  }
 	}
 	_pam_drop(response);
 
@@ -302,9 +248,9 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
 
 		if (getcon(&mycon) != 0)
 		    goto fail_set;
-    		my_context = context_new(mycon);
+		my_context = context_new(mycon);
 	        if (my_context == NULL) {
-    		    freecon(mycon);
+		    freecon(mycon);
 		    goto fail_set;
 		}
 		freecon(mycon);
@@ -313,11 +259,11 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
 		    goto fail_set;
 		}
 		context_free(my_context);
-	    } else if (query_response(pamh, _("level:"), context_range_get(new_context), 
+	    } else if (query_response(pamh, _("level:"), context_range_get(new_context),
 			   &response, debug) == PAM_SUCCESS && response[0]) {
 		if (context_range_set(new_context, response))
 		    goto fail_set;
-	    } 
+	    }
 	    _pam_drop(response);
 	  }
 
@@ -337,7 +283,7 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
           if (mls_enabled && !mls_range_allowed(pamh, defaultcon, newcon, debug)) {
 	    pam_syslog(pamh, LOG_NOTICE, "Security context %s is not allowed for %s", defaultcon, newcon);
 
-    	    send_audit_message(pamh, 0, defaultcon, newcon);
+	    send_audit_message(pamh, 0, defaultcon, newcon);
 
 	    free(newcon);
             goto fail_range;
@@ -362,7 +308,7 @@ config_context (pam_handle_t *pamh, security_context_t defaultcon, int use_curre
   context_free (new_context);
   send_audit_message(pamh, 0, defaultcon, NULL);
  fail_range:
-  return NULL;  
+  return NULL;
 }
 
 static security_context_t
@@ -374,6 +320,7 @@ context_from_env (pam_handle_t *pamh, security_context_t defaultcon, int env_par
   int mls_enabled = is_selinux_mls_enabled();
   const char *env = NULL;
   char *type = NULL;
+  int fail = 1;
 
   if ((new_context = context_new(defaultcon)) == NULL)
     goto fail_set;
@@ -386,7 +333,7 @@ context_from_env (pam_handle_t *pamh, security_context_t defaultcon, int env_par
 	pam_syslog(pamh, LOG_NOTICE, "No default type for role %s", env);
 	goto fail_set;
     } else {
-	if (context_role_set(new_context, env)) 
+	if (context_role_set(new_context, env))
 	    goto fail_set;
 	if (context_type_set(new_context, type))
 	    goto fail_set;
@@ -430,13 +377,10 @@ context_from_env (pam_handle_t *pamh, security_context_t defaultcon, int env_par
 
   if (debug)
     pam_syslog(pamh, LOG_NOTICE, "Selected Security Context %s", newcon);
-  
+
   /* Get the string value of the context and see if it is valid. */
   if (security_check_context(newcon)) {
     pam_syslog(pamh, LOG_NOTICE, "Not a valid security context %s", newcon);
-    send_audit_message(pamh, 0, defaultcon, newcon);
-    freecon(newcon);
-    newcon = NULL;
 
     goto fail_set;
   }
@@ -446,151 +390,313 @@ context_from_env (pam_handle_t *pamh, security_context_t defaultcon, int env_par
      be checked at setexeccon time */
   if (mls_enabled && !mls_range_allowed(pamh, defaultcon, newcon, debug)) {
     pam_syslog(pamh, LOG_NOTICE, "Security context %s is not allowed for %s", defaultcon, newcon);
-    send_audit_message(pamh, 0, defaultcon, newcon);
-    freecon(newcon);
-    newcon = NULL;
+
+    goto fail_set;
   }
+
+  fail = 0;
 
  fail_set:
   free(type);
   context_free(my_context);
   context_free(new_context);
-  send_audit_message(pamh, 0, defaultcon, NULL);
+  if (fail) {
+    send_audit_message(pamh, 0, defaultcon, newcon);
+    freecon(newcon);
+    newcon = NULL;
+  }
   return newcon;
 }
 
+#define DATANAME "pam_selinux_context"
+typedef struct {
+  security_context_t exec_context;
+  security_context_t prev_exec_context;
+  security_context_t default_user_context;
+  security_context_t tty_context;
+  security_context_t prev_tty_context;
+  char *tty_path;
+} module_data_t;
+
 static void
-security_restorelabel_tty(const pam_handle_t *pamh,
-			  const char *tty, security_context_t context)
+free_module_data(module_data_t *data)
 {
-  char ttybuf[PATH_MAX];
-  const char *ptr;
-
-  if (context==NULL)
-    return;
-
-  if(strncmp("/dev/", tty, 5)) {
-    snprintf(ttybuf,sizeof(ttybuf),"/dev/%s",tty);
-    ptr = ttybuf;
-  }
-  else
-    ptr = tty;
-
-  if (setfilecon(ptr, context) && errno != ENOENT)
-  {
-    pam_syslog(pamh, LOG_NOTICE,
-	       "Warning!  Could not relabel %s with %s, not relabeling: %m",
-	       ptr, context);
-  }
+  free(data->tty_path);
+  freecon(data->prev_tty_context);
+  freecon(data->tty_context);
+  freecon(data->default_user_context);
+  freecon(data->prev_exec_context);
+  if (data->exec_context != data->default_user_context)
+    freecon(data->exec_context);
+  memset(data, 0, sizeof(*data));
+  free(data);
 }
 
-static security_context_t
-security_label_tty(pam_handle_t *pamh, char *tty,
-		   security_context_t usercon)
+static void
+cleanup(pam_handle_t *pamh UNUSED, void *data, int err UNUSED)
 {
-  char ttybuf[PATH_MAX];
-  int status=0;
-  security_context_t newdev_context=NULL; /* The new context of a device */
-  security_context_t prev_context=NULL; /* The new context of a device */
-  const char *ptr;
-
-  if(strncmp("/dev/", tty, 5))
-  {
-    snprintf(ttybuf,sizeof(ttybuf),"/dev/%s",tty);
-    ptr = ttybuf;
-  }
-  else
-    ptr = tty;
-
-  if (getfilecon(ptr, &prev_context) < 0)
-  {
-    if(errno != ENOENT)
-      pam_syslog(pamh, LOG_NOTICE,
-	     "Warning!  Could not get current context for %s, not relabeling: %m",
-	     ptr);
-    return NULL;
-  }
-  if( security_compute_relabel(usercon,prev_context,SECCLASS_CHR_FILE,
-                               &newdev_context)!=0)
-  {
-    pam_syslog(pamh, LOG_NOTICE,
-           "Warning!  Could not get new context for %s, not relabeling: %m",
-           ptr);
-    pam_syslog(pamh, LOG_NOTICE,
-	       "usercon=%s, prev_context=%s", usercon, prev_context);
-    freecon(prev_context);
-    return NULL;
-  }
-  status=setfilecon(ptr,newdev_context);
-  if (status)
-  {
-      pam_syslog(pamh, LOG_NOTICE,
-		 "Warning!  Could not relabel %s with %s, not relabeling: %m",
-		 ptr,newdev_context);
-      freecon(prev_context);
-      prev_context=NULL;
-  }
-  freecon(newdev_context);
-  return prev_context;
+  free_module_data(data);
 }
 
-static security_context_t user_context=NULL;
-static security_context_t prev_user_context=NULL;
-static security_context_t ttyn_context=NULL;  /* The current context of ttyn device */
-static int selinux_enabled=0;
-static char *ttyn=NULL;
-
-PAM_EXTERN int
-pam_sm_authenticate(pam_handle_t *pamh UNUSED, int flags UNUSED,
-		    int argc UNUSED, const char **argv UNUSED)
+static const module_data_t *
+get_module_data(const pam_handle_t *pamh)
 {
-	/* Fail by default. */
-	return PAM_AUTH_ERR;
+  const void *data;
+
+  return (pam_get_data(pamh, DATANAME, &data) == PAM_SUCCESS) ? data : NULL;
 }
 
-PAM_EXTERN int
-pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
-	       int argc UNUSED, const char **argv UNUSED)
+static const char *
+get_item(const pam_handle_t *pamh, int item_type)
 {
-	return PAM_SUCCESS;
+  const void *item;
+
+  return (pam_get_item(pamh, item_type, &item) == PAM_SUCCESS) ? item : NULL;
 }
 
-PAM_EXTERN int
-pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
-		    int argc, const char **argv)
+static int
+set_exec_context(const pam_handle_t *pamh, security_context_t context)
 {
-  int i, debug = 0, ttys=1;
-  int verbose=0, close_session=0;
-  int select_context = 0;
-  int use_current_range = 0;
-  int ret = 0;
-  security_context_t* contextlist = NULL;
-  int num_contexts = 0;
-  int env_params = 0;
+  if (setexeccon(context) == 0)
+    return 0;
+  pam_syslog(pamh, LOG_ERR, "Setting executable context \"%s\" failed: %m",
+	     context ? context : "");
+  return -1;
+}
+
+static int
+set_file_context(const pam_handle_t *pamh, security_context_t context,
+		 const char *file)
+{
+  if (!file)
+    return 0;
+  if (setfilecon(file, context) == 0 || errno == ENOENT)
+    return 0;
+  pam_syslog(pamh, LOG_ERR, "Setting file context \"%s\" failed for %s: %m",
+	     context ? context : "", file);
+  return -1;
+}
+
+static int
+compute_exec_context(pam_handle_t *pamh, module_data_t *data,
+		     int select_context, int use_current_range,
+		     int env_params, int debug)
+{
   const char *username;
-  const void *void_username;
-  const void *tty = NULL;
-  char *seuser=NULL;
-  char *level=NULL;
-  security_context_t default_user_context=NULL;
+
 #ifdef HAVE_GETSEUSER
-  const void *void_service;
   const char *service;
 #endif
+  char *seuser = NULL;
+  char *level = NULL;
+  security_context_t *contextlist = NULL;
+  int num_contexts = 0;
+
+  if (!(username = get_item(pamh, PAM_USER))) {
+    pam_syslog(pamh, LOG_ERR, "Cannot obtain the user name");
+    return PAM_USER_UNKNOWN;
+  }
+
+  /* compute execute context */
+#ifdef HAVE_GETSEUSER
+  if (!(service = get_item(pamh, PAM_SERVICE))) {
+    pam_syslog(pamh, LOG_ERR, "Cannot obtain the service name");
+    return PAM_SESSION_ERR;
+  }
+  if (getseuser(username, service, &seuser, &level) == 0) {
+#else
+  if (getseuserbyname(username, &seuser, &level) == 0) {
+#endif
+    num_contexts = get_ordered_context_list_with_level(seuser, level, NULL,
+						       &contextlist);
+    if (debug)
+      pam_syslog(pamh, LOG_DEBUG, "Username= %s SELinux User= %s Level= %s",
+		 username, seuser, level);
+    free(level);
+  }
+  if (num_contexts > 0) {
+    free(seuser);
+    data->default_user_context = strdup(contextlist[0]);
+    freeconary(contextlist);
+    if (!data->default_user_context) {
+      pam_syslog(pamh, LOG_ERR, "Out of memory");
+      return PAM_BUF_ERR;
+    }
+
+    data->exec_context = data->default_user_context;
+    if (select_context)
+      data->exec_context = config_context(pamh, data->default_user_context,
+					  use_current_range, debug);
+    else if (env_params || use_current_range)
+      data->exec_context = context_from_env(pamh, data->default_user_context,
+					    env_params, use_current_range,
+					    debug);
+  }
+
+  if (!data->exec_context) {
+    pam_syslog(pamh, LOG_ERR, "Unable to get valid context for %s", username);
+    pam_prompt(pamh, PAM_ERROR_MSG, NULL,
+	       _("Unable to get valid context for %s"), username);
+  }
+
+  if (getexeccon(&data->prev_exec_context) < 0)
+    data->prev_exec_context = NULL;
+
+  return PAM_SUCCESS;
+}
+
+static int
+compute_tty_context(const pam_handle_t *pamh, module_data_t *data)
+{
+  const char *tty = get_item(pamh, PAM_TTY);
+
+  if (!tty || !*tty || !strcmp(tty, "ssh") || !strncmp(tty, "NODEV", 5)) {
+    tty = ttyname(STDIN_FILENO);
+    if (!tty || !*tty)
+      tty = ttyname(STDOUT_FILENO);
+    if (!tty || !*tty)
+      tty = ttyname(STDERR_FILENO);
+    if (!tty || !*tty)
+      return PAM_SUCCESS;
+  }
+
+  if (strncmp("/dev/", tty, 5)) {
+    if (asprintf(&data->tty_path, "%s%s", "/dev/", tty) < 0)
+      data->tty_path = NULL;
+  } else {
+    data->tty_path = strdup(tty);
+  }
+
+  if (!data->tty_path) {
+    pam_syslog(pamh, LOG_ERR, "Out of memory");
+    return PAM_BUF_ERR;
+  }
+
+  if (getfilecon(data->tty_path, &data->prev_tty_context) < 0) {
+    data->prev_tty_context = NULL;
+    if (errno == ENOENT) {
+      free(data->tty_path);
+      data->tty_path = NULL;
+      return PAM_SUCCESS;
+    }
+    pam_syslog(pamh, LOG_ERR, "Failed to get current context for %s: %m",
+	       data->tty_path);
+    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+  }
+
+  if (security_compute_relabel(data->exec_context, data->prev_tty_context,
+			       SECCLASS_CHR_FILE, &data->tty_context)) {
+    data->tty_context = NULL;
+    pam_syslog(pamh, LOG_ERR, "Failed to compute new context for %s: %m",
+	       data->tty_path);
+    freecon(data->prev_tty_context);
+    data->prev_tty_context = NULL;
+    free(data->tty_path);
+    data->tty_path = NULL;
+    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+  }
+
+  return PAM_SUCCESS;
+}
+
+static int
+restore_context(const pam_handle_t *pamh, const module_data_t *data, int debug)
+{
+  int err;
+
+  if (!data) {
+    if (debug)
+      pam_syslog(pamh, LOG_NOTICE, "No context to restore");
+    return PAM_SUCCESS;
+  }
+
+  if (debug && data->tty_path)
+    pam_syslog(pamh, LOG_NOTICE,
+	       "Restore file context of tty %s: [%s] -> [%s]",
+	       data->tty_path,
+	       data->tty_context ? data->tty_context : "",
+	       data->prev_tty_context ? data->prev_tty_context : "");
+  err = set_file_context(pamh, data->prev_tty_context, data->tty_path);
+
+  if (debug)
+    pam_syslog(pamh, LOG_NOTICE, "Restore executable context: [%s] -> [%s]",
+	       data->exec_context,
+	       data->prev_exec_context ? data->prev_exec_context : "");
+  err |= set_exec_context(pamh, data->prev_exec_context);
+
+  if (err && security_getenforce() == 1)
+    return PAM_SESSION_ERR;
+
+  return PAM_SUCCESS;
+}
+
+static int
+set_context(pam_handle_t *pamh, const module_data_t *data,
+	    int debug, int verbose)
+{
+  int rc, err;
+
+  if (debug && data->tty_path)
+    pam_syslog(pamh, LOG_NOTICE, "Set file context of tty %s: [%s] -> [%s]",
+	       data->tty_path,
+	       data->prev_tty_context ? data->prev_tty_context : "",
+	       data->tty_context ? data->tty_context : "");
+  err = set_file_context(pamh, data->tty_context, data->tty_path);
+
+  if (debug)
+    pam_syslog(pamh, LOG_NOTICE, "Set executable context: [%s] -> [%s]",
+	       data->prev_exec_context ? data->prev_exec_context : "",
+	       data->exec_context);
+  rc = set_exec_context(pamh, data->exec_context);
+  err |= rc;
+
+  send_audit_message(pamh, !rc, data->default_user_context, data->exec_context);
+  if (verbose && !rc) {
+    char msg[PATH_MAX];
+
+    snprintf(msg, sizeof(msg),
+	     _("Security Context %s Assigned"), data->exec_context);
+    send_text(pamh, msg, debug);
+  }
+#ifdef HAVE_SETKEYCREATECON
+  if (debug)
+    pam_syslog(pamh, LOG_NOTICE, "Set key creation context to %s",
+	       data->exec_context ? data->exec_context : "");
+  rc = setkeycreatecon(data->exec_context);
+  err |= rc;
+  if (rc)
+    pam_syslog(pamh, LOG_ERR, "Setting key creation context %s failed: %m",
+	       data->exec_context ? data->exec_context : "");
+  if (verbose && !rc) {
+    char msg[PATH_MAX];
+
+    snprintf(msg, sizeof(msg),
+	     _("Key Creation Context %s Assigned"), data->exec_context);
+    send_text(pamh, msg, debug);
+  }
+#endif
+
+  if (err && security_getenforce() == 1)
+    return PAM_SESSION_ERR;
+
+  return PAM_SUCCESS;
+}
+
+static int
+create_context(pam_handle_t *pamh, int argc, const char **argv,
+	       int debug, int verbose)
+{
+  int i;
+  int ttys = 1;
+  int select_context = 0;
+  int use_current_range = 0;
+  int env_params = 0;
+  module_data_t *data;
 
   /* Parse arguments. */
   for (i = 0; i < argc; i++) {
-    if (strcmp(argv[i], "debug") == 0) {
-      debug = 1;
-    }
     if (strcmp(argv[i], "nottys") == 0) {
       ttys = 0;
-    }
-    if (strcmp(argv[i], "verbose") == 0) {
-      verbose = 1;
-    }
-    if (strcmp(argv[i], "close") == 0) {
-      close_session = 1;
     }
     if (strcmp(argv[i], "select_context") == 0) {
       select_context = 1;
@@ -602,169 +708,111 @@ pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
       env_params = 1;
     }
   }
-  
-  if (debug)
-    pam_syslog(pamh, LOG_NOTICE, "Open Session");
+
+  if (is_selinux_enabled() <= 0) {
+    if (debug)
+      pam_syslog(pamh, LOG_NOTICE, "SELinux is not enabled");
+    return PAM_SUCCESS;
+  }
 
   if (select_context && env_params) {
-    pam_syslog(pamh, LOG_ERR, "select_context cannot be used with env_params");
+    pam_syslog(pamh, LOG_ERR,
+	       "select_context cannot be used with env_params");
     select_context = 0;
   }
 
-  /* this module is only supposed to execute close_session */
-  if (close_session)
-      return PAM_SUCCESS;
-
-  if (!(selinux_enabled = is_selinux_enabled()>0) )
-      return PAM_SUCCESS;
-
-  if (pam_get_item(pamh, PAM_USER, &void_username) != PAM_SUCCESS ||
-                   void_username == NULL) {
-    return PAM_USER_UNKNOWN;
-  }
-  username = void_username;
-
-#ifdef HAVE_GETSEUSER
-  if (pam_get_item(pamh, PAM_SERVICE, (void *) &void_service) != PAM_SUCCESS ||
-                   void_service == NULL) {
-    return PAM_SESSION_ERR;
-  }
-  service = void_service;
-
-  if (getseuser(username, service, &seuser, &level) == 0) {
-#else
-  if (getseuserbyname(username, &seuser, &level) == 0) {
-#endif
-	  num_contexts = get_ordered_context_list_with_level(seuser, 
-							     level,
-							     NULL, 
-							     &contextlist);
-	  if (debug)
-		  pam_syslog(pamh, LOG_DEBUG, "Username= %s SELinux User = %s Level= %s",
-                             username, seuser, level);
-	  free(seuser);
-	  free(level);
-  }
-  if (num_contexts > 0) {
-    default_user_context=strdup(contextlist[0]);
-    freeconary(contextlist);
-    if (default_user_context == NULL) {
-	  pam_syslog(pamh, LOG_ERR, "Out of memory");
-          return PAM_BUF_ERR;
-    }
-
-    user_context = default_user_context;
-    if (select_context) {
-        user_context = config_context(pamh, default_user_context, use_current_range, debug);
-    } else if (env_params || use_current_range) {
-        user_context = context_from_env(pamh, default_user_context, env_params, use_current_range, debug);
-    }
-
-    if (user_context == NULL) {
-	freecon(default_user_context);
-	pam_syslog(pamh, LOG_ERR, "Unable to get valid context for %s",
-		    username);
-	pam_prompt (pamh, PAM_ERROR_MSG, NULL,  _("Unable to get valid context for %s"), username);
-        if (security_getenforce() == 1)
-          return PAM_AUTH_ERR;
-        else
-          return PAM_SUCCESS;
-    }
-  }
-  else { 
-      user_context = manual_context(pamh,seuser,debug);
-      if (user_context == NULL) {
-	pam_syslog (pamh, LOG_ERR, "Unable to get valid context for %s",
-		    username);
-        if (security_getenforce() == 1)
-          return PAM_AUTH_ERR;
-        else
-          return PAM_SUCCESS;
-      }
+  if (!(data = calloc(1, sizeof(*data)))) {
+    pam_syslog(pamh, LOG_ERR, "Out of memory");
+    return PAM_BUF_ERR;
   }
 
-  if (getexeccon(&prev_user_context)<0) {
-    prev_user_context=NULL;
+  i = compute_exec_context(pamh, data, select_context, use_current_range,
+			   env_params, debug);
+  if (i != PAM_SUCCESS) {
+    free_module_data(data);
+    return i;
   }
-  if (ttys) {
-    /* Get the name of the terminal. */
-    if (pam_get_item(pamh, PAM_TTY, &tty) != PAM_SUCCESS) {
-      tty = NULL;
-    }
 
-    if ((tty == NULL) || (strlen(tty) == 0) ||
-	strcmp(tty, "ssh") == 0 || strncmp(tty, "NODEV", 5) == 0) {
-      tty = ttyname(STDIN_FILENO);
-      if ((tty == NULL) || (strlen(tty) == 0)) {
-	tty = ttyname(STDOUT_FILENO);
-      }
-      if ((tty == NULL) || (strlen(tty) == 0)) {
-	tty = ttyname(STDERR_FILENO);
-      }
-    }
+  if (!data->exec_context) {
+    free_module_data(data);
+    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
   }
-  if (ttys && tty) {
-    ttyn=strdup(tty);
-    ttyn_context=security_label_tty(pamh,ttyn,user_context);
-  }
-  send_audit_message(pamh, 1, default_user_context, user_context);
-  if (default_user_context != user_context) {
-    freecon(default_user_context);
-  }
-  ret = setexeccon(user_context);
-  if (ret==0 && verbose) {
-    char msg[PATH_MAX];
-    snprintf(msg, sizeof(msg),
-	     _("Security Context %s Assigned"), user_context);
-    send_text(pamh, msg, debug);
-  }
-  if (ret) {
-    pam_syslog(pamh, LOG_ERR,
-	       "Error!  Unable to set %s executable context %s.",
-	       username, user_context);
-    if (security_getenforce() == 1) {
-       freecon(user_context);
-       return PAM_AUTH_ERR;
-    }
-  } else {
-    if (debug)
-      pam_syslog(pamh, LOG_NOTICE, "set %s security context to %s",
-		 username, user_context);
-  }
-#ifdef HAVE_SETKEYCREATECON
-  ret = setkeycreatecon(user_context);
-  if (ret==0 && verbose) {
-    char msg[PATH_MAX];
-    snprintf(msg, sizeof(msg),
-	     _("Key Creation Context %s Assigned"), user_context);
-    send_text(pamh, msg, debug);
-  }
-  if (ret) {
-    pam_syslog(pamh, LOG_ERR,
-	       "Error!  Unable to set %s key creation context %s.",
-	       username, user_context);
-    if (security_getenforce() == 1) {
-       freecon(user_context);
-       return PAM_AUTH_ERR;
-    }
-  } else {
-    if (debug)
-      pam_syslog(pamh, LOG_NOTICE, "set %s key creation context to %s",
-		 username, user_context);
-  }
-#endif
-  freecon(user_context);
 
+  if (ttys && (i = compute_tty_context(pamh, data)) != PAM_SUCCESS) {
+    free_module_data(data);
+    return i;
+  }
+
+  if ((i = pam_set_data(pamh, DATANAME, data, cleanup)) != PAM_SUCCESS) {
+    pam_syslog(pamh, LOG_ERR, "Error saving context: %m");
+    free_module_data(data);
+    return i;
+  }
+
+  return set_context(pamh, data, debug, verbose);
+}
+
+PAM_EXTERN int
+pam_sm_authenticate(pam_handle_t *pamh UNUSED, int flags UNUSED,
+		    int argc UNUSED, const char **argv UNUSED)
+{
+  /* Fail by default. */
+  return PAM_AUTH_ERR;
+}
+
+PAM_EXTERN int
+pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
+	       int argc UNUSED, const char **argv UNUSED)
+{
   return PAM_SUCCESS;
+}
+
+PAM_EXTERN int
+pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
+{
+  const module_data_t *data;
+  int i, debug = 0, verbose = 0, close_session = 0, restore = 0;
+
+  /* Parse arguments. */
+  for (i = 0; i < argc; i++) {
+    if (strcmp(argv[i], "debug") == 0) {
+      debug = 1;
+    }
+    if (strcmp(argv[i], "verbose") == 0) {
+      verbose = 1;
+    }
+    if (strcmp(argv[i], "close") == 0) {
+      close_session = 1;
+    }
+    if (strcmp(argv[i], "restore") == 0) {
+      restore = 1;
+    }
+  }
+
+  if (debug)
+    pam_syslog(pamh, LOG_NOTICE, "Open Session");
+
+  /* Is this module supposed to execute close_session only? */
+  if (close_session)
+    return PAM_SUCCESS;
+
+  data = get_module_data(pamh);
+
+  /* Is this module supposed only to restore original context? */
+  if (restore)
+    return restore_context(pamh, data, debug);
+
+  /* If there is a saved context, this module is supposed to set it again. */
+  return data ? set_context(pamh, data, debug, verbose) :
+    create_context(pamh, argc, argv, debug, verbose);
 }
 
 PAM_EXTERN int
 pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
-  int i, debug = 0, status = PAM_SUCCESS, open_session = 0;
-  if (! (selinux_enabled ))
-      return PAM_SUCCESS;
+  int i, debug = 0, open_session = 0;
 
   /* Parse arguments. */
   for (i = 0; i < argc; i++) {
@@ -779,34 +827,10 @@ pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
   if (debug)
     pam_syslog(pamh, LOG_NOTICE, "Close Session");
 
+  /* Is this module supposed to execute open_session only? */
   if (open_session)
     return PAM_SUCCESS;
 
-  if (ttyn) {
-    if (debug)
-      pam_syslog(pamh, LOG_NOTICE, "Restore tty  %s -> %s",
-		 ttyn,ttyn_context);
-
-    security_restorelabel_tty(pamh,ttyn,ttyn_context);
-    freecon(ttyn_context);
-    free(ttyn);
-    ttyn=NULL;
-  }
-
-  if (setexeccon(prev_user_context)) {
-      pam_syslog(pamh, LOG_ERR, "Unable to restore executable context %s.",
-	       prev_user_context ? prev_user_context : "");
-      if (security_getenforce() == 1)
-         status = PAM_AUTH_ERR;
-      else
-         status = PAM_SUCCESS;
-  } else if (debug)
-      pam_syslog(pamh, LOG_NOTICE, "Executable context back to original");
-
-  if (prev_user_context) {
-    freecon(prev_user_context);
-    prev_user_context = NULL;
-  }
-
-  return status;
+  /* Restore original context. */
+  return restore_context(pamh, get_module_data(pamh), debug);
 }

@@ -458,7 +458,7 @@ char *yytext;
 #line 1 "pam_conv_l.l"
 #line 3 "pam_conv_l.l"
 /*
- * $Id: pam_conv_l.l,v 1.1 2006/07/24 16:14:40 kukuk Exp $
+ * $Id$
  *
  * Copyright (c) Andrew G. Morgan 1997 <morgan@parc.power.net>
  *
@@ -467,7 +467,7 @@ char *yytext;
  */
 
     static const char lexid[]=
-	"$Id: pam_conv_l.l,v 1.1 2006/07/24 16:14:40 kukuk Exp $\n"
+	"$Id$\n"
 	"Copyright (c) Andrew G. Morgan 1997 <morgan@parc.power.net>\n";
 
 #ifdef HAVE_CONFIG_H

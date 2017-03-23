@@ -37,6 +37,80 @@
 #define SELINUX_ENABLED 0
 #endif
 
+static char *
+search_key (const char *key, const char *filename)
+{
+  FILE *fp;
+  char *buf = NULL;
+  size_t buflen = 0;
+  char *retval = NULL;
+
+  fp = fopen (filename, "r");
+  if (NULL == fp)
+    return NULL;
+
+  while (!feof (fp))
+    {
+      char *tmp, *cp;
+#if defined(HAVE_GETLINE)
+      ssize_t n = getline (&buf, &buflen, fp);
+#elif defined (HAVE_GETDELIM)
+      ssize_t n = getdelim (&buf, &buflen, '\n', fp);
+#else
+      ssize_t n;
+
+      if (buf == NULL)
+        {
+          buflen = BUF_SIZE;
+          buf = malloc (buflen);
+	  if (buf == NULL) {
+	    fclose (fp);
+	    return NULL;
+	  }
+        }
+      buf[0] = '\0';
+      if (fgets (buf, buflen - 1, fp) == NULL)
+        break;
+      else if (buf != NULL)
+        n = strlen (buf);
+      else
+        n = 0;
+#endif /* HAVE_GETLINE / HAVE_GETDELIM */
+      cp = buf;
+
+      if (n < 1)
+        break;
+
+      tmp = strchr (cp, '#');  /* remove comments */
+      if (tmp)
+        *tmp = '\0';
+      while (isspace ((int)*cp))    /* remove spaces and tabs */
+        ++cp;
+      if (*cp == '\0')        /* ignore empty lines */
+        continue;
+
+      if (cp[strlen (cp) - 1] == '\n')
+        cp[strlen (cp) - 1] = '\0';
+
+      tmp = strsep (&cp, " \t=");
+      if (cp != NULL)
+        while (isspace ((int)*cp) || *cp == '=')
+          ++cp;
+
+      if (strcasecmp (tmp, key) == 0)
+        {
+          retval = strdup (cp);
+          break;
+        }
+    }
+  fclose (fp);
+
+  free (buf);
+
+  return retval;
+}
+
+
 /* this is a front-end for module-application conversations */
 
 int _make_remark(pam_handle_t * pamh, unsigned int ctrl,
@@ -58,6 +132,8 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 	      int *pass_min_len, int argc, const char **argv)
 {
 	unsigned int ctrl;
+	char *val;
+	int j;
 
 	D(("called."));
 
@@ -81,10 +157,38 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 		D(("SILENT"));
 		set(UNIX__QUIET, ctrl);
 	}
+
+	/* preset encryption method with value from /etc/login.defs */
+	val = search_key ("ENCRYPT_METHOD", LOGIN_DEFS);
+	if (val) {
+	  for (j = 0; j < UNIX_CTRLS_; ++j) {
+	    if (unix_args[j].token && unix_args[j].is_hash_algo
+		&& !strncasecmp(val, unix_args[j].token, strlen(unix_args[j].token))) {
+	      break;
+	    }
+	  }
+	  if (j >= UNIX_CTRLS_) {
+	    pam_syslog(pamh, LOG_WARNING, "unrecognized ENCRYPT_METHOD value [%s]", val);
+	  } else {
+	    ctrl &= unix_args[j].mask;	/* for turning things off */
+	    ctrl |= unix_args[j].flag;	/* for turning things on  */
+	  }
+	  free (val);
+
+	  /* read number of rounds for crypt algo */
+	  if (rounds && (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl))) {
+	    val=search_key ("SHA_CRYPT_MAX_ROUNDS", LOGIN_DEFS);
+
+	    if (val) {
+	      *rounds = strtol(val, NULL, 10);
+	      free (val);
+	    }
+	  }
+	}
+
 	/* now parse the arguments to this module */
 
-	while (argc-- > 0) {
-		int j;
+	for (; argc-- > 0; ++argv) {
 
 		D(("pam_unix arg: %s", *argv));
 
@@ -99,24 +203,37 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 			pam_syslog(pamh, LOG_ERR,
 			         "unrecognized option [%s]", *argv);
 		} else {
-			ctrl &= unix_args[j].mask;	/* for turning things off */
-			ctrl |= unix_args[j].flag;	/* for turning things on  */
-
 			/* special cases */
-			if (remember != NULL && j == UNIX_REMEMBER_PASSWD) {
+			if (j == UNIX_REMEMBER_PASSWD) {
+				if (remember == NULL) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option remember not allowed for this module type");
+					continue;
+				}
 				*remember = strtol(*argv + 9, NULL, 10);
 				if ((*remember == INT_MIN) || (*remember == INT_MAX))
 					*remember = -1;
 				if (*remember > 400)
 					*remember = 400;
-			} else if (pass_min_len && j == UNIX_MIN_PASS_LEN) {
+			} else if (j == UNIX_MIN_PASS_LEN) {
+				if (pass_min_len == NULL) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option minlen not allowed for this module type");
+					continue;
+				}
 				*pass_min_len = atoi(*argv + 7);
- 			}
-			if (rounds != NULL && j == UNIX_ALGO_ROUNDS)
+			} else if (j == UNIX_ALGO_ROUNDS) {
+				if (rounds == NULL) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option rounds not allowed for this module type");
+					continue;
+				}
 				*rounds = strtol(*argv + 7, NULL, 10);
-		}
+			}
 
-		++argv;		/* step to next argument */
+			ctrl &= unix_args[j].mask;	/* for turning things off */
+			ctrl |= unix_args[j].flag;	/* for turning things on  */
+		}
 	}
 
 	if (UNIX_DES_CRYPT(ctrl)
@@ -132,7 +249,7 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 	}
 
 	/* Set default rounds for blowfish */
-	if (on(UNIX_BLOWFISH_PASS, ctrl) && off(UNIX_ALGO_ROUNDS, ctrl)) {
+	if (on(UNIX_BLOWFISH_PASS, ctrl) && off(UNIX_ALGO_ROUNDS, ctrl) && rounds != NULL) {
 		*rounds = 5;
 		set(UNIX_ALGO_ROUNDS, ctrl);
 	}
@@ -462,14 +579,17 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
                 rlim.rlim_max = MAX_FD_NO;
 	  for (i=0; i < (int)rlim.rlim_max; i++) {
 		if (i != STDIN_FILENO)
-	  	   close(i);
+		  close(i);
 	  }
 	}
 
 	if (geteuid() == 0) {
           /* must set the real uid to 0 so the helper will not error
 	     out if pam is called from setuid binary (su, sudo...) */
-	  setuid(0);
+	  if (setuid(0) == -1) {
+             D(("setuid failed"));
+	     _exit(PAM_AUTHINFO_UNAVAIL);
+          }
 	}
 
 	/* exec binary helper */
@@ -493,20 +613,19 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 	if (passwd != NULL) {            /* send the password to the child */
 	    if (write(fds[1], passwd, strlen(passwd)+1) == -1) {
 	      pam_syslog (pamh, LOG_ERR, "Cannot send password to helper: %m");
-	      close(fds[1]);
 	      retval = PAM_AUTH_ERR;
 	    }
 	    passwd = NULL;
 	} else {                         /* blank password */
 	    if (write(fds[1], "", 1) == -1) {
 	      pam_syslog (pamh, LOG_ERR, "Cannot send password to helper: %m");
-	      close(fds[1]);
 	      retval = PAM_AUTH_ERR;
 	    }
 	}
 	close(fds[0]);       /* close here to avoid possible SIGPIPE above */
 	close(fds[1]);
-	rc=waitpid(child, &retval, 0);  /* wait for helper to complete */
+	/* wait for helper to complete: */
+	while ((rc=waitpid(child, &retval, 0)) < 0 && errno == EINTR);
 	if (rc<0) {
 	  pam_syslog(pamh, LOG_ERR, "unix_chkpwd waitpid returned %d: %m", rc);
 	  retval = PAM_AUTH_ERR;
@@ -519,7 +638,7 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
     } else {
 	D(("fork failed"));
 	close(fds[0]);
- 	close(fds[1]);
+	close(fds[1]);
 	retval = PAM_AUTH_ERR;
     }
 
