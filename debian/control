@@ -12,7 +12,7 @@ Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
 Vcs-Bzr: https://code.launchpad.net/~ubuntu-core-dev/pam/ubuntu
 Homepage: http://pam.sourceforge.net/
-XS-Pexip-Upstream: http://archive.ubuntu.com/ubuntu/ precise
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie
 
 Package: libpam0g
 Priority: required
