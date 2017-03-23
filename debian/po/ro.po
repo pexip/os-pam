@@ -189,6 +189,7 @@ msgstr ""
 #. Description
 #: ../libpam-runtime.templates:5001
 #, fuzzy
+#| msgid "Incompatible PAM profiles selected."
 msgid "No PAM profiles have been selected."
 msgstr "Selecție de profile PAM incompatibile."
 

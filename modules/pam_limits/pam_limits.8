@@ -1,161 +1,22 @@
+'\" t
 .\"     Title: pam_limits
 .\"    Author: [see the "AUTHORS" section]
-.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
-.\"      Date: 10/27/2010
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 09/19/2013
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_LIMITS" "8" "10/27/2010" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_LIMITS" "8" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
-.\" * (re)Define some macros
+.\" * Define some portability stuff
 .\" -----------------------------------------------------------------
 .\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" toupper - uppercase a string (locale-aware)
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
 .\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de toupper
-.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
-\\$*
-.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SH-xref - format a cross-reference to an SH section
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de SH-xref
-.ie n \{\
-.\}
-.toupper \\$*
-.el \{\
-\\$*
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SH - level-one heading that works better for non-TTY output
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de1 SH
-.\" put an extra blank line of space above the head in non-TTY output
-.if t \{\
-.sp 1
-.\}
-.sp \\n[PD]u
-.nr an-level 1
-.set-an-margin
-.nr an-prevailing-indent \\n[IN]
-.fi
-.in \\n[an-margin]u
-.ti 0
-.HTML-TAG ".NH \\n[an-level]"
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-\." make the size of the head bigger
-.ps +3
-.ft B
-.ne (2v + 1u)
-.ie n \{\
-.\" if n (TTY output), use uppercase
-.toupper \\$*
-.\}
-.el \{\
-.nr an-break-flag 0
-.\" if not n (not TTY), use normal case (not uppercase)
-\\$1
-.in \\n[an-margin]u
-.ti 0
-.\" if not n (not TTY), put a border/line under subheading
-.sp -.6
-\l'\n(.lu'
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SS - level-two heading that works better for non-TTY output
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de1 SS
-.sp \\n[PD]u
-.nr an-level 1
-.set-an-margin
-.nr an-prevailing-indent \\n[IN]
-.fi
-.in \\n[IN]u
-.ti \\n[SN]u
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.ps \\n[PS-SS]u
-\." make the size of the head bigger
-.ps +2
-.ft B
-.ne (2v + 1u)
-.if \\n[.$] \&\\$*
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" BB/BE - put background/screen (filled box) around block of text
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de BB
-.if t \{\
-.sp -.5
-.br
-.in +2n
-.ll -2n
-.gcolor red
-.di BX
-.\}
-..
-.de EB
-.if t \{\
-.if "\\$2"adjust-for-leading-newline" \{\
-.sp -1
-.\}
-.br
-.di
-.in
-.ll
-.gcolor
-.nr BW \\n(.lu-\\n(.i
-.nr BH \\n(dn+.5v
-.ne \\n(BHu+.5v
-.ie "\\$2"adjust-for-leading-newline" \{\
-\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
-.\}
-.el \{\
-\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
-.\}
-.in 0
-.sp -.5v
-.nf
-.BX
-.in
-.sp .5v
-.fi
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" BM/EM - put colored marker in margin next to block of text
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de BM
-.if t \{\
-.br
-.ll -2n
-.gcolor red
-.di BX
-.\}
-..
-.de EM
-.if t \{\
-.br
-.di
-.ll
-.gcolor
-.nr BH \\n(dn
-.ne \\n(BHu
-\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
-.in 0
-.nf
-.BX
-.in
-.fi
-.\}
-..
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -166,13 +27,11 @@
 .\" -----------------------------------------------------------------
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
-.SH "Name"
+.SH "NAME"
 pam_limits \- PAM module to limit resources
-.SH "Synopsis"
-.fam C
+.SH "SYNOPSIS"
 .HP \w'\fBpam_limits\&.so\fR\ 'u
-\fBpam_limits\&.so\fR [change_uid] [conf=\fI/path/to/limits\&.conf\fR] [debug] [utmp_early] [noaudit]
-.fam
+\fBpam_limits\&.so\fR [conf=\fI/path/to/limits\&.conf\fR] [debug] [set_all] [utmp_early] [noaudit]
 .SH "DESCRIPTION"
 .PP
 The pam_limits PAM module sets limits on the system resources that can be obtained in a user\-session\&. Users of
@@ -180,20 +39,15 @@ The pam_limits PAM module sets limits on the system resources that can be obtain
 are affected by this limits, too\&.
 .PP
 By default limits are taken from the
-\FC/etc/security/limits\&.conf\F[]
+/etc/security/limits\&.conf
 config file\&. Then individual *\&.conf files from the
-\FC/etc/security/limits\&.d/\F[]
+/etc/security/limits\&.d/
 directory are read\&. The files are parsed one after another in the order of "C" locale\&. The effect of the individual files is the same as if all the files were concatenated together in the order of parsing\&. If a config file is explicitly specified with a module option then the files in the above directory are not parsed\&.
 .PP
 The module must not be called by a multithreaded application\&.
 .PP
 If Linux PAM is compiled with audit support the module will report when it denies access based on limit of maximum number of concurrent login sessions\&.
 .SH "OPTIONS"
-.PP
-\fBchange_uid\fR
-.RS 4
-Change real uid to the user for who the limits are set up\&. Use this option if you have problems like login not forking a shell for user who has no processes\&. Be warned that something else may break when you do this\&.
-.RE
 .PP
 \fBconf=\fR\fB\fI/path/to/limits\&.conf\fR\fR
 .RS 4
@@ -203,6 +57,11 @@ Indicate an alternative limits\&.conf style configuration file to override the d
 \fBdebug\fR
 .RS 4
 Print debug information\&.
+.RE
+.PP
+\fBset_all\fR
+.RS 4
+Set the limits for which no value is specified in the configuration file to the one from the process with the PID 1\&.
 .RE
 .PP
 \fButmp_early\fR
@@ -257,41 +116,27 @@ The user is not known to the system\&.
 .RE
 .SH "FILES"
 .PP
-\FC/etc/security/limits\&.conf\F[]
+/etc/security/limits\&.conf
 .RS 4
 Default configuration file
 .RE
 .SH "EXAMPLES"
 .PP
 For the services you need resources limits (login for example) put a the following line in
-\FC/etc/pam\&.d/login\F[]
+/etc/pam\&.d/login
 as the last line for that service (usually after the pam_unix session line):
 .sp
 .if n \{\
 .RS 4
 .\}
-.fam C
-.ps -1
 .nf
-.if t \{\
-.sp -1
-.\}
-.BB lightgray adjust-for-leading-newline
-.sp -1
-
 #%PAM\-1\&.0
 #
 # Resource limits imposed on login sessions via pam_limits
 #
 session  required  pam_limits\&.so
     
-.EB lightgray adjust-for-leading-newline
-.if t \{\
-.sp 1
-.\}
 .fi
-.fam
-.ps +1
 .if n \{\
 .RE
 .\}
@@ -299,7 +144,6 @@ session  required  pam_limits\&.so
 Replace "login" for each service you are using this module\&.
 .SH "SEE ALSO"
 .PP
-
 \fBlimits.conf\fR(5),
 \fBpam.d\fR(5),
 \fBpam\fR(8)\&.

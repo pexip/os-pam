@@ -97,7 +97,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-    
+
 #define MAXLINE  1000
 #define INDENT_STRING "  "
 #define PAPER_WIDTH   74
@@ -1409,7 +1409,7 @@ yyreduce:
     printf("%s%s%s", (yyvsp[(2) - (7)].string), fixed, (yyvsp[(4) - (7)].string));
     free((yyvsp[(2) - (7)].string));
     free((yyvsp[(4) - (7)].string));
-    
+
     l = (len+1)/2;
     memset(fixed, ' ', l);
     fixed[l] = '\0';
@@ -1440,7 +1440,7 @@ yyreduce:
     printf("%s%s%s", (yyvsp[(2) - (7)].string), fixed, (yyvsp[(4) - (7)].string));
     free((yyvsp[(2) - (7)].string));
     free((yyvsp[(4) - (7)].string));
-    
+
     l = (len+1)/2;
     memset(fixed, ' ', l);
     fixed[l] = '\0';
@@ -1853,7 +1853,7 @@ char *new_counter(const char *key)
     sprintf(new+j, "%d", ++i);
 
     counter_root = set_key(counter_root, key, new);
-    
+
     if (last_label) {
 	free(last_label);
     }

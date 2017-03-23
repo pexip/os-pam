@@ -1,5 +1,5 @@
 /*
- * $Id: blank.c,v 1.2 2000/12/04 19:02:33 baggins Exp $
+ * $Id$
  */
 
 /* Andrew Morgan (morgan@parc.power.net) -- a self contained `blank'
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 	  fprintf(stderr,"usage: %s [username]\n",argv[0]);
      } else if (argc == 2) {
 	  username = argv[1];
-     } 
+     }
 
      /* initialize the Linux-PAM library */
      retcode = pam_start("blank", username, &conv, &pamh);
@@ -141,7 +141,7 @@ int main(int argc, char **argv)
 	       fprintf(stderr,"%s: problem closing a session\n",argv[0]);
 	       break;
 	  }
-	  
+
 	  retcode = pam_setcred(pamh, PAM_DELETE_CRED);
 	  bail_out(pamh,0,retcode,"pam_setcred2");
 

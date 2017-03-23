@@ -30,6 +30,17 @@ log=file
 
     The output of the command is appended to file
 
+type=type
+
+    Only run the command if the module type matches the given type.
+
+stdout
+
+    Per default the output of the executed command is written to /dev/null.
+    With this option, the stdout output of the executed command is redirected
+    to the calling application. It's in the responsibility of this application
+    what happens with the output. The log option is ignored.
+
 quiet
 
     Per default pam_exec.so will echo the exit status of the external command
@@ -57,5 +68,6 @@ with effective user ID.
 
 AUTHOR
 
-pam_exec was written by Thorsten Kukuk <kukuk@thkukuk.de>.
+pam_exec was written by Thorsten Kukuk <kukuk@thkukuk.de> and Josh Triplett
+<josh@joshtriplett.org>.
 

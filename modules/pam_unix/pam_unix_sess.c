@@ -1,5 +1,5 @@
 /*
- * $Id: pam_unix_sess.c,v 1.11 2010/08/17 11:15:33 kukuk Exp $
+ * $Id$
  *
  * Copyright Alexander O. Yuriev, 1996.  All rights reserved.
  * Copyright Jan Rêkorajski, 1999.  All rights reserved.
@@ -16,13 +16,13 @@
  * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior
  *    written permission.
- * 
+ *
  * ALTERNATIVELY, this product may be distributed under the terms of
  * the GNU Public License, in which case the provisions of the GPL are
  * required INSTEAD OF the above restrictions.  (This clause is
  * necessary due to a potential bad interaction between the GPL and
  * the restrictions contained in a BSD-style copyright.)
- * 
+ *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -49,7 +49,11 @@
 
 /* indicate the following groups are defined */
 
-#define PAM_SM_SESSION
+#ifdef PAM_STATIC
+# include "pam_unix_static.h"
+#else
+# define PAM_SM_SESSION
+#endif
 
 #include <security/_pam_macros.h>
 #include <security/pam_modules.h>
@@ -63,8 +67,8 @@
  * session module.
  */
 
-PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
-				   int argc, const char **argv)
+int
+pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	char *user_name, *service;
 	unsigned int ctrl;
@@ -98,8 +102,8 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t * pamh, int flags,
 	return PAM_SUCCESS;
 }
 
-PAM_EXTERN int pam_sm_close_session(pam_handle_t * pamh, int flags,
-				    int argc, const char **argv)
+int
+pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	char *user_name, *service;
 	unsigned int ctrl;
@@ -127,17 +131,3 @@ PAM_EXTERN int pam_sm_close_session(pam_handle_t * pamh, int flags,
 
 	return PAM_SUCCESS;
 }
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_unix_session_modstruct = {
-    "pam_unix_session",
-    NULL,
-    NULL,
-    NULL,
-    pam_sm_open_session,
-    pam_sm_close_session,
-    NULL,
-};
-#endif
-

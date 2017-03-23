@@ -1,161 +1,22 @@
+'\" t
 .\"     Title: pam_cracklib
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.74.0 <http://docbook.sf.net/>
-.\"      Date: 10/27/2010
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 06/18/2013
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_CRACKLIB" "8" "10/27/2010" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_CRACKLIB" "8" "06/18/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
-.\" * (re)Define some macros
+.\" * Define some portability stuff
 .\" -----------------------------------------------------------------
 .\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" toupper - uppercase a string (locale-aware)
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
 .\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de toupper
-.tr aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ
-\\$*
-.tr aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SH-xref - format a cross-reference to an SH section
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de SH-xref
-.ie n \{\
-.\}
-.toupper \\$*
-.el \{\
-\\$*
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SH - level-one heading that works better for non-TTY output
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de1 SH
-.\" put an extra blank line of space above the head in non-TTY output
-.if t \{\
-.sp 1
-.\}
-.sp \\n[PD]u
-.nr an-level 1
-.set-an-margin
-.nr an-prevailing-indent \\n[IN]
-.fi
-.in \\n[an-margin]u
-.ti 0
-.HTML-TAG ".NH \\n[an-level]"
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-\." make the size of the head bigger
-.ps +3
-.ft B
-.ne (2v + 1u)
-.ie n \{\
-.\" if n (TTY output), use uppercase
-.toupper \\$*
-.\}
-.el \{\
-.nr an-break-flag 0
-.\" if not n (not TTY), use normal case (not uppercase)
-\\$1
-.in \\n[an-margin]u
-.ti 0
-.\" if not n (not TTY), put a border/line under subheading
-.sp -.6
-\l'\n(.lu'
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" SS - level-two heading that works better for non-TTY output
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de1 SS
-.sp \\n[PD]u
-.nr an-level 1
-.set-an-margin
-.nr an-prevailing-indent \\n[IN]
-.fi
-.in \\n[IN]u
-.ti \\n[SN]u
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.ps \\n[PS-SS]u
-\." make the size of the head bigger
-.ps +2
-.ft B
-.ne (2v + 1u)
-.if \\n[.$] \&\\$*
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" BB/BE - put background/screen (filled box) around block of text
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de BB
-.if t \{\
-.sp -.5
-.br
-.in +2n
-.ll -2n
-.gcolor red
-.di BX
-.\}
-..
-.de EB
-.if t \{\
-.if "\\$2"adjust-for-leading-newline" \{\
-.sp -1
-.\}
-.br
-.di
-.in
-.ll
-.gcolor
-.nr BW \\n(.lu-\\n(.i
-.nr BH \\n(dn+.5v
-.ne \\n(BHu+.5v
-.ie "\\$2"adjust-for-leading-newline" \{\
-\M[\\$1]\h'1n'\v'+.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
-.\}
-.el \{\
-\M[\\$1]\h'1n'\v'-.5v'\D'P \\n(BWu 0 0 \\n(BHu -\\n(BWu 0 0 -\\n(BHu'\M[]
-.\}
-.in 0
-.sp -.5v
-.nf
-.BX
-.in
-.sp .5v
-.fi
-.\}
-..
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\" BM/EM - put colored marker in margin next to block of text
-.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.de BM
-.if t \{\
-.br
-.ll -2n
-.gcolor red
-.di BX
-.\}
-..
-.de EM
-.if t \{\
-.br
-.di
-.ll
-.gcolor
-.nr BH \\n(dn
-.ne \\n(BHu
-\M[\\$1]\D'P -.75n 0 0 \\n(BHu -(\\n[.i]u - \\n(INu - .75n) 0 0 -\\n(BHu'\M[]
-.in 0
-.nf
-.BX
-.in
-.fi
-.\}
-..
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -166,13 +27,11 @@
 .\" -----------------------------------------------------------------
 .\" * MAIN CONTENT STARTS HERE *
 .\" -----------------------------------------------------------------
-.SH "Name"
+.SH "NAME"
 pam_cracklib \- PAM module to check the password against dictionary words
-.SH "Synopsis"
-.fam C
+.SH "SYNOPSIS"
 .HP \w'\fBpam_cracklib\&.so\fR\ 'u
 \fBpam_cracklib\&.so\fR [\fI\&.\&.\&.\fR]
-.fam
 .SH "DESCRIPTION"
 .PP
 This module can be plugged into the
@@ -201,21 +60,14 @@ Similar
 .RS 4
 Is the new password too much like the old one? This is primarily controlled by one argument,
 \fBdifok\fR
-which is a number of characters that if different between the old and new are enough to accept the new password, this defaults to 10 or 1/2 the size of the new password whichever is smaller\&.
-.sp
-To avoid the lockup associated with trying to change a long and complicated password,
-\fBdifignore\fR
-is available\&. This argument can be used to specify the minimum length a new password needs to be before the
-\fBdifok\fR
-value is ignored\&. The default value for
-\fBdifignore\fR
-is 23\&.
+which is a number of character changes (inserts, removals, or replacements) between the old and new password that are enough to accept the new password\&. This defaults to 5 changes\&.
 .RE
 .PP
 Simple
 .RS 4
-Is the new password too small? This is controlled by 5 arguments
+Is the new password too small? This is controlled by 6 arguments
 \fBminlen\fR,
+\fBmaxclassrepeat\fR,
 \fBdcredit\fR,
 \fBucredit\fR,
 \fBlcredit\fR, and
@@ -232,9 +84,14 @@ Same consecutive characters
 Optional check for same consecutive characters\&.
 .RE
 .PP
+Too long monotonic character sequence
+.RS 4
+Optional check for too long monotonic character sequence\&.
+.RE
+.PP
 Contains user name
 .RS 4
-Optional check whether the password contains the user\'s name in some form\&.
+Optional check whether the password contains the user\*(Aqs name in some form\&.
 .RE
 .PP
 This module with no arguments will work well for standard unix password encryption\&. With md5 encryption, passwords can be longer than 8 characters and the default settings for this module can make it hard for the user to choose a satisfactory new password\&. Notably, the requirement that the new password contain no more than 1/2 of the characters in the old password becomes a non\-trivial constraint\&. For example, an old password of the form "the quick brown fox jumped over the lazy dogs" would be difficult to change\&.\&.\&. In addition, the default action is to allow passwords as small as 5 characters in length\&. For a md5 systems it can be a good idea to increase the required minimum size of a password\&. One can then allow more credit for different kinds of characters but accept that the new password may share most of these characters with the old password\&.
@@ -267,13 +124,7 @@ times before returning with error\&. The default is
 .RS 4
 This argument will change the default of
 \fI5\fR
-for the number of characters in the new password that must not be present in the old password\&. In addition, if 1/2 of the characters in the new password are different then the new password will be accepted anyway\&.
-.RE
-.PP
-\fBdifignore=\fR\fB\fIN\fR\fR
-.RS 4
-How many characters should the password have before difok will be ignored\&. The default is
-\fI23\fR\&.
+for the number of character changes in the new password that differentiate it from the old password\&.
 .RE
 .PP
 \fBminlen=\fR\fB\fIN\fR\fR
@@ -366,9 +217,29 @@ out of four of the classes are required\&.
 Reject passwords which contain more than N same consecutive characters\&. The default is 0 which means that this check is disabled\&.
 .RE
 .PP
+\fBmaxsequence=\fR\fB\fIN\fR\fR
+.RS 4
+Reject passwords which contain monotonic character sequences longer than N\&. The default is 0 which means that this check is disabled\&. Examples of such sequence are \*(Aq12345\*(Aq or \*(Aqfedcb\*(Aq\&. Note that most such passwords will not pass the simplicity check unless the sequence is only a minor part of the password\&.
+.RE
+.PP
+\fBmaxclassrepeat=\fR\fB\fIN\fR\fR
+.RS 4
+Reject passwords which contain more than N consecutive characters of the same class\&. The default is 0 which means that this check is disabled\&.
+.RE
+.PP
 \fBreject_username\fR
 .RS 4
 Check whether the name of the user in straight or reversed form is contained in the new password\&. If it is found the new password is rejected\&.
+.RE
+.PP
+\fBgecoscheck\fR
+.RS 4
+Check whether the words from the GECOS field (usualy full name of the user) longer than 3 characters in straight or reversed form are contained in the new password\&. If any such word is found the new password is rejected\&.
+.RE
+.PP
+\fBenforce_for_root\fR
+.RS 4
+The module will return error on failed check also if the user changing the password is root\&. This option is off by default which means that just the message about the failed check is printed but root can change the password anyway\&. Note that root is not asked for an old password so the checks that compare the old and new password are not performed\&.
 .RE
 .PP
 \fBuse_authtok\fR
@@ -421,15 +292,7 @@ For an example of the use of this module, we show how it may be stacked with the
 .if n \{\
 .RS 4
 .\}
-.fam C
-.ps -1
 .nf
-.if t \{\
-.sp -1
-.\}
-.BB lightgray adjust-for-leading-newline
-.sp -1
-
 #
 # These lines stack two password type modules\&. In this example the
 # user is given 3 opportunities to enter a strong password\&. The
@@ -440,33 +303,19 @@ For an example of the use of this module, we show how it may be stacked with the
 passwd  password required       pam_cracklib\&.so retry=3
 passwd  password required       pam_unix\&.so use_authtok
       
-.EB lightgray adjust-for-leading-newline
-.if t \{\
-.sp 1
-.\}
 .fi
-.fam
-.ps +1
 .if n \{\
 .RE
 .\}
 .PP
 Another example (in the
-\FC/etc/pam\&.d/passwd\F[]
+/etc/pam\&.d/passwd
 format) is for the case that you want to use md5 password encryption:
 .sp
 .if n \{\
 .RS 4
 .\}
-.fam C
-.ps -1
 .nf
-.if t \{\
-.sp -1
-.\}
-.BB lightgray adjust-for-leading-newline
-.sp -1
-
 #%PAM\-1\&.0
 #
 # These lines allow a md5 systems to support passwords of at least 14
@@ -478,31 +327,17 @@ password  required pam_cracklib\&.so \e
                difok=3 minlen=15 dcredit= 2 ocredit=2
 password  required pam_unix\&.so use_authtok nullok md5
       
-.EB lightgray adjust-for-leading-newline
-.if t \{\
-.sp 1
-.\}
 .fi
-.fam
-.ps +1
 .if n \{\
 .RE
 .\}
 .PP
-And here is another example in case you don\'t want to use credits:
+And here is another example in case you don\*(Aqt want to use credits:
 .sp
 .if n \{\
 .RS 4
 .\}
-.fam C
-.ps -1
 .nf
-.if t \{\
-.sp -1
-.\}
-.BB lightgray adjust-for-leading-newline
-.sp -1
-
 #%PAM\-1\&.0
 #
 # These lines require the user to select a password with a minimum
@@ -513,20 +348,13 @@ password  required pam_cracklib\&.so \e
                dcredit=\-1 ucredit=\-1 ocredit=\-1 lcredit=0 minlen=8
 password  required pam_unix\&.so use_authtok nullok md5
       
-.EB lightgray adjust-for-leading-newline
-.if t \{\
-.sp 1
-.\}
 .fi
-.fam
-.ps +1
 .if n \{\
 .RE
 .\}
 .sp
 .SH "SEE ALSO"
 .PP
-
 \fBpam.conf\fR(5),
 \fBpam.d\fR(5),
 \fBpam\fR(8)

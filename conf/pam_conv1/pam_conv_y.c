@@ -84,7 +84,7 @@
 
 
 /*
- * $Id: pam_conv_y.y,v 1.1 2006/07/24 16:14:40 kukuk Exp $
+ * $Id$
  *
  * Copyright (c) Andrew G. Morgan 1997 <morgan@parc.power.net>
  *
@@ -93,7 +93,7 @@
  */
 
     static const char bisonid[]=
-	"$Id: pam_conv_y.y,v 1.1 2006/07/24 16:14:40 kukuk Exp $\n"
+	"$Id$\n"
 	"Copyright (c) Andrew G. Morgan 1997-8 <morgan@linux.kernel.org>\n";
 
 #ifdef HAVE_CONFIG_H

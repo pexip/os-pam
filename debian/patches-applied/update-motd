@@ -6,10 +6,10 @@ Authors: Dustin Kirkland <kirkland@canonical.com>
 
 Upstream status: not yet submitted
 
-Index: pam.ubuntu/modules/pam_motd/pam_motd.c
+Index: pam.debian/modules/pam_motd/pam_motd.c
 ===================================================================
---- pam.ubuntu.orig/modules/pam_motd/pam_motd.c
-+++ pam.ubuntu/modules/pam_motd/pam_motd.c
+--- pam.debian.orig/modules/pam_motd/pam_motd.c
++++ pam.debian/modules/pam_motd/pam_motd.c
 @@ -48,14 +48,39 @@
  
  static char default_motd[] = DEFAULT_MOTD;
@@ -111,10 +111,10 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.c
  }
  
  
-Index: pam.ubuntu/modules/pam_motd/pam_motd.8.xml
+Index: pam.debian/modules/pam_motd/pam_motd.8.xml
 ===================================================================
---- pam.ubuntu.orig/modules/pam_motd/pam_motd.8.xml
-+++ pam.ubuntu/modules/pam_motd/pam_motd.8.xml
+--- pam.debian.orig/modules/pam_motd/pam_motd.8.xml
++++ pam.debian/modules/pam_motd/pam_motd.8.xml
 @@ -52,6 +52,17 @@
            </para>
          </listitem>
@@ -133,25 +133,10 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.8.xml
      </variablelist>
    </refsect1>
  
-Index: pam.ubuntu/modules/pam_motd/pam_motd.8
+Index: pam.debian/modules/pam_motd/pam_motd.8
 ===================================================================
---- pam.ubuntu.orig/modules/pam_motd/pam_motd.8
-+++ pam.ubuntu/modules/pam_motd/pam_motd.8
-@@ -2,12 +2,12 @@
- .\"     Title: pam_motd
- .\"    Author: [see the "AUTHOR" section]
- .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
--.\"      Date: 06/04/2011
-+.\"      Date: 10/30/2011
- .\"    Manual: Linux-PAM Manual
- .\"    Source: Linux-PAM Manual
- .\"  Language: English
- .\"
--.TH "PAM_MOTD" "8" "06/04/2011" "Linux-PAM Manual" "Linux\-PAM Manual"
-+.TH "PAM_MOTD" "8" "10/30/2011" "Linux-PAM Manual" "Linux\-PAM Manual"
- .\" -----------------------------------------------------------------
- .\" * Define some portability stuff
- .\" -----------------------------------------------------------------
+--- pam.debian.orig/modules/pam_motd/pam_motd.8
++++ pam.debian/modules/pam_motd/pam_motd.8
 @@ -45,6 +45,13 @@
  /path/filename
  file is displayed as message of the day\&.
@@ -166,10 +151,10 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.8
  .SH "MODULE TYPES PROVIDED"
  .PP
  Only the
-Index: pam.ubuntu/modules/pam_motd/README
+Index: pam.debian/modules/pam_motd/README
 ===================================================================
---- pam.ubuntu.orig/modules/pam_motd/README
-+++ pam.ubuntu/modules/pam_motd/README
+--- pam.debian.orig/modules/pam_motd/README
++++ pam.debian/modules/pam_motd/README
 @@ -14,6 +14,10 @@
  
      The /path/filename file is displayed as message of the day.

@@ -100,12 +100,14 @@ struct login_info {
     const char *from;
     const char *config_file;
     const char *hostname;
-    int debug;              		/* Print debugging messages. */
+    int debug;				/* Print debugging messages. */
     int only_new_group_syntax;		/* Only allow group entries of the form "(xyz)" */
     int noaudit;			/* Do not audit denials */
     const char *fs;			/* field separator */
     const char *sep;			/* list-element separator */
     int from_remote_host;               /* If PAM_RHOST was used for from */
+    struct addrinfo *res;		/* Cached DNS resolution of from */
+    int gai_rv;				/* Cached retval of getaddrinfo */
 };
 
 /* Parse module config arguments */
@@ -168,7 +170,7 @@ static int user_match (pam_handle_t *, char *, struct login_info *);
 static int group_match (pam_handle_t *, const char *, const char *, int);
 static int from_match (pam_handle_t *, char *, struct login_info *);
 static int string_match (pam_handle_t *, const char *, const char *, int);
-static int network_netmask_match (pam_handle_t *, const char *, const char *, int);
+static int network_netmask_match (pam_handle_t *, const char *, const char *, struct login_info *);
 
 
 /* isipaddr - find out if string provided is an IP address or not */
@@ -373,7 +375,7 @@ login_access (pam_handle_t *pamh, struct login_info *item)
 	    /* Allow field seperator in last field of froms */
 	    if (!(perm = strtok_r(line, item->fs, &sptr))
 		|| !(users = strtok_r(NULL, item->fs, &sptr))
-  	        || !(froms = strtok_r(NULL, "\n", &sptr))) {
+		|| !(froms = strtok_r(NULL, "\n", &sptr))) {
 		pam_syslog(pamh, LOG_ERR, "%s: line %d: bad field count",
 			   item->config_file, lineno);
 		continue;
@@ -396,8 +398,8 @@ login_access (pam_handle_t *pamh, struct login_info *item)
 		    nonall_match = YES;
 		}
 		if (item->debug)
-	    	    pam_syslog (pamh, LOG_DEBUG,
-			  "from_match=%d, \"%s\"", match, item->from);
+		    pam_syslog (pamh, LOG_DEBUG,
+				"from_match=%d, \"%s\"", match, item->from);
 	    }
 	}
 	(void) fclose(fp);
@@ -469,20 +471,18 @@ netgroup_match (pam_handle_t *pamh, const char *netgroup,
   int retval;
   char *mydomain = NULL;
 
-#ifdef HAVE_YP_GET_DEFAUTL_DOMAIN
-  yp_get_default_domain(&mydomain);
-#elif defined(HAVE_GETDOMAINNAME)
+#if defined(HAVE_GETDOMAINNAME)
   char domainname_res[256];
 
   if (getdomainname (domainname_res, sizeof (domainname_res)) == 0)
     {
-      if (strcmp (domainname_res, "(none)") == 0)
+      if (domainname_res[0] != '\0' && strcmp (domainname_res, "(none)") != 0)
         {
-          /* If domainname is not set, some systems will return "(none)" */
-	  domainname_res[0] = '\0';
-	}
-      mydomain = domainname_res;
+          mydomain = domainname_res;
+        }
     }
+#elif defined(HAVE_YP_GET_DEFAULT_DOMAIN)
+  yp_get_default_domain(&mydomain);
 #endif
 
 #ifdef HAVE_INNETGR
@@ -521,14 +521,25 @@ user_match (pam_handle_t *pamh, char *tok, struct login_info *item)
      * name of the user's primary group.
      */
 
-    if (tok[0] != '@' && (at = strchr(tok + 1, '@')) != 0) {
+    /* Try to split on a pattern (@*[^@]+)(@+.*) */
+    for (at = tok; *at == '@'; ++at);
+
+    if ((at = strchr(at, '@')) != NULL) {
         /* split user@host pattern */
 	if (item->hostname == NULL)
 	    return NO;
+	memcpy (&fake_item, item, sizeof(fake_item));
 	fake_item.from = item->hostname;
+	fake_item.gai_rv = 0;
+	fake_item.res = NULL;
+	fake_item.from_remote_host = 1; /* hostname should be resolvable */
 	*at = 0;
-	return (user_match (pamh, tok, item) &&
-		from_match (pamh, at + 1, &fake_item));
+	if (!user_match (pamh, tok, item))
+		return NO;
+	rv = from_match (pamh, at + 1, &fake_item);
+	if (fake_item.gai_rv == 0 && fake_item.res)
+		freeaddrinfo(fake_item.res);
+	return rv;
     } else if (tok[0] == '@') {			/* netgroup */
 	const char *hostname = NULL;
 	if (tok[1] == '@') {			/* add hostname to netgroup match */
@@ -612,22 +623,24 @@ from_match (pam_handle_t *pamh UNUSED, char *tok, struct login_info *item)
 	if ((str_len = strlen(string)) > (tok_len = strlen(tok))
 	    && strcasecmp(tok, string + str_len - tok_len) == 0)
 	    return (YES);
-    } else if (strcasecmp(tok, "LOCAL") == 0) {	/* local: no PAM_RHOSTS */
-	if (item->from_remote_host == 0)
+    } else if (item->from_remote_host == 0) {	/* local: no PAM_RHOSTS */
+	if (strcasecmp(tok, "LOCAL") == 0)
 	    return (YES);
     } else if (tok[(tok_len = strlen(tok)) - 1] == '.') {
-      struct addrinfo *res;
       struct addrinfo hint;
 
       memset (&hint, '\0', sizeof (hint));
       hint.ai_flags = AI_CANONNAME;
       hint.ai_family = AF_INET;
 
-      if (getaddrinfo (string, NULL, &hint, &res) != 0)
+      if (item->gai_rv != 0)
+	return NO;
+      else if (!item->res &&
+		(item->gai_rv = getaddrinfo (string, NULL, &hint, &item->res)) != 0)
 	return NO;
       else
 	{
-	  struct addrinfo *runp = res;
+	  struct addrinfo *runp = item->res;
 
           while (runp != NULL)
 	    {
@@ -643,17 +656,15 @@ from_match (pam_handle_t *pamh UNUSED, char *tok, struct login_info *item)
 
 		  if (strncmp(tok, buf, tok_len) == 0)
 		    {
-		      freeaddrinfo (res);
 		      return YES;
 		    }
 		}
 	      runp = runp->ai_next;
 	    }
-	  freeaddrinfo (res);
 	}
     } else {
       /* Assume network/netmask with a IP of a host.  */
-      if (network_netmask_match(pamh, tok, string, item->debug))
+      if (network_netmask_match(pamh, tok, string, item))
 	return YES;
     }
 
@@ -696,13 +707,13 @@ string_match (pam_handle_t *pamh, const char *tok, const char *string,
  */
 static int
 network_netmask_match (pam_handle_t *pamh,
-		       const char *tok, const char *string, int debug)
+		       const char *tok, const char *string, struct login_info *item)
 {
     char *netmask_ptr;
     char netmask_string[MAXHOSTNAMELEN + 1];
     int addr_type;
 
-    if (debug)
+    if (item->debug)
     pam_syslog (pamh, LOG_DEBUG,
 		"network_netmask_match: tok=%s, item=%s", tok, string);
     /* OK, check if tok is of type addr/mask */
@@ -747,18 +758,20 @@ network_netmask_match (pam_handle_t *pamh,
     if (isipaddr(string, NULL, NULL) != YES)
       {
 	/* Assume network/netmask with a name of a host.  */
-	struct addrinfo *res;
 	struct addrinfo hint;
 
 	memset (&hint, '\0', sizeof (hint));
 	hint.ai_flags = AI_CANONNAME;
 	hint.ai_family = AF_UNSPEC;
 
-	if (getaddrinfo (string, NULL, &hint, &res) != 0)
+	if (item->gai_rv != 0)
+	    return NO;
+	else if (!item->res &&
+		(item->gai_rv = getaddrinfo (string, NULL, &hint, &item->res)) != 0)
 	    return NO;
         else
 	  {
-	    struct addrinfo *runp = res;
+	    struct addrinfo *runp = item->res;
 
 	    while (runp != NULL)
 	      {
@@ -772,12 +785,10 @@ network_netmask_match (pam_handle_t *pamh,
 
 		if (are_addresses_equal(buf, tok, netmask_ptr))
 		  {
-		    freeaddrinfo (res);
 		    return YES;
 		  }
 		runp = runp->ai_next;
 	      }
-	    freeaddrinfo (res);
 	  }
       }
     else
@@ -799,6 +810,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     const char *from;
     struct passwd *user_pw;
     char hostname[MAXHOSTNAMELEN + 1];
+    int rv;
 
 
     /* set username */
@@ -815,6 +827,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     /*
      * Bundle up the arguments to avoid unnecessary clumsiness later on.
      */
+    memset(&loginfo, '\0', sizeof(loginfo));
     loginfo.user = user_pw;
     loginfo.config_file = PAM_ACCESS_CONFIG;
 
@@ -885,7 +898,12 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 	loginfo.hostname = NULL;
     }
 
-    if (login_access(pamh, &loginfo)) {
+    rv = login_access(pamh, &loginfo);
+
+    if (loginfo.gai_rv == 0 && loginfo.res)
+	freeaddrinfo(loginfo.res);
+
+    if (rv) {
 	return (PAM_SUCCESS);
     } else {
 	pam_syslog(pamh, LOG_ERR,

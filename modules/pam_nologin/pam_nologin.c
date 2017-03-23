@@ -1,7 +1,7 @@
 /* pam_nologin module */
 
 /*
- * $Id: pam_nologin.c,v 1.12 2010/08/26 19:16:18 t8m Exp $
+ * $Id$
  *
  * Written by Michael K. Johnson <johnsonm@redhat.com> 1996/10/24
  *

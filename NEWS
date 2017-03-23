@@ -1,5 +1,42 @@
 Linux-PAM NEWS -- history of user-visible changes.
 
+Release 1.1.8
+* pam_unix: bug fix for compiling with SELinux, fix crash at login time
+
+
+Release 1.1.7
+* Update translations
+* pam_exec: add stdout and type= options
+* pam_tty_audit: add options to control logging of passwords
+* pam_unix: Read defaults from /etc/login.defs
+* pam_userdb: Allow modern password hashes
+* pam_selinux/pam_tally2: Add tty and rhost to audit data
+* Lot of docu and code fixes
+
+
+Release 1.1.6
+* Update translations
+* pam_cracklib: Add more checks for weak passwords
+* pam_lastlog: Never lock out root
+* Lot of bug fixes and smaller enhancements
+
+
+Release 1.1.5
+* pam_env: Fix CVE-2011-3148 and CVE-2011-3149
+* pam_access: Add hostname resolution cache
+* Documentation: Improvements/fixes
+
+
+Release 1.1.4
+
+* Add vietnamese translation
+* pam_namepace: Add new functionality
+* pam_securetty: Honour console= kernel option, add noconsole option
+* pam_limits: Add %group syntax, drop change_uid option, add set_all option
+* Lot of small bug fixes
+* Lot of compiler warnings fixed
+* Add support for libtirpc
+
 
 Release 1.1.3
 

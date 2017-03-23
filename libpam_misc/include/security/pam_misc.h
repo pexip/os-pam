@@ -1,4 +1,4 @@
-/* $Id: pam_misc.h,v 1.5 2005/08/16 12:27:40 kukuk Exp $ */
+/* $Id$ */
 
 #ifndef __PAMMISC_H
 #define __PAMMISC_H
@@ -6,8 +6,8 @@
 #include <security/pam_appl.h>
 #include <security/pam_client.h>
 
-#ifdef __cplusplus 
-extern "C" { 
+#ifdef __cplusplus
+extern "C" {
 #endif /* __cplusplus */
 
 /* include some useful macros */

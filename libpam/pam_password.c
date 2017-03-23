@@ -1,7 +1,7 @@
 /* pam_password.c - PAM Password Management */
 
 /*
- * $Id: pam_password.c,v 1.7 2009/12/08 14:41:41 kukuk Exp $
+ * $Id$
  */
 
 #include "pam_private.h"

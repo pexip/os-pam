@@ -7,7 +7,9 @@ DESCRIPTION
 pam_securetty is a PAM module that allows root logins only if the user is
 logging in on a "secure" tty, as defined by the listing in /etc/securetty.
 pam_securetty also checks to make sure that /etc/securetty is a plain file and
-not world writable.
+not world writable. It will also allow root logins on the tty specified with
+console= switch on the kernel command line and on ttys from the /sys/class/tty/
+console/active.
 
 This module has no effect on non-root users and requires that the application
 fills in the PAM_TTY item correctly.
@@ -20,6 +22,12 @@ OPTIONS
 debug
 
     Print debug information.
+
+noconsole
+
+    Do not automatically allow root logins on the kernel console device, as
+    specified on the kernel command line or by the sys file, if it is not also
+    specified in the /etc/securetty file.
 
 EXAMPLES
 

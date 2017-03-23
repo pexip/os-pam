@@ -1,5 +1,5 @@
 /*
- * $Id: pam_modutil_priv.c,v 1.1 2010/10/03 21:02:07 ldv Exp $
+ * $Id$
  *
  * This file provides two functions:
  * pam_modutil_drop_priv:

@@ -1,20 +1,20 @@
 /*
  * This function implements the "bigcrypt" algorithm specifically for
  * Linux-PAM.
- *  
+ *
  * This algorithm is algorithm 0 (default) shipped with the C2 secure
  * implementation of Digital UNIX.
- * 
+ *
  * Disclaimer: This work is not based on the source code to Digital
  * UNIX, nor am I connected to Digital Equipment Corp, in any way
  * other than as a customer. This code is based on published
  * interfaces and reasonable guesswork.
- * 
+ *
  * Description: The cleartext is divided into blocks of SEGMENT_SIZE=8
  * characters or less. Each block is encrypted using the standard UNIX
  * libc crypt function. The result of the encryption for one block
  * provides the salt for the suceeding block.
- * 
+ *
  * Restrictions: The buffer used to hold the encrypted result is
  * statically allocated. (see MAX_PASS_LEN below).  This is necessary,
  * as the returned pointer points to "static data that are overwritten
@@ -109,6 +109,10 @@ char *bigcrypt(const char *key, const char *salt)
 #else
 	tmp_ptr = crypt(plaintext_ptr, salt);	/* libc crypt() */
 #endif
+	if (tmp_ptr == NULL) {
+		free(dec_c2_cryptbuf);
+		return NULL;
+	}
 	/* and place in the static area */
 	strncpy(cipher_ptr, tmp_ptr, 13);
 	cipher_ptr += ESEGMENT_SIZE + SALT_SIZE;
@@ -130,6 +134,11 @@ char *bigcrypt(const char *key, const char *salt)
 #else
 			tmp_ptr = crypt(plaintext_ptr, salt_ptr);
 #endif
+			if (tmp_ptr == NULL) {
+				_pam_overwrite(dec_c2_cryptbuf);
+				free(dec_c2_cryptbuf);
+				return NULL;
+			}
 
 			/* skip the salt for seg!=0 */
 			strncpy(cipher_ptr, (tmp_ptr + SALT_SIZE), ESEGMENT_SIZE);

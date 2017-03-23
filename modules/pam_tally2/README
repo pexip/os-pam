@@ -76,10 +76,6 @@ AUTH OPTIONS
         incremented. The sysadmin should use this for user launched services,
         like su, otherwise this argument should be omitted.
 
-    no_lock_time
-
-        Do not use the .fail_locktime field in /var/log/faillog for this user.
-
     even_deny_root
 
         Root account can become unavailable.

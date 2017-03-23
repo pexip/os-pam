@@ -1,5 +1,5 @@
 /*
- * $Id: pam_modutil_ingroup.c,v 1.1 2005/09/21 10:00:58 t8m Exp $
+ * $Id$
  *
  * This function provides common methods for checking if a user is in a
  * specified group.
@@ -74,7 +74,7 @@ pam_modutil_user_in_group_common(pam_handle_t *pamh UNUSED,
 	return 0;
 }
 
-int 
+int
 pam_modutil_user_in_group_nam_nam(pam_handle_t *pamh,
 				 const char *user, const char *group)
 {

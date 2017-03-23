@@ -483,6 +483,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			pam_syslog(pamh, LOG_NOTICE, "timestamp file `%s' is "
 				"corrupted", path);
 			close(fd);
+			free(mac);
 			free(message);
 			return PAM_AUTH_ERR;
 		}
@@ -636,6 +637,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED, int argc, const char *
 		       "error setting ownership of `%s': %m",
 		       path);
 	  }
+	  close(fd);
+	  free(text);
 	  return PAM_SESSION_ERR;
 	}
 
@@ -684,7 +687,7 @@ struct pam_module _pam_timestamp_modstruct = {
 int
 main(int argc, char **argv)
 {
-	int i, pretval = -1, retval = 0, dflag = 0, kflag = 0;
+	int i, retval = 0, dflag = 0, kflag = 0;
 	const char *target_user = NULL, *user = NULL, *tty = NULL;
 	struct passwd *pwd;
 	struct timeval tv;
@@ -826,7 +829,6 @@ main(int argc, char **argv)
 			select(STDOUT_FILENO + 1,
 			       NULL, NULL, &write_fds,
 			       &tv);
-			pretval = retval;
 			retval = 0;
 		}
 	} while (dflag > 0);

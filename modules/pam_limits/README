@@ -22,12 +22,6 @@ denies access based on limit of maximum number of concurrent login sessions.
 
 OPTIONS
 
-change_uid
-
-    Change real uid to the user for who the limits are set up. Use this option
-    if you have problems like login not forking a shell for user who has no
-    processes. Be warned that something else may break when you do this.
-
 conf=/path/to/limits.conf
 
     Indicate an alternative limits.conf style configuration file to override
@@ -36,6 +30,11 @@ conf=/path/to/limits.conf
 debug
 
     Print debug information.
+
+set_all
+
+    Set the limits for which no value is specified in the configuration file to
+    the one from the process with the PID 1.
 
 utmp_early
 
@@ -55,11 +54,14 @@ These are some example lines which might be specified in /etc/security/
 limits.conf.
 
 *               soft    core            0
-*               hard    rss             10000
+*               hard    nofile          512
 @student        hard    nproc           20
 @faculty        soft    nproc           20
 @faculty        hard    nproc           50
 ftp             hard    nproc           0
 @student        -       maxlogins       4
+:123            hard    cpu             5000
+@500:           soft    cpu             10000
+600:700         hard    locks           10
 
 
