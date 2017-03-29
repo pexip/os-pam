@@ -86,16 +86,16 @@ Index: pam.debian/modules/pam_motd/pam_motd.c
 -
 -	pam_info (pamh, "%s", mtmp);
 -	break;
-+    /* Run the update-motd dynamic motd scripts, outputting to /var/run/motd.
-+       If /etc/motd -> /var/run/motd, the displayed MOTD will be dynamic.
-+       Otherwise, the admin can force a static MOTD by breaking that symlink
-+       and publishing into an /etc/motd text file. */
++    /* Run the update-motd dynamic motd scripts, outputting to /run/motd.dynamic.
++       This will be displayed only when calling pam_motd with
++       motd=/run/motd.dynamic; current /etc/pam.d/login and /etc/pam.d/sshd
++       display both this file and /etc/motd. */
 +    if (do_update && (stat("/etc/update-motd.d", &st) == 0)
 +        && S_ISDIR(st.st_mode))
 +    {
 +	mode_t old_mask = umask(0022);
-+	if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts --lsbsysinit /etc/update-motd.d > /var/run/motd.new"))
-+	    rename("/var/run/motd.new", "/var/run/motd");
++	if (!system("/usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin run-parts --lsbsysinit /etc/update-motd.d > /run/motd.dynamic.new"))
++	    rename("/run/motd.dynamic.new", "/run/motd.dynamic");
 +	umask(old_mask);
      }
  

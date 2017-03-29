@@ -18,6 +18,9 @@ pam (1.1.8-3.1+deb8u2pexip1) pexip; urgency=low
     - debian/local/common-session{,-noninteractive}: Enable pam_umask by
       default, now that the umask setting is gone from /etc/profile.
     - debian/local/pam-auth-update: Add the new md5sums for pam_umask addition.
+    - Adjust debian/patches-applied/update-motd to write to
+      /run/motd.dynamic, as sysvinit/ssh/login in Debian have been changed
+      to use this file and no longer links /etc/motd to /var/run/motd.
 
  -- John-Mark Bell <jmb@pexip.com>  Thu, 23 Mar 2017 15:50:32 +0000
 
