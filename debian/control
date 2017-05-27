@@ -3,13 +3,13 @@ Section: libs
 Priority: optional
 Uploaders: Sam Hartman <hartmans@debian.org>, Roger Leigh <rleigh@debian.org>
 Maintainer: Steve Langasek <vorlon@debian.org>
-Standards-Version: 3.9.1
-Build-Depends: libcrack2-dev (>= 2.8), bzip2, debhelper (>= 8.9.4), quilt (>= 0.48-1), flex, libdb-dev, libselinux1-dev [linux-any], po-debconf, dh-autoreconf, autopoint, libaudit-dev [linux-any], pkg-config
-Build-Depends-Indep: xsltproc, libxml2-utils, docbook-xml, docbook-xsl, w3m
+Standards-Version: 3.9.8
+Build-Depends: libcrack2-dev (>= 2.8), bzip2, debhelper (>= 9), quilt (>= 0.48-1), flex, libdb-dev, libselinux1-dev [linux-any], po-debconf, dh-autoreconf, autopoint, libaudit-dev [linux-any], pkg-config, libfl-dev, libfl-dev:native, docbook-xsl, docbook-xml, xsltproc, libxml2-utils, w3m
 Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
-Vcs-Bzr: http://bzr.debian.org/bzr/pkg-pam/debian/sid/
-Homepage: http://pam.sourceforge.net/
+Vcs-Bzr: https://alioth.debian.org/scm/loggerhead/pkg-pam/debian/sid
+Vcs-Browser: https://alioth.debian.org/scm/loggerhead/pkg-pam/debian/sid/files
+Homepage: http://www.linux-pam.org/
 
 Package: libpam0g
 Priority: required

@@ -15,7 +15,7 @@ hurd_no_setfsuid
 045_pam_dispatch_jump_is_ignore
 054_pam_security_abstract_securetty_handling
 055_pam_unix_nullok_secure
-cve-2011-4708.patch
+cve-2010-4708.patch
 PAM-manpage-section 
 update-motd
 no_PATH_MAX_on_hurd
@@ -24,3 +24,6 @@ pam-loginuid-in-containers
 cve-2013-7041.patch
 cve-2014-2583.patch
 cve-2015-3238.patch
+pam-limits-nofile-fd-setsize-cap
+pam_namespace_fix_bashism.patch
+make_documentation_reproducible.patch

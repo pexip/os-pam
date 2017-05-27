@@ -1,0 +1,61 @@
+From fbc65c39d6853af268c9a093923afc876d0b138e Mon Sep 17 00:00:00 2001
+From: Steve Langasek <vorlon@debian.org>
+Date: Tue, 14 Jan 2014 19:48:51 -0800
+Subject: pam_namespace: don't use bashisms in default namespace.init script
+
+* modules/pam_namespace/pam_namespace.c: call setuid() before execing the
+namespace init script, so that scripts run with maximum privilege regardless
+of the shell implementation.
+* modules/pam_namespace/namespace.init: drop the '-p' bashism from the
+shebang line
+
+This is not a POSIX standard option, it's a bashism.  The bash manpage says
+that it's used to prevent the effective user id from being reset to the real
+user id on startup, and to ignore certain unsafe variables from the
+environment.
+
+In the case of pam_namespace, the -p is not necessary for environment
+sanitizing because the PAM module (properly) sanitizes the environment
+before execing the script.
+
+The stated reason given in CVS history for passing -p is to "preserve euid
+when called from setuid apps (su, newrole)."  This should be done more
+portably, by calling setuid() before spawning the shell.
+
+Signed-off-by: Steve Langasek <vorlon@debian.org>
+Bug-Debian: http://bugs.debian.org/624842
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1081323
+---
+ modules/pam_namespace/namespace.init  | 2 +-
+ modules/pam_namespace/pam_namespace.c | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/modules/pam_namespace/namespace.init b/modules/pam_namespace/namespace.init
+index 9ab5806..67d4aa2 100755
+--- a/modules/pam_namespace/namespace.init
++++ b/modules/pam_namespace/namespace.init
+@@ -1,4 +1,4 @@
+-#!/bin/sh -p
++#!/bin/sh
+ # It receives polydir path as $1, the instance path as $2,
+ # a flag whether the instance dir was newly created (0 - no, 1 - yes) in $3,
+ # and user name in $4.
+diff --git a/modules/pam_namespace/pam_namespace.c b/modules/pam_namespace/pam_namespace.c
+index e0d5e30..92883f5 100644
+--- a/modules/pam_namespace/pam_namespace.c
++++ b/modules/pam_namespace/pam_namespace.c
+@@ -1205,6 +1205,11 @@ static int inst_init(const struct polydir_s *polyptr, const char *ipath,
+ 						_exit(1);
+ 				}
+ #endif
++				/* Pass maximum privs when we exec() */
++				if (setuid(geteuid()) < 0) {
++					/* ignore failures, they don't matter */
++				}
++
+ 				if (execle(init_script, init_script,
+ 					polyptr->dir, ipath, newdir?"1":"0", idata->user, NULL, envp) < 0)
+ 					_exit(1);
+-- 
+cgit v0.12
+

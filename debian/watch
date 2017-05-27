@@ -1,3 +1,4 @@
 version=3
-opts=pasv ftp://ftp.kernel.org/pub/linux/libs/pam/library/Linux-PAM-(.*).tar.gz
-
+opts=uversionmangle=s/^(\S+-doc)/0.0.$1/ \
+http://www.linux-pam.org/library/ \
+(?:|.*/)Linux-PAM(?:[_\-]v?|)(\d[^\s/]*)\.(?:tar\.xz|txz|tar\.bz2|tbz2|tar\.gz|tgz)
