@@ -1,3 +1,9 @@
+pam (1.1.8-3.1+deb8u2+b1pexip1) pexip; urgency=low
+
+  * Bump version number to allow for debian bin NMU
+
+ -- Vincent Sanders <vince@pexip.com>  Thu, 2 nov 2017 08:00:32 +0000
+
 pam (1.1.8-3.1+deb8u2pexip1) pexip; urgency=low
 
   * Migrate to Jessie
