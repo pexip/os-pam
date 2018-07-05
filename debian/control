@@ -11,7 +11,7 @@ Build-Conflicts-Indep: fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev
 Vcs-Bzr: http://bzr.debian.org/bzr/pkg-pam/debian/sid/
 Homepage: http://pam.sourceforge.net/
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ jessie
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ stretch
 
 Package: libpam0g
 Priority: required
