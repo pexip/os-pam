@@ -2,4 +2,6 @@ examples/blank.c
 examples/check_user.c
 examples/vpass.c
 examples/xsh.c
-libpamc/test/{agents,modules,regress}
+libpamc/test/agents
+libpamc/test/modules
+libpamc/test/regress
