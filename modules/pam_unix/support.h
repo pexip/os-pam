@@ -18,8 +18,6 @@
  * typed were not the same.
  */
 
-#define MISTYPED_PASS "Sorry, passwords do not match"
-
 /* type definition for the control options */
 
 typedef struct {
@@ -72,7 +70,7 @@ typedef struct {
 					   some information may be sensitive */
 #define UNIX_USE_FIRST_PASS       4
 #define UNIX_TRY_FIRST_PASS       5
-#define UNIX_NOT_SET_PASS         6	/* don't set the AUTHTOK items */
+#define UNIX_AUTHTOK_TYPE         6	/* TYPE for pam_get_authtok() */
 
 #define UNIX__PRELIM              7	/* internal */
 #define UNIX__UPDATE              8	/* internal */
@@ -97,8 +95,11 @@ typedef struct {
 					   password hash algorithms */
 #define UNIX_BLOWFISH_PASS       26	/* new password hashes will use blowfish */
 #define UNIX_MIN_PASS_LEN        27	/* min length for password */
+#define UNIX_QUIET		 28	/* Don't print informational messages */
+#define UNIX_NO_PASS_EXPIRY      29     /* Don't check for password expiration if not used for authentication */
+#define UNIX_DES                 30     /* DES, default */
 /* -------------- */
-#define UNIX_CTRLS_              28	/* number of ctrl arguments defined */
+#define UNIX_CTRLS_              31	/* number of ctrl arguments defined */
 
 #define UNIX_DES_CRYPT(ctrl)	(off(UNIX_MD5_PASS,ctrl)&&off(UNIX_BIGCRYPT,ctrl)&&off(UNIX_SHA256_PASS,ctrl)&&off(UNIX_SHA512_PASS,ctrl)&&off(UNIX_BLOWFISH_PASS,ctrl))
 
@@ -113,7 +114,7 @@ static const UNIX_Ctrls unix_args[UNIX_CTRLS_] =
 /* UNIX_AUDIT */           {"audit",           _ALL_ON_,                 010, 0},
 /* UNIX_USE_FIRST_PASS */  {"use_first_pass",  _ALL_ON_^(060),           020, 0},
 /* UNIX_TRY_FIRST_PASS */  {"try_first_pass",  _ALL_ON_^(060),           040, 0},
-/* UNIX_NOT_SET_PASS */    {"not_set_pass",    _ALL_ON_,                0100, 0},
+/* UNIX_AUTHTOK_TYPE */    {"authtok_type=",   _ALL_ON_,                0100, 0},
 /* UNIX__PRELIM */         {NULL,              _ALL_ON_^(0600),         0200, 0},
 /* UNIX__UPDATE */         {NULL,              _ALL_ON_^(0600),         0400, 0},
 /* UNIX__NONULL */         {NULL,              _ALL_ON_,               01000, 0},
@@ -135,11 +136,12 @@ static const UNIX_Ctrls unix_args[UNIX_CTRLS_] =
 /* UNIX_ALGO_ROUNDS */     {"rounds=",         _ALL_ON_,          0100000000, 0},
 /* UNIX_BLOWFISH_PASS */   {"blowfish",    _ALL_ON_^(0260420000), 0200000000, 1},
 /* UNIX_MIN_PASS_LEN */    {"minlen=",		_ALL_ON_,         0400000000, 0},
+/* UNIX_QUIET */           {"quiet",           _ALL_ON_,         01000000000, 0},
+/* UNIX_NO_PASS_EXPIRY */  {"no_pass_expiry",  _ALL_ON_,         02000000000, 0},
+/* UNIX_DES */             {"des",             _ALL_ON_^(0260420000),      0, 1},
 };
 
 #define UNIX_DEFAULTS  (unix_args[UNIX__NONULL].flag)
-
-#define MAX_FD_NO 2000000
 
 /* use this to free strings. ESPECIALLY password strings */
 

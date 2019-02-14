@@ -68,6 +68,10 @@ Indicate that the caller is a package maintainer script; lowers the
 priority of debconf questions to `medium' so that the user is not
 prompted by default.
 .TP
+.B \-\-enable \fIprofile \fR[\fIprofile\fR...]
+Enable the specified profiles in system configuration. This is used to
+enable profiles that are not on by default.
+.TP
 .B \-\-remove \fIprofile \fR[\fIprofile\fR...]
 Remove the specified profiles from the system configuration.
 .B pam\-auth\-update \-\-remove

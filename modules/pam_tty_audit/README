@@ -11,15 +11,15 @@ OPTIONS
 
 disable=patterns
 
-    For each user matching one of comma-separated glob patterns, disable TTY
-    auditing. This overrides any previous enable option matching the same user
-    name on the command line.
+    For each user matching patterns, disable TTY auditing. This overrides any
+    previous enable option matching the same user name on the command line. See
+    NOTES for further description of patterns.
 
 enable=patterns
 
-    For each user matching one of comma-separated glob patterns, enable TTY
-    auditing. This overrides any previous disable option matching the same user
-    name on the command line.
+    For each user matching patterns, enable TTY auditing. This overrides any
+    previous disable option matching the same user name on the command line.
+    See NOTES for further description of patterns.
 
 open_only
 
@@ -42,8 +42,13 @@ enabled, and audit TTY input even by other users unless auditing for these
 users is explicitly disabled. Therefore, it is recommended to use disable=* as
 the first option for most daemons using PAM.
 
-To view the data that was logged by the kernel to audit use the command
+To view the data that was logged by the kernel to audit use the command 
 aureport --tty.
+
+The patterns are comma separated lists of glob patterns or ranges of uids. A
+range is specified as min_uid:max_uid where one of these values can be empty.
+If min_uid is empty only user with the uid max_uid will be matched. If max_uid
+is empty users with the uid greater than or equal to min_uid will be matched.
 
 EXAMPLES
 

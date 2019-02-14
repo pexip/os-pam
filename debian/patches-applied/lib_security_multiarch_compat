@@ -11,13 +11,13 @@ currently abusing the existing variables and inverting their meaning in
 order to get everything installed where we want it and get absolute paths
 the way we want them.
 
-Index: multiarch/libpam/pam_handlers.c
+Index: pam/libpam/pam_handlers.c
 ===================================================================
---- multiarch.orig/libpam/pam_handlers.c
-+++ multiarch/libpam/pam_handlers.c
-@@ -705,7 +705,26 @@
- 	}
- #else
+--- pam.orig/libpam/pam_handlers.c
++++ pam/libpam/pam_handlers.c
+@@ -728,7 +728,26 @@
+ 	success = PAM_ABORT;
+ 
  	D(("_pam_load_module: _pam_dlopen(%s)", mod_path));
 -	mod->dl_handle = _pam_dlopen(mod_path);
 +	if (mod_path[0] == '/') {
@@ -43,7 +43,7 @@ Index: multiarch/libpam/pam_handlers.c
  	D(("_pam_load_module: _pam_dlopen'ed"));
  	D(("_pam_load_module: dlopen'ed"));
  	if (mod->dl_handle == NULL) {
-@@ -775,7 +794,6 @@
+@@ -797,7 +816,6 @@
      struct handler **handler_p2;
      struct handlers *the_handlers;
      const char *sym, *sym2;
@@ -51,7 +51,7 @@ Index: multiarch/libpam/pam_handlers.c
      servicefn func, func2;
      int mod_type = PAM_MT_FAULTY_MOD;
  
-@@ -787,16 +805,7 @@
+@@ -809,16 +827,7 @@
  
      if ((handler_type == PAM_HT_MODULE || handler_type == PAM_HT_SILENT_MODULE) &&
  	mod_path != NULL) {

@@ -2,12 +2,12 @@
 .\"     Title: pam_tty_audit
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/04/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TTY_AUDIT" "8" "09/04/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TTY_AUDIT" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -39,18 +39,20 @@ The pam_tty_audit PAM module is used to enable or disable TTY auditing\&. By def
 .PP
 \fBdisable=\fR\fB\fIpatterns\fR\fR
 .RS 4
-For each user matching one of comma\-separated glob
+For each user matching
 \fB\fIpatterns\fR\fR, disable TTY auditing\&. This overrides any previous
 \fBenable\fR
-option matching the same user name on the command line\&.
+option matching the same user name on the command line\&. See NOTES for further description of
+\fB\fIpatterns\fR\fR\&.
 .RE
 .PP
 \fBenable=\fR\fB\fIpatterns\fR\fR
 .RS 4
-For each user matching one of comma\-separated glob
+For each user matching
 \fB\fIpatterns\fR\fR, enable TTY auditing\&. This overrides any previous
 \fBdisable\fR
-option matching the same user name on the command line\&.
+option matching the same user name on the command line\&. See NOTES for further description of
+\fB\fIpatterns\fR\fR\&.
 .RE
 .PP
 \fBopen_only\fR
@@ -89,6 +91,20 @@ as the first option for most daemons using PAM\&.
 .PP
 To view the data that was logged by the kernel to audit use the command
 \fBaureport \-\-tty\fR\&.
+.PP
+The
+\fB\fIpatterns\fR\fR
+are comma separated lists of glob patterns or ranges of uids\&. A range is specified as
+\fImin_uid\fR:\fImax_uid\fR
+where one of these values can be empty\&. If
+\fImin_uid\fR
+is empty only user with the uid
+\fImax_uid\fR
+will be matched\&. If
+\fImax_uid\fR
+is empty users with the uid greater than or equal to
+\fImin_uid\fR
+will be matched\&.
 .SH "EXAMPLES"
 .PP
 Audit all administrative actions\&.

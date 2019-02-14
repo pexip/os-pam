@@ -384,7 +384,7 @@ _parse_line (const pam_handle_t *pamh, char *buffer, VAR *var)
   length = strcspn(buffer," \t\n");
 
   if ((var->name = malloc(length + 1)) == NULL) {
-    pam_syslog(pamh, LOG_ERR, "Couldn't malloc %d bytes", length+1);
+    pam_syslog(pamh, LOG_CRIT, "Couldn't malloc %d bytes", length+1);
     return PAM_BUF_ERR;
   }
 
@@ -440,7 +440,7 @@ _parse_line (const pam_handle_t *pamh, char *buffer, VAR *var)
     if (length) {
       if ((*valptr = malloc(length + 1)) == NULL) {
 	D(("Couldn't malloc %d bytes", length+1));
-	pam_syslog(pamh, LOG_ERR, "Couldn't malloc %d bytes", length+1);
+	pam_syslog(pamh, LOG_CRIT, "Couldn't malloc %d bytes", length+1);
 	return PAM_BUF_ERR;
       }
       (void)strncpy(*valptr,ptr,length);
@@ -653,7 +653,7 @@ static int _expand_arg(pam_handle_t *pamh, char **value)
     free(*value);
     if ((*value = malloc(strlen(tmp) +1)) == NULL) {
       D(("Couldn't malloc %d bytes for expanded var", strlen(tmp)+1));
-      pam_syslog (pamh, LOG_ERR, "Couldn't malloc %lu bytes for expanded var",
+      pam_syslog (pamh, LOG_CRIT, "Couldn't malloc %lu bytes for expanded var",
 	       (unsigned long)strlen(tmp)+1);
       return PAM_BUF_ERR;
     }
@@ -676,7 +676,7 @@ static const char * _pam_get_item_byname(pam_handle_t *pamh, const char *name)
   const void *itemval;
 
   D(("Called."));
-  if (strcmp(name, "PAM_USER") == 0) {
+  if (strcmp(name, "PAM_USER") == 0 || strcmp(name, "HOME") == 0 || strcmp(name, "SHELL") == 0) {
     item = PAM_USER;
   } else if (strcmp(name, "PAM_USER_PROMPT") == 0) {
     item = PAM_USER_PROMPT;
@@ -696,6 +696,19 @@ static const char * _pam_get_item_byname(pam_handle_t *pamh, const char *name)
     D(("pam_get_item failed"));
     return NULL;     /* let pam_get_item() log the error */
   }
+
+  if (itemval && (strcmp(name, "HOME") == 0 || strcmp(name, "SHELL") == 0)) {
+    struct passwd *user_entry;
+    user_entry = pam_modutil_getpwnam (pamh, (char *) itemval);
+    if (!user_entry) {
+      pam_syslog(pamh, LOG_ERR, "No such user!?");
+      return NULL;
+    }
+    return (strcmp(name, "SHELL") == 0) ?
+      user_entry->pw_shell :
+      user_entry->pw_dir;
+  }
+
   D(("Exit."));
   return itemval;
 }
@@ -709,7 +722,7 @@ static int _define_var(pam_handle_t *pamh, int ctrl, VAR *var)
 
   D(("Called."));
   if (asprintf(&envvar, "%s=%s", var->name, var->value) < 0) {
-    pam_syslog(pamh, LOG_ERR, "out of memory");
+    pam_syslog(pamh, LOG_CRIT, "out of memory");
     return PAM_BUF_ERR;
   }
 
@@ -755,7 +768,7 @@ static void   _clean_var(VAR *var)
 
 /* --- authentication management functions (only) --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		     int argc UNUSED, const char **argv UNUSED)
 {
@@ -801,7 +814,7 @@ handle_env (pam_handle_t *pamh, int argc, const char **argv)
     else {
       if (asprintf(&envpath, "%s/%s", user_entry->pw_dir, user_env_file) < 0)
 	{
-	  pam_syslog(pamh, LOG_ERR, "Out of memory");
+	  pam_syslog(pamh, LOG_CRIT, "Out of memory");
 	  return PAM_BUF_ERR;
 	}
       if (stat(envpath, &statbuf) == 0) {
@@ -826,7 +839,7 @@ handle_env (pam_handle_t *pamh, int argc, const char **argv)
   return retval;
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		  int argc UNUSED, const char **argv UNUSED)
 {
@@ -834,7 +847,7 @@ pam_sm_acct_mgmt (pam_handle_t *pamh UNUSED, int flags UNUSED,
   return PAM_SERVICE_ERR;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh, int flags UNUSED,
 		int argc, const char **argv)
 {
@@ -842,7 +855,7 @@ pam_sm_setcred (pam_handle_t *pamh, int flags UNUSED,
   return handle_env (pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -850,7 +863,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
   return handle_env (pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		      int argc UNUSED, const char **argv UNUSED)
 {
@@ -858,28 +871,12 @@ pam_sm_close_session (pam_handle_t *pamh UNUSED, int flags UNUSED,
   return PAM_SUCCESS;
 }
 
-PAM_EXTERN int
+int
 pam_sm_chauthtok (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		  int argc UNUSED, const char **argv UNUSED)
 {
   pam_syslog (pamh, LOG_NOTICE, "pam_sm_chauthtok called inappropriately");
   return PAM_SERVICE_ERR;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_env_modstruct = {
-     "pam_env",
-     pam_sm_authenticate,
-     pam_sm_setcred,
-     pam_sm_acct_mgmt,
-     pam_sm_open_session,
-     pam_sm_close_session,
-     pam_sm_chauthtok,
-};
-
-#endif
 
 /* end of module definition */

@@ -2,12 +2,12 @@
 .\"     Title: pam_exec
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_EXEC" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_EXEC" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -65,7 +65,9 @@ Print debug information\&.
 \fBexpose_authtok\fR
 .RS 4
 During authentication the calling command can read the password from
-\fBstdin\fR(3)\&.
+\fBstdin\fR(3)\&. Only first
+\fIPAM_MAX_RESP_SIZE\fR
+bytes of a password are provided to the command\&.
 .RE
 .PP
 \fBlog=\fR\fB\fIfile\fR\fR

@@ -4,7 +4,7 @@ pam_shells — PAM module to check for valid login shell
 
 DESCRIPTION
 
-pam_shells is a PAM module that only allows access to the system if the users
+pam_shells is a PAM module that only allows access to the system if the user's
 shell is listed in /etc/shells.
 
 It also checks if /etc/shells is a plain file and not world writable.

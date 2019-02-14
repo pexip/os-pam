@@ -106,7 +106,7 @@ selinux_check_root (void)
 	return status;
     }
 
-    status = selinux_check_access(user_context, user_context, "passwd", "passwd", NULL);
+    status = selinux_check_access(user_context, user_context, "passwd", "rootok", NULL);
 
     selinux_set_callback(SELINUX_CB_LOG, old_callback);
     freecon(user_context);
@@ -135,7 +135,7 @@ check_for_root (pam_handle_t *pamh, int ctrl)
 
 /* --- management functions --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -146,14 +146,14 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     return check_for_root (pamh, ctrl);
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
     return PAM_SUCCESS;
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt (pam_handle_t *pamh, int flags UNUSED,
 		  int argc, const char **argv)
 {
@@ -164,7 +164,7 @@ pam_sm_acct_mgmt (pam_handle_t *pamh, int flags UNUSED,
     return check_for_root (pamh, ctrl);
 }
 
-PAM_EXTERN int
+int
 pam_sm_chauthtok (pam_handle_t *pamh, int flags UNUSED,
 		  int argc, const char **argv)
 {
@@ -174,21 +174,5 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags UNUSED,
 
     return check_for_root (pamh, ctrl);
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_rootok_modstruct = {
-    "pam_rootok",
-    pam_sm_authenticate,
-    pam_sm_setcred,
-    pam_sm_acct_mgmt,
-    NULL,
-    NULL,
-    pam_sm_chauthtok,
-};
-
-#endif
 
 /* end of module definition */

@@ -24,7 +24,8 @@ debug
 expose_authtok
 
     During authentication the calling command can read the password from stdin
-    (3).
+    (3). Only first PAM_MAX_RESP_SIZE bytes of a password are provided to the
+    command.
 
 log=file
 

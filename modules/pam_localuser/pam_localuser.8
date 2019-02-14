@@ -2,12 +2,12 @@
 .\"     Title: pam_localuser
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_LOCALUSER" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_LOCALUSER" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -70,15 +70,15 @@ PAM_SERVICE_ERR
 No username was given\&.
 .RE
 .PP
-PAM_USER_UNKNOWN
+PAM_PERM_DENIED
 .RS 4
-User not known\&.
+The user is not listed in the passwd file\&.
 .RE
 .SH "EXAMPLES"
 .PP
-Add the following line to
+Add the following lines to
 /etc/pam\&.d/su
-to allow only local users in group wheel to use su\&.
+to allow only local users or group wheel to use su\&.
 .sp
 .if n \{\
 .RS 4

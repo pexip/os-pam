@@ -491,11 +491,16 @@ compute_exec_context(pam_handle_t *pamh, module_data_t *data,
   char *level = NULL;
   security_context_t *contextlist = NULL;
   int num_contexts = 0;
+  const struct passwd *pwd;
 
   if (!(username = get_item(pamh, PAM_USER))) {
     pam_syslog(pamh, LOG_ERR, "Cannot obtain the user name");
     return PAM_USER_UNKNOWN;
   }
+
+  if ((pwd = pam_modutil_getpwnam(pamh, username)) != NULL) {
+    username = pwd->pw_name;
+  } /* ignore error and keep using original username */
 
   /* compute execute context */
 #ifdef HAVE_GETSEUSER
@@ -519,7 +524,7 @@ compute_exec_context(pam_handle_t *pamh, module_data_t *data,
     data->default_user_context = strdup(contextlist[0]);
     freeconary(contextlist);
     if (!data->default_user_context) {
-      pam_syslog(pamh, LOG_ERR, "Out of memory");
+      pam_syslog(pamh, LOG_CRIT, "Out of memory");
       return PAM_BUF_ERR;
     }
 
@@ -568,7 +573,7 @@ compute_tty_context(const pam_handle_t *pamh, module_data_t *data)
   }
 
   if (!data->tty_path) {
-    pam_syslog(pamh, LOG_ERR, "Out of memory");
+    pam_syslog(pamh, LOG_CRIT, "Out of memory");
     return PAM_BUF_ERR;
   }
 
@@ -722,7 +727,7 @@ create_context(pam_handle_t *pamh, int argc, const char **argv,
   }
 
   if (!(data = calloc(1, sizeof(*data)))) {
-    pam_syslog(pamh, LOG_ERR, "Out of memory");
+    pam_syslog(pamh, LOG_CRIT, "Out of memory");
     return PAM_BUF_ERR;
   }
 
@@ -752,7 +757,7 @@ create_context(pam_handle_t *pamh, int argc, const char **argv,
   return set_context(pamh, data, debug, verbose);
 }
 
-PAM_EXTERN int
+int
 pam_sm_authenticate(pam_handle_t *pamh UNUSED, int flags UNUSED,
 		    int argc UNUSED, const char **argv UNUSED)
 {
@@ -760,14 +765,14 @@ pam_sm_authenticate(pam_handle_t *pamh UNUSED, int flags UNUSED,
   return PAM_AUTH_ERR;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
 	       int argc UNUSED, const char **argv UNUSED)
 {
   return PAM_SUCCESS;
 }
 
-PAM_EXTERN int
+int
 pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 		    int argc, const char **argv)
 {
@@ -808,7 +813,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
     create_context(pamh, argc, argv, debug, verbose);
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {

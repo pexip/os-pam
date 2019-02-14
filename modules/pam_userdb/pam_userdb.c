@@ -184,7 +184,7 @@ user_lookup (pam_handle_t *pamh, const char *database, const char *cryptmode,
 	else
 	    key.dsize = strlen(key.dptr);
     } else {
-        key.dptr = x_strdup(user);
+        key.dptr = strdup(user);
         key.dsize = strlen(user);
     }
 
@@ -213,25 +213,38 @@ user_lookup (pam_handle_t *pamh, const char *database, const char *cryptmode,
 
 	  /* crypt(3) password storage */
 
-	  char *cryptpw;
+	  char *cryptpw = NULL;
 
 	  if (data.dsize < 13) {
 	    compare = -2;
 	  } else if (ctrl & PAM_ICASE_ARG) {
 	    compare = -2;
 	  } else {
+#ifdef HAVE_CRYPT_R
+	    struct crypt_data *cdata = NULL;
+	    cdata = malloc(sizeof(*cdata));
+	    if (cdata != NULL) {
+		cdata->initialized = 0;
+		cryptpw = crypt_r(pass, data.dptr, cdata);
+	    }
+#else
 	    cryptpw = crypt (pass, data.dptr);
-
-	    if (cryptpw) {
-	      compare = strncasecmp (data.dptr, cryptpw, data.dsize);
+#endif
+	    if (cryptpw && strlen(cryptpw) == (size_t)data.dsize) {
+	      compare = memcmp(data.dptr, cryptpw, data.dsize);
 	    } else {
 	      compare = -2;
 	      if (ctrl & PAM_DEBUG_ARG) {
-		pam_syslog(pamh, LOG_INFO, "crypt() returned NULL");
+		if (cryptpw)
+		  pam_syslog(pamh, LOG_INFO, "lengths of computed and stored hashes differ");
+		else
+		  pam_syslog(pamh, LOG_INFO, "crypt() returned NULL");
 	      }
-	    };
-
-	  };
+	    }
+#ifdef HAVE_CRYPT_R
+	    free(cdata);
+#endif
+	  }
 
 	} else {
 
@@ -321,7 +334,7 @@ user_lookup (pam_handle_t *pamh, const char *database, const char *cryptmode,
 
 /* --- authentication management functions (only) --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
 		    int argc, const char **argv)
 {
@@ -384,7 +397,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
 	     return PAM_SERVICE_ERR;
 	 case -1:
 	     /* incorrect password */
-	     pam_syslog(pamh, LOG_WARNING,
+	     pam_syslog(pamh, LOG_NOTICE,
 			"user `%s' denied access (incorrect password)",
 			username);
 	     return PAM_AUTH_ERR;
@@ -410,14 +423,14 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
      return PAM_IGNORE;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
 	       int argc UNUSED, const char **argv UNUSED)
 {
     return PAM_SUCCESS;
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 		 int argc, const char **argv)
 {
@@ -461,23 +474,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 
     return PAM_SUCCESS;
 }
-
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_userdb_modstruct = {
-     "pam_userdb",
-     pam_sm_authenticate,
-     pam_sm_setcred,
-     pam_sm_acct_mgmt,
-     NULL,
-     NULL,
-     NULL,
-};
-
-#endif
 
 /*
  * Copyright (c) Cristian Gafton <gafton@redhat.com>, 1999

@@ -39,9 +39,11 @@ Reviewed-by: Adam Conrad <adconrad@ubuntu.com>
 Reviewed-by: Martin Pitt <martin.pitt@ubuntu.com>
 Last-Update: 2015-04-22
 
---- a/modules/pam_limits/pam_limits.c
-+++ b/modules/pam_limits/pam_limits.c
-@@ -439,6 +439,14 @@ static void parse_kernel_limits(pam_hand
+Index: pam/modules/pam_limits/pam_limits.c
+===================================================================
+--- pam.orig/modules/pam_limits/pam_limits.c
++++ pam/modules/pam_limits/pam_limits.c
+@@ -451,6 +451,14 @@
          pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
      }
      fclose(limitsfile);

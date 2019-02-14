@@ -50,11 +50,7 @@
 
 /* indicate the following groups are defined */
 
-#ifdef PAM_STATIC
-# include "pam_unix_static.h"
-#else
-# define PAM_SM_AUTH
-#endif
+#define PAM_SM_AUTH
 
 #define _PAM_EXTERN_FUNCTIONS
 #include <security/_pam_macros.h>
@@ -81,15 +77,12 @@
 #define _UNIX_AUTHTOK  "-UN*X-PASS"
 
 #define AUTH_RETURN						\
-do {								\
-	if (on(UNIX_LIKE_AUTH, ctrl) && ret_data) {		\
-		D(("recording return code for next time [%d]",	\
-					retval));		\
-		*ret_data = retval;				\
-		pam_set_data(pamh, "unix_setcred_return",	\
-		             (void *) ret_data, setcred_free);	\
-	} else if (ret_data)					\
-	  free (ret_data);                                      \
+do {									\
+	D(("recording return code for next time [%d]",		\
+				retval));			\
+	*ret_data = retval;					\
+	pam_set_data(pamh, "unix_setcred_return",		\
+			 (void *) ret_data, setcred_free);	\
 	D(("done. [%s]", pam_strerror(pamh, retval)));		\
 	return retval;						\
 } while (0)
@@ -108,16 +101,21 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	unsigned int ctrl;
 	int retval, *ret_data = NULL;
 	const char *name;
-	const void *p;
+	const char *p;
 
 	D(("called."));
 
 	ctrl = _set_ctrl(pamh, flags, NULL, NULL, NULL, argc, argv);
 
 	/* Get a few bytes so we can pass our return value to
-	   pam_sm_setcred(). */
-	if (on(UNIX_LIKE_AUTH, ctrl))
-		ret_data = malloc(sizeof(int));
+	   pam_sm_setcred() and pam_sm_acct_mgmt(). */
+	ret_data = malloc(sizeof(int));
+	if (!ret_data) {
+		D(("cannot malloc ret_data"));
+		pam_syslog(pamh, LOG_CRIT,
+				"pam_unix_auth: cannot allocate ret_data");
+		return PAM_BUF_ERR;
+	}
 
 	/* get the user'name' */
 
@@ -157,8 +155,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	}
 	/* get this user's authentication token */
 
-	retval = _unix_read_password(pamh, ctrl, NULL, _("Password: "), NULL
-				     ,_UNIX_AUTHTOK, &p);
+	retval = pam_get_authtok(pamh, PAM_AUTHTOK, &p , NULL);
 	if (retval != PAM_SUCCESS) {
 		if (retval != PAM_CONV_AGAIN) {
 			pam_syslog(pamh, LOG_CRIT,
@@ -194,20 +191,24 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc, const char **argv)
  */
 
 int
-pam_sm_setcred (pam_handle_t *pamh, int flags UNUSED,
-		int argc UNUSED, const char **argv UNUSED)
+pam_sm_setcred (pam_handle_t *pamh, int flags,
+		int argc, const char **argv)
 {
 	int retval;
 	const void *pretval = NULL;
+	unsigned int ctrl;
 
 	D(("called."));
+
+	ctrl = _set_ctrl(pamh, flags, NULL, NULL, NULL, argc, argv);
 
 	retval = PAM_SUCCESS;
 
 	D(("recovering return code from auth call"));
 	/* We will only find something here if UNIX_LIKE_AUTH is set --
 	   don't worry about an explicit check of argv. */
-	if (pam_get_data(pamh, "unix_setcred_return", &pretval) == PAM_SUCCESS
+	if (on(UNIX_LIKE_AUTH, ctrl)
+	    && pam_get_data(pamh, "unix_setcred_return", &pretval) == PAM_SUCCESS
 	    && pretval) {
 	        retval = *(const int *)pretval;
 		pam_set_data(pamh, "unix_setcred_return", NULL, NULL);

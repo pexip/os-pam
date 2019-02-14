@@ -80,6 +80,13 @@
     </para>
 
     <para>
+      The maximum length of a password supported by the pam_unix module
+      via the helper binary is <emphasis>PAM_MAX_RESP_SIZE</emphasis>
+      - currently 512 bytes. The rest of the password provided by the
+      conversation function to the module will be ignored.
+    </para>
+
+    <para>
       The password component of this module performs the task of updating
       the user's password. The default encryption hash is taken from the
       <emphasis remap='B'>ENCRYPT_METHOD</emphasis> variable from
@@ -125,6 +132,21 @@
         <listitem>
           <para>
             A little more extreme than debug.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>quiet</option>
+        </term>
+        <listitem>
+          <para>
+	    Turns off informational messages namely messages about
+	    session open and close via
+            <citerefentry>
+              <refentrytitle>syslog</refentrytitle><manvolnum>3</manvolnum>
+            </citerefentry>.
           </para>
         </listitem>
       </varlistentry>
@@ -195,13 +217,13 @@
       </varlistentry>
       <varlistentry>
         <term>
-          <option>not_set_pass</option>
+          <option>authtok_type=<replaceable>type</replaceable></option>
         </term>
         <listitem>
           <para>
-            This argument is used to inform the module that it is not to
-            pay attention to/make available the old or new passwords from/to
-            other (stacked) password modules.
+            This argument can be used to modify the password prompt
+            when changing passwords to include the type of the password.
+            Empty by default.
           </para>
         </listitem>
       </varlistentry>
@@ -225,6 +247,8 @@
             user are saved in <filename>/etc/security/opasswd</filename>
             in order to force password change history and keep the user
             from alternating between the same password too frequently.
+            The MD5 password hash algorithm is used for storing the
+            old passwords.
             Instead of this option the <command>pam_pwhistory</command>
             module should be used.
           </para>
@@ -342,6 +366,25 @@
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term>
+          <option>no_pass_expiry</option>
+        </term>
+        <listitem>
+          <para>
+            When set ignore password expiration as defined by the
+            <emphasis>shadow</emphasis> entry of the user. The option has an
+            effect only in case <emphasis>pam_unix</emphasis> was not used
+            for the authentication or it returned authentication failure
+            meaning that other authentication source or method succeeded.
+            The example can be public key authentication in
+            <emphasis>sshd</emphasis>. The module will return
+            <emphasis remap='B'>PAM_SUCCESS</emphasis> instead of eventual
+            <emphasis remap='B'>PAM_NEW_AUTHTOK_REQD</emphasis> or
+            <emphasis remap='B'>PAM_AUTHTOK_EXPIRED</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
     <para>
       Invalid arguments are logged with  <citerefentry>
@@ -382,7 +425,7 @@
 auth       required   pam_unix.so
 # Ensure users account and password are still active
 account    required   pam_unix.so
-# Change the users password, but at first check the strength
+# Change the user's password, but at first check the strength
 # with pam_cracklib(8)
 password   required   pam_cracklib.so retry=3 minlen=6 difok=3
 password   required   pam_unix.so use_authtok nullok md5

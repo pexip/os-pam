@@ -2,12 +2,12 @@
 .\"     Title: pam_userdb
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 06/18/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_USERDB" "8" "06/18/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_USERDB" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -53,7 +53,9 @@ Use the
 /path/database
 database for performing lookup\&. There is no default; the module will return
 \fBPAM_IGNORE\fR
-if no database is provided\&.
+if no database is provided\&. Note that the path to the database file should be specified without the
+\&.db
+suffix\&.
 .RE
 .PP
 \fBdebug\fR
@@ -139,7 +141,7 @@ User not known to the underlying authentication module\&.
 .RS 4
 .\}
 .nf
-auth  sufficient pam_userdb\&.so icase db=/etc/dbtest\&.db
+auth  sufficient pam_userdb\&.so icase db=/etc/dbtest
     
 .fi
 .if n \{\

@@ -45,17 +45,17 @@ runX
     have read the pam(3) manual page. Basically, for each management group
     there are up to two ways of calling the module's functions. In the case of
     the authentication and session components there are actually two separate
-    functions. For the case of authentication, these functions are
+    functions. For the case of authentication, these functions are 
     pam_authenticate(3) and pam_setcred(3), here run1 means run the filter from
     the pam_authenticate function and run2 means run the filter from
     pam_setcred. In the case of the session modules, run1 implies that the
-    filter is invoked at the pam_open_session(3) stage, and run2 for
+    filter is invoked at the pam_open_session(3) stage, and run2 for 
     pam_close_session(3).
 
     For the case of the account component. Either run1 or run2 may be used.
 
     For the case of the password component, run1 is used to indicate that the
-    filter is run on the first occasion of pam_chauthtok(3) (the
+    filter is run on the first occasion of pam_chauthtok(3) (the 
     PAM_PRELIM_CHECK phase) and run2 is used to indicate that the filter is run
     on the second occasion (the PAM_UPDATE_AUTHTOK phase).
 

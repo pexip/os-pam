@@ -11,13 +11,13 @@ created files.
 The PAM module tries to get the umask value from the following places in the
 following order:
 
-  • umask= argument
-
   • umask= entry in the user's GECOS field
 
-  • UMASK= entry from /etc/default/login
+  • umask= argument
 
   • UMASK entry from /etc/login.defs
+
+  • UMASK= entry from /etc/default/login
 
 The GECOS field is split on comma ',' characters. The module also in addition
 to the umask= entry recognizes pri= entry, which sets the nice priority value

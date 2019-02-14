@@ -2,12 +2,12 @@
 .\"     Title: pam_unix
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_UNIX" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_UNIX" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -56,6 +56,10 @@ to work without being setuid\-root\&. The module, by default, will temporarily t
 \fBnoreap\fR
 module argument can be used to suppress this temporary shielding and may be needed for use with certain applications\&.
 .PP
+The maximum length of a password supported by the pam_unix module via the helper binary is
+\fIPAM_MAX_RESP_SIZE\fR
+\- currently 512 bytes\&. The rest of the password provided by the conversation function to the module will be ignored\&.
+.PP
 The password component of this module performs the task of updating the user\*(Aqs password\&. The default encryption hash is taken from the
 \fBENCRYPT_METHOD\fR
 variable from
@@ -76,6 +80,12 @@ Turns on debugging via
 \fBaudit\fR
 .RS 4
 A little more extreme than debug\&.
+.RE
+.PP
+\fBquiet\fR
+.RS 4
+Turns off informational messages namely messages about session open and close via
+\fBsyslog\fR(3)\&.
 .RE
 .PP
 \fBnullok\fR
@@ -111,9 +121,9 @@ module (this is used in the example of the stacking of the
 module documented below)\&.
 .RE
 .PP
-\fBnot_set_pass\fR
+\fBauthtok_type=\fR\fB\fItype\fR\fR
 .RS 4
-This argument is used to inform the module that it is not to pay attention to/make available the old or new passwords from/to other (stacked) password modules\&.
+This argument can be used to modify the password prompt when changing passwords to include the type of the password\&. Empty by default\&.
 .RE
 .PP
 \fBnis\fR
@@ -127,7 +137,7 @@ The last
 \fIn\fR
 passwords for each user are saved in
 /etc/security/opasswd
-in order to force password change history and keep the user from alternating between the same password too frequently\&. Instead of this option the
+in order to force password change history and keep the user from alternating between the same password too frequently\&. The MD5 password hash algorithm is used for storing the old passwords\&. Instead of this option the
 \fBpam_pwhistory\fR
 module should be used\&.
 .RE
@@ -186,6 +196,21 @@ Set a minimum password length of
 characters\&. The max\&. for DES crypt based passwords are 8 characters\&.
 .RE
 .PP
+\fBno_pass_expiry\fR
+.RS 4
+When set ignore password expiration as defined by the
+\fIshadow\fR
+entry of the user\&. The option has an effect only in case
+\fIpam_unix\fR
+was not used for the authentication or it returned authentication failure meaning that other authentication source or method succeeded\&. The example can be public key authentication in
+\fIsshd\fR\&. The module will return
+\fBPAM_SUCCESS\fR
+instead of eventual
+\fBPAM_NEW_AUTHTOK_REQD\fR
+or
+\fBPAM_AUTHTOK_EXPIRED\fR\&.
+.RE
+.PP
 Invalid arguments are logged with
 \fBsyslog\fR(3)\&.
 .SH "MODULE TYPES PROVIDED"
@@ -215,7 +240,7 @@ would be:
 auth       required   pam_unix\&.so
 # Ensure users account and password are still active
 account    required   pam_unix\&.so
-# Change the users password, but at first check the strength
+# Change the user\*(Aqs password, but at first check the strength
 # with pam_cracklib(8)
 password   required   pam_cracklib\&.so retry=3 minlen=6 difok=3
 password   required   pam_unix\&.so use_authtok nullok md5

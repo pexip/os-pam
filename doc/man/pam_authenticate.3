@@ -2,12 +2,12 @@
 .\"     Title: pam_authenticate
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_AUTHENTICATE" "3" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_AUTHENTICATE" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -44,7 +44,7 @@ The
 \fBpam_authenticate\fR
 function is used to authenticate the user\&. The user is required to provide an authentication token depending upon the authentication service, usually this is a password, but could also be a finger print\&.
 .PP
-The PAM service module may request that the user enter their username vio the the conversation mechanism (see
+The PAM service module may request that the user enter their username via the conversation mechanism (see
 \fBpam_start\fR(3)
 and
 \fBpam_conv\fR(3))\&. The name of the authenticated user will be present in the PAM item PAM_USER\&. This item may be recovered with a call to
@@ -82,7 +82,7 @@ PAM_CRED_INSUFFICIENT
 For some reason the application does not have sufficient credentials to authenticate the user\&.
 .RE
 .PP
-PAM_AUTHINFO_UNVAIL
+PAM_AUTHINFO_UNAVAIL
 .RS 4
 The modules were not able to access the authentication information\&. This might be due to a network or hardware failure etc\&.
 .RE

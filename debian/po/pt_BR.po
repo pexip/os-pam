@@ -2,27 +2,28 @@
 # Copyright (c) 2007 Steve Langasek <vorlon@debian.org>
 # This file is distributed under the same license as the pam package.
 # Eder L. Marques <eder@edermarques.net>, 2007-2009.
+# Fernando Ike de Oliveira <fike@midstorm.org>, 2013.
+# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2009-2015.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pam_0.99.7.1-5\n"
+"Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
 "POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2011-03-29 13:01-0700\n"
-"Last-Translator: Eder L. Marques <eder@edermarques.net>\n"
+"PO-Revision-Date: 2015-09-18 20:27-0300\n"
+"Last-Translator: Adriano Rafael Gomes <adrianorg@arg.eti.br>\n"
 "Language-Team: Brazilian Portuguese <debian-l10n-portuguese@lists.debian."
 "org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"pt_BR utf-8\n"
 
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
 msgid "Services to restart for PAM library upgrade:"
-msgstr "Serviços a serem reiniciados para a atualização de bibliotecas PAM:"
+msgstr "Serviços a serem reiniciados para atualização da biblioteca PAM:"
 
 #. Type: string
 #. Description
@@ -35,14 +36,14 @@ msgid ""
 msgstr ""
 "A maioria dos serviços que utilizam PAM precisam ser reiniciados para usar "
 "os módulos construídos para esta nova versão da libpam. Por favor, revise a "
-"seguinte lista separada por espaços de seus scripts init.d para os serviços "
-"a serem reiniciados agora, e a corrija se necessário."
+"seguinte lista separada por espaços de scripts init.d de serviços que serão "
+"reiniciados agora, e a corrija, se necessário."
 
 #. Type: error
 #. Description
 #: ../libpam0g.templates:2001
 msgid "Display manager must be restarted manually"
-msgstr "Gerenciadores de display devem ser reiniciados manualmente"
+msgstr "Gerenciador de display deve ser reiniciado manualmente"
 
 #. Type: error
 #. Description
@@ -55,7 +56,7 @@ msgid ""
 msgstr ""
 "Os gerenciadores de display wdm e xdm precisam ser reiniciados para a nova "
 "versão da libpam, mas existem sessões de login X ativas em seu sistema que "
-"podem ser terminadas por este reinicio. Você consequentemente necessitará "
+"serão terminadas por este reinício. Você consequentemente necessitará "
 "reiniciar estes serviços manualmente antes que logins X adicionais sejam "
 "possíveis."
 
@@ -63,7 +64,7 @@ msgstr ""
 #. Description
 #: ../libpam0g.templates:3001
 msgid "Failure restarting some services for PAM upgrade"
-msgstr "Falha ao reiniciar alguns serviços para a atualização da PAM"
+msgstr "Falha ao reiniciar alguns serviços para atualização do PAM"
 
 #. Type: error
 #. Description
@@ -81,13 +82,14 @@ msgid ""
 "You will need to start these manually by running '/etc/init.d/<service> "
 "start'."
 msgstr ""
-"Você deverá iniciá-los manualmente executando '/etc/init.d/<serviço> start'."
+"Você deverá iniciá-los manualmente executando \"/etc/init.d/<serviço> start"
+"\"."
 
 #. Type: boolean
 #. Description
 #: ../libpam0g.templates:4001
 msgid "Restart services during package upgrades without asking?"
-msgstr ""
+msgstr "Reiniciar serviços durante a atualização de pacotes sem perguntar?"
 
 #. Type: boolean
 #. Description
@@ -101,12 +103,20 @@ msgid ""
 "necessary restarts will be done for you automatically so you can avoid being "
 "asked questions on each library upgrade."
 msgstr ""
+"Existem serviços instalados no seu sistema que precisam ser reiniciados "
+"quando determinadas bibliotecas, tais como libpam, libc e libssl são "
+"atualizadas. Uma vez que essas reinicializações podem causar interrupções de "
+"serviços para o sistema, normalmente você terá que responder a cada "
+"atualização qual será a lista de serviços que quiser reiniciar. Você pode "
+"escolher esta opção para evitar novas solicitações; ao invés disso, todas as "
+"reinicializações necessárias serão realizadas automaticamente para evitar "
+"que você responda a cada atualização de biblioteca."
 
 #. Type: title
 #. Description
 #: ../libpam-runtime.templates:1001
 msgid "PAM configuration"
-msgstr ""
+msgstr "Configuração do PAM"
 
 #. Type: multiselect
 #. Description
@@ -124,9 +134,9 @@ msgid ""
 "sessions."
 msgstr ""
 "O PAM (\"Pluggable Authentication Modules\") determina como a autenticação, "
-"autorização e alteração de senha são tratados no sistema, assim como permite "
-"a configuração de ações adicionais a serem tomadas quando sessões de usuário "
-"são iniciadas."
+"a autorização e a alteração de senha são tratadas no sistema, assim como "
+"permite a configuração de ações adicionais a serem tomadas quando sessões de "
+"usuário são iniciadas."
 
 #. Type: multiselect
 #. Description
@@ -138,7 +148,7 @@ msgid ""
 msgstr ""
 "Alguns pacotes de módulos PAM fornecem perfis que podem ser usados para "
 "ajustar automaticamente o comportamento de todas as aplicações que usam PAM "
-"no sistema. Por favor, indique quais destes comportamentos você deseja "
+"no sistema. Por favor, indique quais desses comportamentos você deseja "
 "habilitar."
 
 #. Type: error
@@ -178,7 +188,7 @@ msgid ""
 "configuration by hand."
 msgstr ""
 "Um ou mais dos arquivos /etc/pam.d/common-{auth,account,password,session} "
-"foram modificados localmente. Por favor, indique quais destas modificações "
+"foram modificados localmente. Por favor, indique se essas modificações "
 "locais devem ser sobrescritas usando a configuração fornecida pelo sistema. "
 "Se você recusar esta opção, você precisará gerenciar a configuração de "
 "autenticação do seu sistema manualmente."
@@ -197,15 +207,15 @@ msgid ""
 "all users access without authenticating, and is not allowed.  Please select "
 "at least one PAM profile from the available list."
 msgstr ""
-"Nenhum perfil PAM foi selecionado para uso neste sistema. Isto irá garantir "
-"a todos os usuários acesso sem autenticação, e isto não é permitido. Por "
+"Nenhum perfil PAM foi selecionado para uso neste sistema. Isto garantiria a "
+"todos os usuários acesso sem autenticação, e isto não é permitido. Por "
 "favor, selecione no mínimo um perfil PAM da lista disponível."
 
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:1001
 msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr "O xscreensaver e xlockmore precisam ser reiniciados antes de atualizar"
+msgstr "xscreensaver e xlockmore devem ser reiniciados antes da atualização"
 
 #. Type: error
 #. Description
@@ -220,7 +230,7 @@ msgid ""
 msgstr ""
 "Uma ou mais instâncias do xscreensaver ou do xlockmore foram detectadas em "
 "execução neste sistema. Por causa de modificações incompatíveis de "
-"biblioteca a atualização do pacote libpam-modules impossibilitará você de se "
-"autenticar nestes programas. Você deve providenciar que estes programas "
+"biblioteca, a atualização do pacote libpam-modules impossibilitará você de "
+"se autenticar nestes programas. Você deve providenciar que estes programas "
 "sejam reiniciados ou parados antes de continuar com esta atualização, para "
 "evitar bloquear seus usuários fora de suas sessões atuais."

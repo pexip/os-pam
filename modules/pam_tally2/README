@@ -10,10 +10,10 @@ success, can deny access if too many attempts fail.
 pam_tally2 comes in two parts: pam_tally2.so and pam_tally2. The former is the
 PAM module and the latter, a stand-alone program. pam_tally2 is an (optional)
 application which can be used to interrogate and manipulate the counter file.
-It can display users' counts, set individual counts, or clear all counts.
-Setting artificially high counts may be useful for blocking users without
-changing their passwords. For example, one might find it useful to clear all
-counts every midnight from a cron job.
+It can display user counts, set individual counts, or clear all counts. Setting
+artificially high counts may be useful for blocking users without changing
+their passwords. For example, one might find it useful to clear all counts
+every midnight from a cron job.
 
 Normally, failed attempts to access root will not cause the root account to
 become blocked, to prevent denial-of-service: if your users aren't given shell
@@ -28,7 +28,7 @@ GLOBAL OPTIONS
 
     onerr=[fail|succeed]
 
-        If something weird happens (like unable to open the file), return with
+        If something weird happens (like unable to open the file), return with 
         PAM_SUCCESS if onerr=succeed is given, else with the corresponding PAM
         error code.
 
@@ -47,6 +47,11 @@ GLOBAL OPTIONS
     no_log_info
 
         Don't log informative messages via syslog(3).
+
+    debug
+
+        Always log tally count when it is incremented as a debug level message
+        to the system log.
 
 AUTH OPTIONS
 
@@ -108,7 +113,7 @@ ACCOUNT OPTIONS
     magic_root
 
         If the module is invoked by a user with uid=0 the counter is not
-        changed. The sysadmin should use this for user launched services, like
+        changed. The sysadmin should use this for user launched services, like 
         su, otherwise this argument should be omitted.
 
 NOTES
@@ -117,7 +122,7 @@ pam_tally2 is not compatible with the old pam_tally faillog file format. This
 is caused by requirement of compatibility of the tallylog file format between
 32bit and 64bit architectures on multiarch systems.
 
-There is no setuid wrapper for access to the data file such as when the
+There is no setuid wrapper for access to the data file such as when the 
 pam_tally2.so module is called from xscreensaver. As this would make it
 impossible to share PAM configuration with such services the following
 workaround is used: If the data file cannot be opened because of insufficient

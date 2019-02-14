@@ -4,11 +4,11 @@ the chain and PAM_OK (aka required) in the frozen part of the chain.
 No one on pam-list was able to explain this behavior, so I changed it
 to be consistent.
 
-Index: pam.debian/libpam/pam_dispatch.c
+Index: pam/libpam/pam_dispatch.c
 ===================================================================
---- pam.debian.orig/libpam/pam_dispatch.c
-+++ pam.debian/libpam/pam_dispatch.c
-@@ -254,19 +254,7 @@
+--- pam.orig/libpam/pam_dispatch.c
++++ pam/libpam/pam_dispatch.c
+@@ -260,22 +260,7 @@
  	    if ( _PAM_ACTION_IS_JUMP(action) ) {
  
  		/* If we are evaluating a cached chain, we treat this
@@ -20,6 +20,9 @@ Index: pam.debian/libpam/pam_dispatch.c
 -			|| (impression == _PAM_POSITIVE
 -			    && status == PAM_SUCCESS) ) {
 -			if ( retval != PAM_IGNORE || cached_retval == retval ) {
+-			    if ( impression == _PAM_UNDEF && retval == PAM_SUCCESS ) {
+-				h->grantor = 1;
+-			    }
 -			    impression = _PAM_POSITIVE;
 -			    status = retval;
 -			}

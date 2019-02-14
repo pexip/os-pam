@@ -1,4 +1,2 @@
-version=3
-opts=uversionmangle=s/^(\S+-doc)/0.0.$1/ \
-http://www.linux-pam.org/library/ \
-(?:|.*/)Linux-PAM(?:[_\-]v?|)(\d[^\s/]*)\.(?:tar\.xz|txz|tar\.bz2|tbz2|tar\.gz|tgz)
+version=4
+  https://github.com/linux-pam/linux-pam/releases .*/\S+-([\d.]+)\.tar\.xz

@@ -64,12 +64,6 @@ extern char *FascistCheck(char *pw, const char *dictpath);
 #define CRACKLIB_DICTS NULL
 #endif
 
-/* For Translators: "%s%s" could be replaced with "<service> " or "". */
-#define PROMPT1 _("New %s%spassword: ")
-/* For Translators: "%s%s" could be replaced with "<service> " or "". */
-#define PROMPT2 _("Retype new %s%spassword: ")
-#define MISTYPED_PASS _("Sorry, passwords do not match.")
-
 #ifdef MIN
 #undef MIN
 #endif
@@ -408,7 +402,7 @@ static int simple(struct cracklib_options *opt, const char *new)
             } else
                 sameclass++;
         }
-        if (opt->max_class_repeat > 1 && sameclass > opt->max_class_repeat) {
+        if (opt->max_class_repeat > 0 && sameclass > opt->max_class_repeat) {
                 return 1;
         }
     }
@@ -619,16 +613,16 @@ static const char *password_check(pam_handle_t *pamh, struct cracklib_options *o
 	    return msg;
 	}
 
-	newmono = str_lower(x_strdup(new));
+	newmono = str_lower(strdup(new));
 	if (!newmono)
 		msg = _("memory allocation error");
 
-	usermono = str_lower(x_strdup(user));
+	usermono = str_lower(strdup(user));
 	if (!usermono)
 		msg = _("memory allocation error");
 
 	if (!msg && old) {
-		oldmono = str_lower(x_strdup(old));
+		oldmono = str_lower(strdup(old));
 		if (oldmono)
 			wrapped = malloc(strlen(oldmono) * 2 + 1);
 		if (wrapped) {
@@ -728,8 +722,8 @@ static int _pam_unix_approve_pass(pam_handle_t *pamh,
 /* The Main Thing (by Cristian Gafton, CEO at this module :-)
  * (stolen from http://home.netscape.com)
  */
-PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
-				int argc, const char **argv)
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     unsigned int ctrl;
     struct cracklib_options options;
@@ -857,19 +851,6 @@ PAM_EXTERN int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 }
 
 
-
-#ifdef PAM_STATIC
-/* static module data */
-struct pam_module _pam_cracklib_modstruct = {
-     "pam_cracklib",
-     NULL,
-     NULL,
-     NULL,
-     NULL,
-     NULL,
-     pam_sm_chauthtok
-};
-#endif
 
 /*
  * Copyright (c) Cristian Gafton <gafton@redhat.com>, 1996.

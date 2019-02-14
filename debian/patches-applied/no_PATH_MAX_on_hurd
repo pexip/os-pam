@@ -4,10 +4,10 @@ Description: define PATH_MAX for compatibility when it's not already set
 Author: Steve Langasek <vorlon@debian.org>
 Bug-Debian: http://bugs.debian.org/552043
 
-Index: pam.deb/tests/tst-dlopen.c
+Index: pam/tests/tst-dlopen.c
 ===================================================================
---- pam.deb.orig/tests/tst-dlopen.c
-+++ pam.deb/tests/tst-dlopen.c
+--- pam.orig/tests/tst-dlopen.c
++++ pam/tests/tst-dlopen.c
 @@ -16,6 +16,11 @@
  #include <limits.h>
  #include <sys/stat.h>

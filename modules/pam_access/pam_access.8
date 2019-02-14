@@ -2,12 +2,12 @@
 .\"     Title: pam_access
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_ACCESS" "8" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_ACCESS" "8" "05/18/2018" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,13 +34,21 @@ pam_access \- PAM module for logdaemon style login access control
 \fBpam_access\&.so\fR [debug] [nodefgroup] [noaudit] [accessfile=\fIfile\fR] [fieldsep=\fIsep\fR] [listsep=\fIsep\fR]
 .SH "DESCRIPTION"
 .PP
-The pam_access PAM module is mainly for access management\&. It provides logdaemon style login access control based on login names, host or domain names, internet addresses or network numbers, or on terminal line names in case of non\-networked logins\&.
+The pam_access PAM module is mainly for access management\&. It provides logdaemon style login access control based on login names, host or domain names, internet addresses or network numbers, or on terminal line names, X
+\fI$DISPLAY\fR
+values, or PAM service names in case of non\-networked logins\&.
 .PP
 By default rules for access management are taken from config file
 /etc/security/access\&.conf
-if you don\*(Aqt specify another file\&.
+if you don\*(Aqt specify another file\&. Then individual
+*\&.conf
+files from the
+/etc/security/access\&.d/
+directory are read\&. The files are parsed one after another in the order of the system locale\&. The effect of the individual files is the same as if all the files were concatenated together in the order of parsing\&. This means that once a pattern is matched in some file no further files are parsed\&. If a config file is explicitly specified with the
+\fBaccessfile\fR
+option the files in the above directory are not parsed\&.
 .PP
-If Linux PAM is compiled with audit support the module will report when it denies access based on origin (host or tty)\&.
+If Linux PAM is compiled with audit support the module will report when it denies access based on origin (host, tty, etc\&.)\&.
 .SH "OPTIONS"
 .PP
 \fBaccessfile=\fR\fB\fI/path/to/access\&.conf\fR\fR

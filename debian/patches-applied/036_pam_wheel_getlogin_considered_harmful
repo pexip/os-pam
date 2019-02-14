@@ -8,10 +8,10 @@ Authors: Ben Collins <bcollins@debian.org>
 
 Upstream status: submitted in <20070901175405.GA26092@dario.dodds.net>
 
-Index: pam.debian/modules/pam_wheel/pam_wheel.c
+Index: pam/modules/pam_wheel/pam_wheel.c
 ===================================================================
---- pam.debian.orig/modules/pam_wheel/pam_wheel.c
-+++ pam.debian/modules/pam_wheel/pam_wheel.c
+--- pam.orig/modules/pam_wheel/pam_wheel.c
++++ pam/modules/pam_wheel/pam_wheel.c
 @@ -60,9 +60,8 @@
  /* argument parsing */
  
@@ -68,10 +68,10 @@ Index: pam.debian/modules/pam_wheel/pam_wheel.c
  
      /*
       * At this point fromsu = username-of-invoker; tpwd = pwd ptr for fromsu
-Index: pam.debian/modules/pam_wheel/pam_wheel.8.xml
+Index: pam/modules/pam_wheel/pam_wheel.8.xml
 ===================================================================
---- pam.debian.orig/modules/pam_wheel/pam_wheel.8.xml
-+++ pam.debian/modules/pam_wheel/pam_wheel.8.xml
+--- pam.orig/modules/pam_wheel/pam_wheel.8.xml
++++ pam/modules/pam_wheel/pam_wheel.8.xml
 @@ -33,9 +33,6 @@
        <arg choice="opt">
  	trust
@@ -82,7 +82,7 @@ Index: pam.debian/modules/pam_wheel/pam_wheel.8.xml
      </cmdsynopsis>
    </refsynopsisdiv>
  
-@@ -115,18 +112,6 @@
+@@ -116,18 +113,6 @@
            </para>
          </listitem>
        </varlistentry>
@@ -101,10 +101,10 @@ Index: pam.debian/modules/pam_wheel/pam_wheel.8.xml
      </variablelist>
    </refsect1>
  
-Index: pam.debian/modules/pam_wheel/pam_wheel.8
+Index: pam/modules/pam_wheel/pam_wheel.8
 ===================================================================
---- pam.debian.orig/modules/pam_wheel/pam_wheel.8
-+++ pam.debian/modules/pam_wheel/pam_wheel.8
+--- pam.orig/modules/pam_wheel/pam_wheel.8
++++ pam/modules/pam_wheel/pam_wheel.8
 @@ -31,7 +31,7 @@
  pam_wheel \- Only permit root access to members of group wheel
  .SH "SYNOPSIS"
@@ -126,10 +126,10 @@ Index: pam.debian/modules/pam_wheel/pam_wheel.8
  .SH "MODULE TYPES PROVIDED"
  .PP
  The
-Index: pam.debian/modules/pam_wheel/README
+Index: pam/modules/pam_wheel/README
 ===================================================================
---- pam.debian.orig/modules/pam_wheel/README
-+++ pam.debian/modules/pam_wheel/README
+--- pam.orig/modules/pam_wheel/README
++++ pam/modules/pam_wheel/README
 @@ -39,12 +39,6 @@
      modules the wheel members may be able to su to root without being prompted
      for a passwd).

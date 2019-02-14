@@ -7,7 +7,7 @@ DESCRIPTION
 pam_listfile is a PAM module which provides a way to deny or allow services
 based on an arbitrary file.
 
-The module gets the item of the type specified -- user specifies the username,
+The module gets the item of the type specified -- user specifies the username, 
 PAM_USER; tty specifies the name of the terminal over which the request has
 been made, PAM_TTY; rhost specifies the name of the remote host (if any) from
 which the request was made, PAM_RHOST; and ruser specifies the name of the
@@ -24,7 +24,7 @@ appropriate) will be returned.
 
 An additional argument, apply=, can be used to restrict the application of the
 above to a specific user (apply=username) or a given group (apply=@groupname).
-This added restriction is only meaningful when used with the tty, rhost and
+This added restriction is only meaningful when used with the tty, rhost and 
 shell items.
 
 Besides this last one, all arguments should be specified; do not count on any

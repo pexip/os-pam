@@ -53,11 +53,7 @@
 
 /* indicate that the following groups are defined */
 
-#ifdef PAM_STATIC
-# include "pam_unix_static.h"
-#else
-# define PAM_SM_ACCOUNT
-#endif
+#define PAM_SM_ACCOUNT
 
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
@@ -98,24 +94,21 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
   /* fork */
   child = fork();
   if (child == 0) {
-    int i=0;
-    struct rlimit rlim;
     static char *envp[] = { NULL };
-    char *args[] = { NULL, NULL, NULL, NULL };
-
-    /* reopen stdout as pipe */
-    dup2(fds[1], STDOUT_FILENO);
+    const char *args[] = { NULL, NULL, NULL, NULL };
 
     /* XXX - should really tidy up PAM here too */
 
-    if (getrlimit(RLIMIT_NOFILE,&rlim)==0) {
-      if (rlim.rlim_max >= MAX_FD_NO)
-        rlim.rlim_max = MAX_FD_NO;
-      for (i=0; i < (int)rlim.rlim_max; i++) {
-	if (i != STDOUT_FILENO) {
-	  close(i);
-	}
-      }
+    /* reopen stdout as pipe */
+    if (dup2(fds[1], STDOUT_FILENO) != STDOUT_FILENO) {
+      pam_syslog(pamh, LOG_ERR, "dup2 of %s failed: %m", "stdout");
+      _exit(PAM_AUTHINFO_UNAVAIL);
+    }
+
+    if (pam_modutil_sanitize_helper_fds(pamh, PAM_MODUTIL_PIPE_FD,
+					PAM_MODUTIL_IGNORE_FD,
+					PAM_MODUTIL_PIPE_FD) < 0) {
+      _exit(PAM_AUTHINFO_UNAVAIL);
     }
 
     if (geteuid() == 0) {
@@ -130,11 +123,11 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
     }
 
     /* exec binary helper */
-    args[0] = x_strdup(CHKPWD_HELPER);
-    args[1] = x_strdup(user);
-    args[2] = x_strdup("chkexpiry");
+    args[0] = CHKPWD_HELPER;
+    args[1] = user;
+    args[2] = "chkexpiry";
 
-    execve(CHKPWD_HELPER, args, envp);
+    execve(CHKPWD_HELPER, (char *const *) args, envp);
 
     pam_syslog(pamh, LOG_ERR, "helper binary execve failed: %m");
     /* should not get here: exit with error */
@@ -208,7 +201,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	uname = void_uname;
 	D(("user = `%s'", uname));
 	if (retval != PAM_SUCCESS || uname == NULL) {
-		pam_syslog(pamh, LOG_ALERT,
+		pam_syslog(pamh, LOG_ERR,
 			 "could not identify user (from uid=%lu)",
 			 (unsigned long int)getuid());
 		return PAM_USER_UNKNOWN;
@@ -216,7 +209,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	retval = get_account_info(pamh, uname, &pwent, &spent);
 	if (retval == PAM_USER_UNKNOWN) {
-		pam_syslog(pamh, LOG_ALERT,
+		pam_syslog(pamh, LOG_ERR,
 			 "could not identify user (from getpwnam(%s))",
 			 uname);
 		return retval;
@@ -238,6 +231,19 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	} else
 		retval = check_shadow_expiry(pamh, spent, &daysleft);
 
+	if (on(UNIX_NO_PASS_EXPIRY, ctrl)) {
+		const void *pretval = NULL;
+		int authrv = PAM_AUTHINFO_UNAVAIL; /* authentication not called */
+
+		if (pam_get_data(pamh, "unix_setcred_return", &pretval) == PAM_SUCCESS
+			&& pretval)
+			authrv = *(const int *)pretval;
+
+		if (authrv != PAM_SUCCESS
+			&& (retval == PAM_NEW_AUTHTOK_REQD || retval == PAM_AUTHTOK_EXPIRED))
+			retval = PAM_SUCCESS;
+	}
+
 	switch (retval) {
 	case PAM_ACCT_EXPIRED:
 		pam_syslog(pamh, LOG_NOTICE,
@@ -252,13 +258,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				"expired password for user %s (root enforced)",
 				uname);
 			_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-				_("You are required to change your password immediately (root enforced)"));
+				_("You are required to change your password immediately (administrator enforced)"));
 		} else {
 			pam_syslog(pamh, LOG_DEBUG,
 				"expired password for user %s (password aged)",
 				uname);
 			_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-				_("You are required to change your password immediately (password aged)"));
+				_("You are required to change your password immediately (password expired)"));
 		}
 		break;
 	case PAM_AUTHTOK_EXPIRED:

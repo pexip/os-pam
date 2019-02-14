@@ -103,9 +103,11 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 
 	/* Create stdio pipery. */
 	if (pipe(ipipe) == -1) {
+		pam_syslog(pamh, LOG_ERR, "Could not create pipe: %m");
 		return -1;
 	}
 	if (pipe(opipe) == -1) {
+		pam_syslog(pamh, LOG_ERR, "Could not create pipe: %m");
 		close(ipipe[0]);
 		close(ipipe[1]);
 		return -1;
@@ -114,6 +116,7 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 	/* Fork off a child. */
 	child = fork();
 	if (child == -1) {
+		pam_syslog(pamh, LOG_ERR, "Could not fork: %m");
 		close(ipipe[0]);
 		close(ipipe[1]);
 		close(opipe[0]);
@@ -124,9 +127,7 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 	if (child == 0) {
 		/* We're the child. */
 		size_t j;
-		char *args[10];
-		const char *tmp;
-		int maxopened;
+		const char *args[10];
 		/* Drop privileges. */
 		if (setgid(gid) == -1)
 		  {
@@ -148,42 +149,48 @@ run_coprocess(pam_handle_t *pamh, const char *input, char **output,
 				(unsigned long) geteuid ());
 		    _exit (err);
 		  }
-		/* Initialize the argument list. */
-		memset(args, 0, sizeof(args));
 		/* Set the pipe descriptors up as stdin and stdout, and close
 		 * everything else, including the original values for the
 		 * descriptors. */
-		dup2(ipipe[0], STDIN_FILENO);
-		dup2(opipe[1], STDOUT_FILENO);
-		maxopened = (int)sysconf(_SC_OPEN_MAX);
-		for (i = 0; i < maxopened; i++) {
-			if ((i != STDIN_FILENO) && (i != STDOUT_FILENO)) {
-				close(i);
-			}
+		if (dup2(ipipe[0], STDIN_FILENO) != STDIN_FILENO) {
+		    int err = errno;
+		    pam_syslog(pamh, LOG_ERR, "dup2 of %s failed: %m", "stdin");
+		    _exit(err);
 		}
+		if (dup2(opipe[1], STDOUT_FILENO) != STDOUT_FILENO) {
+		    int err = errno;
+		    pam_syslog(pamh, LOG_ERR, "dup2 of %s failed: %m", "stdout");
+		    _exit(err);
+		}
+		if (pam_modutil_sanitize_helper_fds(pamh, PAM_MODUTIL_IGNORE_FD,
+						    PAM_MODUTIL_IGNORE_FD,
+						    PAM_MODUTIL_NULL_FD) < 0) {
+		    _exit(1);
+		}
+		/* Initialize the argument list. */
+		memset(args, 0, sizeof(args));
 		/* Convert the varargs list into a regular array of strings. */
 		va_start(ap, command);
-		args[0] = strdup(command);
+		args[0] = command;
 		for (j = 1; j < ((sizeof(args) / sizeof(args[0])) - 1); j++) {
-			tmp = va_arg(ap, const char*);
-			if (tmp == NULL) {
+			args[j] = va_arg(ap, const char*);
+			if (args[j] == NULL) {
 				break;
 			}
-			args[j] = strdup(tmp);
 		}
 		/* Run the command. */
-		execv(command, args);
+		execv(command, (char *const *) args);
 		/* Never reached. */
 		_exit(1);
 	}
 
 	/* We're the parent, so close the other ends of the pipes. */
-	close(ipipe[0]);
 	close(opipe[1]);
 	/* Send input to the process (if we have any), then send an EOF. */
 	if (input) {
 		(void)pam_modutil_write(ipipe[1], input, strlen(input));
 	}
+	close(ipipe[0]); /* close here to avoid possible SIGPIPE above */
 	close(ipipe[1]);
 
 	/* Read data output until we run out of stuff to read. */
@@ -676,7 +683,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 
 		  if (asprintf(&d, "DISPLAY=%s", display) < 0)
 		    {
-		      pam_syslog(pamh, LOG_ERR, "out of memory");
+		      pam_syslog(pamh, LOG_CRIT, "out of memory");
 		      cookiefile = NULL;
 		      retval = PAM_SESSION_ERR;
 		      goto cleanup;
@@ -693,7 +700,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		  char *d;
 
 		  if (asprintf(&d, "XAUTHLOCALHOSTNAME=%s", xauthlocalhostname) < 0) {
-		    pam_syslog(pamh, LOG_ERR, "out of memory");
+		    pam_syslog(pamh, LOG_CRIT, "out of memory");
 		    retval = PAM_SESSION_ERR;
 		    goto cleanup;
 		  }
@@ -791,16 +798,3 @@ pam_sm_close_session (pam_handle_t *pamh, int flags UNUSED,
 
 	return PAM_SUCCESS;
 }
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_xauth_modstruct = {
-  "pam_xauth",
-  NULL,
-  NULL,
-  NULL,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  NULL
-};
-#endif

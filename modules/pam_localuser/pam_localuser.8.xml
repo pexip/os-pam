@@ -106,16 +106,16 @@
           <term>PAM_SERVICE_ERR</term>
           <listitem>
             <para>
-	      No username was given.
+              No username was given.
             </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
-          <term>PAM_USER_UNKNOWN</term>
+          <term>PAM_PERM_DENIED</term>
           <listitem>
             <para>
-	      User not known.
+              The user is not listed in the passwd file.
             </para>
           </listitem>
         </varlistentry>
@@ -127,8 +127,8 @@
   <refsect1 id='pam_localuser-examples'>
     <title>EXAMPLES</title>
     <para>
-      Add the following line to <filename>/etc/pam.d/su</filename> to
-      allow only local users in group wheel to use su.
+      Add the following lines to <filename>/etc/pam.d/su</filename> to
+      allow only local users or group wheel to use su.
       <programlisting>
 account sufficient pam_localuser.so
 account required pam_wheel.so

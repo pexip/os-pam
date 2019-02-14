@@ -2,12 +2,12 @@
 .\"     Title: pam
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM" "8" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM" "8" "05/18/2018" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -50,6 +50,14 @@ directory\&. The presence of this directory will cause
 \fBLinux\-PAM\fR
 to
 \fIignore\fR/etc/pam\&.conf\&.
+.PP
+Vendor\-supplied PAM configuration files might be installed in the system directory
+/usr/lib/pam\&.d/
+instead of the machine configuration directory
+/etc/pam\&.d/\&. If no machine configuration file is found, the vendor\-supplied file is used\&. All files in
+/etc/pam\&.d/
+override files with the same name in
+/usr/lib/pam\&.d/\&.
 .PP
 From the point of view of the system administrator, for whom this manual is provided, it is not of primary importance to understand the internal behavior of the
 \fBLinux\-PAM\fR
@@ -102,6 +110,15 @@ the
 configuration directory\&. Generally, if this directory is present, the
 /etc/pam\&.conf
 file is ignored\&.
+.RE
+.PP
+/usr/lib/pam\&.d
+.RS 4
+the
+\fBLinux\-PAM\fR
+vendor configuration directory\&. Files in
+/etc/pam\&.d
+override files with the same name in this directory\&.
 .RE
 .SH "ERRORS"
 .PP

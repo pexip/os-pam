@@ -43,7 +43,6 @@
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 
-PAM_EXTERN
 int pam_sm_authenticate (pam_handle_t *pamh, int flags, int argc,
 			 const char **argv)
 {
@@ -102,7 +101,7 @@ int pam_sm_authenticate (pam_handle_t *pamh, int flags, int argc,
       lpwd = pam_modutil_getpwnam(pamh, luser);
       if (lpwd == NULL) {
 	if (opt_debug)
-	  /* don't print by default, could be the users password */
+	  /* don't print by default, could be the user's password */
 	  pam_syslog(pamh, LOG_DEBUG,
 		     "user '%s' unknown to this system", luser);
 	return PAM_USER_UNKNOWN;
@@ -130,26 +129,9 @@ int pam_sm_authenticate (pam_handle_t *pamh, int flags, int argc,
 }
 
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
   return PAM_SUCCESS;
 }
-
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_rhosts_modstruct = {
-  "pam_rhosts",
-  pam_sm_authenticate,
-  pam_sm_setcred,
-  NULL,
-  NULL,
-  NULL,
-  NULL,
-};
-
-#endif
