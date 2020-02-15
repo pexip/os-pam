@@ -120,7 +120,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
     if (! *buf) {
 	*buf = (char *) calloc(1, PAM_TIME_BUFLEN+1);
 	if (! *buf) {
-	    pam_syslog(pamh, LOG_ERR, "out of memory");
+	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    D(("no memory"));
 	    *state = STATE_EOF;
 	    return -1;
@@ -555,7 +555,11 @@ check_account(pam_handle_t *pamh, const char *service,
 	  }
 	  /* If buffer starts with @, we are using netgroups */
 	  if (buffer[0] == '@')
+#ifdef HAVE_INNETGR
 	    good &= innetgr (&buffer[1], NULL, user, NULL);
+#else
+	    pam_syslog (pamh, LOG_ERR, "pam_time does not have netgroup support");
+#endif
 	  else
 	    good &= logic_field(pamh, user, buffer, count, is_same);
 	  D(("with user: %s", good ? "passes":"fails" ));
@@ -588,7 +592,7 @@ check_account(pam_handle_t *pamh, const char *service,
 
 /* --- public account management functions --- */
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 		 int argc, const char **argv)
 {
@@ -663,18 +667,3 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 }
 
 /* end of module definition */
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_time_modstruct = {
-    "pam_time",
-    NULL,
-    NULL,
-    pam_sm_acct_mgmt,
-    NULL,
-    NULL,
-    NULL
-};
-#endif

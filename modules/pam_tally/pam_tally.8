@@ -2,12 +2,12 @@
 .\"     Title: pam_tally
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TALLY" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TALLY" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -45,7 +45,7 @@ pam_tally comes in two parts:
 and
 \fBpam_tally\fR\&. The former is the PAM module and the latter, a stand\-alone program\&.
 \fBpam_tally\fR
-is an (optional) application which can be used to interrogate and manipulate the counter file\&. It can display users\*(Aq counts, set individual counts, or clear all counts\&. Setting artificially high counts may be useful for blocking users without changing their passwords\&. For example, one might find it useful to clear all counts every midnight from a cron job\&. The
+is an (optional) application which can be used to interrogate and manipulate the counter file\&. It can display user counts, set individual counts, or clear all counts\&. Setting artificially high counts may be useful for blocking users without changing their passwords\&. For example, one might find it useful to clear all counts every midnight from a cron job\&. The
 \fBfaillog\fR(8)
 command can be used instead of pam_tally to to maintain the counter file\&.
 .PP

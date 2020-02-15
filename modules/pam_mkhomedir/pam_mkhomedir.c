@@ -58,8 +58,6 @@
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 
-#define MAX_FD_NO 10000
-
 /* argument parsing */
 #define MKHOMEDIR_DEBUG      020	/* be verbose about things */
 #define MKHOMEDIR_QUIET      040	/* keep quiet about things */
@@ -103,14 +101,14 @@ _pam_parse (const pam_handle_t *pamh, int flags, int argc, const char **argv,
 /* Do the actual work of creating a home dir */
 static int
 create_homedir (pam_handle_t *pamh, options_t *opt,
-		const struct passwd *pwd)
+		const char *user, const char *dir)
 {
    int retval, child;
    struct sigaction newsa, oldsa;
 
    /* Mention what is happening, if the notification fails that is OK */
    if (!(opt->ctrl & MKHOMEDIR_QUIET))
-      pam_info(pamh, _("Creating directory '%s'."), pwd->pw_dir);
+      pam_info(pamh, _("Creating directory '%s'."), dir);
 
 
    D(("called."));
@@ -131,26 +129,21 @@ create_homedir (pam_handle_t *pamh, options_t *opt,
    /* fork */
    child = fork();
    if (child == 0) {
-        int i;
-        struct rlimit rlim;
 	static char *envp[] = { NULL };
-	char *args[] = { NULL, NULL, NULL, NULL, NULL };
+	const char *args[] = { NULL, NULL, NULL, NULL, NULL };
 
-	if (getrlimit(RLIMIT_NOFILE, &rlim)==0) {
-          if (rlim.rlim_max >= MAX_FD_NO)
-                rlim.rlim_max = MAX_FD_NO;
-	  for (i=0; i < (int)rlim.rlim_max; i++) {
-		close(i);
-	  }
-	}
+	if (pam_modutil_sanitize_helper_fds(pamh, PAM_MODUTIL_PIPE_FD,
+					    PAM_MODUTIL_PIPE_FD,
+					    PAM_MODUTIL_PIPE_FD) < 0)
+		_exit(PAM_SYSTEM_ERR);
 
 	/* exec the mkhomedir helper */
-	args[0] = x_strdup(MKHOMEDIR_HELPER);
-	args[1] = pwd->pw_name;
-	args[2] = x_strdup(opt->umask);
-	args[3] = x_strdup(opt->skeldir);
+	args[0] = MKHOMEDIR_HELPER;
+	args[1] = user;
+	args[2] = opt->umask;
+	args[3] = opt->skeldir;
 
-	execve(MKHOMEDIR_HELPER, args, envp);
+	execve(MKHOMEDIR_HELPER, (char *const *) args, envp);
 
 	/* should not get here: exit with error */
 	D(("helper binary is not available"));
@@ -181,7 +174,7 @@ create_homedir (pam_handle_t *pamh, options_t *opt,
 
    if (retval != PAM_SUCCESS && !(opt->ctrl & MKHOMEDIR_QUIET)) {
 	pam_error(pamh, _("Unable to create and initialize directory '%s'."),
-	    pwd->pw_dir);
+		  dir);
    }
 
    D(("returning %d", retval));
@@ -190,7 +183,7 @@ create_homedir (pam_handle_t *pamh, options_t *opt,
 
 /* --- authentication management functions (only) --- */
 
-PAM_EXTERN int
+int
 pam_sm_open_session (pam_handle_t *pamh, int flags, int argc,
 		     const char **argv)
 {
@@ -230,29 +223,12 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc,
       return PAM_SUCCESS;
    }
 
-   return create_homedir(pamh, &opt, pwd);
+   return create_homedir(pamh, &opt, user, pwd->pw_dir);
 }
 
 /* Ignore */
-PAM_EXTERN
 int pam_sm_close_session (pam_handle_t * pamh UNUSED, int flags UNUSED,
 			  int argc UNUSED, const char **argv UNUSED)
 {
    return PAM_SUCCESS;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-struct pam_module _pam_mkhomedir_modstruct =
-{
-   "pam_mkhomedir",
-   NULL,
-   NULL,
-   NULL,
-   pam_sm_open_session,
-   pam_sm_close_session,
-   NULL,
-};
-
-#endif

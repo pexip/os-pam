@@ -712,7 +712,7 @@ static char *md5hash(const char *instname, struct instance_data *idata)
     MD5((const unsigned char *)instname, strlen(instname), inst_digest);
 
     if ((md5inst = malloc(MD5_DIGEST_LENGTH * 2 + 1)) == NULL) {
-        pam_syslog(idata->pamh, LOG_ERR, "Unable to allocate buffer");
+        pam_syslog(idata->pamh, LOG_CRIT, "Unable to allocate buffer");
         return NULL;
     }
 
@@ -801,12 +801,12 @@ static int form_context(const struct polydir_s *polyptr,
 
 		scontext = context_new(scon);
 		if (! scontext) {
-			pam_syslog(idata->pamh, LOG_ERR, "out of memory");
+			pam_syslog(idata->pamh, LOG_CRIT, "out of memory");
 			goto fail;
 		}
 		fcontext = context_new(*origcon);
 		if (! fcontext) {
-			pam_syslog(idata->pamh, LOG_ERR, "out of memory");
+			pam_syslog(idata->pamh, LOG_CRIT, "out of memory");
 			goto fail;
 		}
 		if (context_range_set(fcontext, context_range_get(scontext)) != 0) {
@@ -815,7 +815,7 @@ static int form_context(const struct polydir_s *polyptr,
 		}
 		*i_context=strdup(context_str(fcontext));
 		if (! *i_context) {
-			pam_syslog(idata->pamh, LOG_ERR, "out of memory");
+			pam_syslog(idata->pamh, LOG_CRIT, "out of memory");
 			goto fail;
 		}
 
@@ -1130,7 +1130,7 @@ static int check_inst_parent(char *ipath, struct instance_data *idata)
 	 */
 	inst_parent = (char *) malloc(strlen(ipath)+1);
 	if (!inst_parent) {
-		pam_syslog(idata->pamh, LOG_ERR, "Error allocating pathname string");
+		pam_syslog(idata->pamh, LOG_CRIT, "Error allocating pathname string");
 		return PAM_SESSION_ERR;
 	}
 
@@ -1205,6 +1205,11 @@ static int inst_init(const struct polydir_s *polyptr, const char *ipath,
 						_exit(1);
 				}
 #endif
+				/* Pass maximum privs when we exec() */
+				if (setuid(geteuid()) < 0) {
+					/* ignore failures, they don't matter */
+				}
+
 				if (execle(init_script, init_script,
 					polyptr->dir, ipath, newdir?"1":"0", idata->user, NULL, envp) < 0)
 					_exit(1);
@@ -2003,7 +2008,7 @@ static int get_user_data(struct instance_data *idata)
 /*
  * Entry point from pam_open_session call.
  */
-PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
+int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
                                    int argc, const char **argv)
 {
     int i, retval;
@@ -2099,7 +2104,7 @@ PAM_EXTERN int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 /*
  * Entry point from pam_close_session call.
  */
-PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
+int pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
                                     int argc, const char **argv)
 {
     int i, retval;
@@ -2178,18 +2183,3 @@ PAM_EXTERN int pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 
     return PAM_SUCCESS;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_namespace_modstruct = {
-     "pam_namespace",
-     NULL,
-     NULL,
-     NULL,
-     pam_sm_open_session,
-     pam_sm_close_session,
-     NULL
-};
-#endif

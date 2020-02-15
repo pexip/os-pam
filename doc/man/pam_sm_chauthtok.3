@@ -2,12 +2,12 @@
 .\"     Title: pam_sm_chauthtok
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_SM_CHAUTHTOK" "3" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_SM_CHAUTHTOK" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -42,8 +42,8 @@ pam_sm_chauthtok \- PAM service function for authentication token management
 #include <security/pam_modules\&.h>
 .fi
 .ft
-.HP \w'PAM_EXTERN\ int\ pam_sm_chauthtok('u
-.BI "PAM_EXTERN int pam_sm_chauthtok(pam_handle_t\ *" "pamh" ", int\ " "flags" ", int\ " "argc" ", const\ char\ **" "argv" ");"
+.HP \w'int\ pam_sm_chauthtok('u
+.BI "int pam_sm_chauthtok(pam_handle_t\ *" "pamh" ", int\ " "flags" ", int\ " "argc" ", const\ char\ **" "argv" ");"
 .SH "DESCRIPTION"
 .PP
 The
@@ -64,7 +64,7 @@ Do not emit any messages\&.
 .PP
 PAM_CHANGE_EXPIRED_AUTHTOK
 .RS 4
-This argument indicates to the module that the users authentication token (password) should only be changed if it has expired\&. This flag is optional and
+This argument indicates to the module that the user\*(Aqs authentication token (password) should only be changed if it has expired\&. This flag is optional and
 \fImust\fR
 be combined with one of the following two flags\&. Note, however, the following two options are
 \fImutually exclusive\fR\&.

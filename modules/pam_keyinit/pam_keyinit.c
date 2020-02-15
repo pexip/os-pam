@@ -165,7 +165,6 @@ static void kill_keyrings(pam_handle_t *pamh)
 /*
  * open a PAM session by making sure there's a session keyring
  */
-PAM_EXTERN
 int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 			int argc, const char **argv)
 {
@@ -218,7 +217,8 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 
 	if (uid != old_uid && setreuid(uid, -1) < 0) {
 		error(pamh, "Unable to change UID to %d temporarily\n", uid);
-		setregid(old_gid, -1);
+		if (setregid(old_gid, -1) < 0)
+			error(pamh, "Unable to change GID back to %d\n", old_gid);
 		return PAM_SESSION_ERR;
 	}
 
@@ -237,7 +237,6 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 /*
  * close a PAM session by revoking the session keyring if requested
  */
-PAM_EXTERN
 int pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 			 int argc UNUSED, const char **argv UNUSED)
 {
@@ -251,18 +250,3 @@ int pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 
 	return PAM_SUCCESS;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_keyinit_modstruct = {
-     "pam_keyinit",
-     NULL,
-     NULL,
-     NULL,
-     pam_sm_open_session,
-     pam_sm_close_session,
-     NULL
-};
-#endif

@@ -124,6 +124,7 @@ struct tally_options {
 #define OPT_AUDIT                       0100
 #define OPT_NOLOGNOTICE                 0400
 #define OPT_SERIALIZE                  01000
+#define OPT_DEBUG                      02000
 
 #define MAX_LOCK_WAITING_TIME 10
 
@@ -195,6 +196,9 @@ tally_parse_args(pam_handle_t *pamh, struct tally_options *opts,
       }
       else if ( ! strcmp( *argv, "serialize" ) ) {
         opts->ctrl |= OPT_SERIALIZE;
+      }
+      else if ( ! strcmp( *argv, "debug" ) ) {
+        opts->ctrl |= OPT_DEBUG;
       }
       else if ( ! strcmp( *argv, "even_deny_root_account" ) ||
                 ! strcmp( *argv, "even_deny_root" ) ) {
@@ -451,11 +455,8 @@ skip_open:
 	alarm(oldalarm);
     }
 
-    if (fileinfo.st_size < (off_t)(uid+1)*(off_t)sizeof(*tally)) {
+    if (pam_modutil_read(*tfile, void_tally, sizeof(*tally)) != sizeof(*tally)) {
 	memset(tally, 0, sizeof(*tally));
-    } else if (pam_modutil_read(*tfile, void_tally, sizeof(*tally)) != sizeof(*tally)) {
-	memset(tally, 0, sizeof(*tally));
-	/* Shouldn't happen */
     }
 
     tally->fail_line[sizeof(tally->fail_line)-1] = '\0';
@@ -506,6 +507,7 @@ tally_check (tally_t oldcnt, time_t oldtime, pam_handle_t *pamh, uid_t uid,
 	     struct tallylog *tally)
 {
     int rv = PAM_SUCCESS;
+    int loglevel = LOG_DEBUG;
 #ifdef HAVE_LIBAUDIT
     char buf[64];
     int audit_fd = -1;
@@ -578,11 +580,7 @@ tally_check (tally_t oldcnt, time_t oldtime, pam_handle_t *pamh, uid_t uid,
             pam_info(pamh, _("Account locked due to %u failed logins"),
 		    (unsigned int)tally->fail_cnt);
         }
-	if (!(opts->ctrl & OPT_NOLOGNOTICE)) {
-            pam_syslog(pamh, LOG_NOTICE,
-                   "user %s (%lu) tally %hu, deny %hu",
-		   user, (unsigned long)uid, tally->fail_cnt, opts->deny);
-	}
+	loglevel = LOG_NOTICE;
         rv = PAM_AUTH_ERR;                 /* Only unconditional failure   */
         goto cleanup;
     }
@@ -612,6 +610,11 @@ tally_check (tally_t oldcnt, time_t oldtime, pam_handle_t *pamh, uid_t uid,
     }
 
 cleanup:
+    if (!(opts->ctrl & OPT_NOLOGNOTICE) && (loglevel != LOG_DEBUG || opts->ctrl & OPT_DEBUG)) {
+        pam_syslog(pamh, loglevel,
+            "user %s (%lu) tally %hu, deny %hu",
+            user, (unsigned long)uid, tally->fail_cnt, opts->deny);
+    }
 #ifdef HAVE_LIBAUDIT
     if (audit_fd != -1) {
         close(audit_fd);
@@ -734,7 +737,7 @@ tally_reset (pam_handle_t *pamh, uid_t uid, struct tally_options *opts, int old_
 
 /* --- authentication management functions (only) --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
 		    int argc, const char **argv)
 {
@@ -767,7 +770,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
   return rv;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred(pam_handle_t *pamh, int flags UNUSED,
 	       int argc, const char **argv)
 {
@@ -807,7 +810,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags UNUSED,
 
 /* To reset failcount of user on successfull login */
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 		 int argc, const char **argv)
 {
@@ -840,33 +843,6 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 
   return rv;
 }
-
-/*-----------------------------------------------------------------------*/
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_tally2_modstruct = {
-     MODULE_NAME,
-#ifdef PAM_SM_AUTH
-     pam_sm_authenticate,
-     pam_sm_setcred,
-#else
-     NULL,
-     NULL,
-#endif
-#ifdef PAM_SM_ACCOUNT
-     pam_sm_acct_mgmt,
-#else
-     NULL,
-#endif
-     NULL,
-     NULL,
-     NULL,
-};
-
-#endif   /* #ifdef PAM_STATIC */
 
 /*-----------------------------------------------------------------------*/
 
@@ -921,7 +897,7 @@ static void
 print_one(const struct tallylog *tally, uid_t uid)
 {
    static int once;
-   char *cp;
+   char *cp = "[UNKNOWN]";
    time_t fail_time;
    struct tm *tm;
    struct passwd *pwent;
@@ -930,9 +906,10 @@ print_one(const struct tallylog *tally, uid_t uid)
 
    pwent = getpwuid(uid);
    fail_time = tally->fail_time;
-   tm = localtime(&fail_time);
-   strftime (ptime, sizeof (ptime), "%D %H:%M:%S", tm);
-   cp = ptime;
+   if ((tm = localtime(&fail_time)) != NULL) {
+        strftime (ptime, sizeof (ptime), "%D %H:%M:%S", tm);
+        cp = ptime;
+   }
    if (pwent) {
         username = pwent->pw_name;
    }
@@ -980,6 +957,18 @@ main( int argc UNUSED, char **argv )
     if ( i != PAM_SUCCESS ) {
       fprintf(stderr,"%s: %s\n",*argv,pam_errors(i));
       exit(1);
+    }
+
+    if (cline_reset == 0) {
+      struct stat st;
+
+      if (stat(cline_filename, &st) && errno == ENOENT) {
+	if (!cline_quiet) {
+	  memset(&tally, 0, sizeof(tally));
+	  print_one(&tally, uid);
+	}
+	return 0;	/* no file => nothing to reset */
+      }
     }
 
     i=get_tally(NULL, uid, cline_filename, &tfile, &tally, 0);

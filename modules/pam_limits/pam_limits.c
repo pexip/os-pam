@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <syslog.h>
 #include <stdarg.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
@@ -269,15 +270,26 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
             continue;
 	}
         if (!pl->flag_numsyslogins) {
+	    char user[sizeof(ut->UT_USER) + 1];
+	    user[0] = '\0';
+	    strncat(user, ut->UT_USER, sizeof(ut->UT_USER));
+
 	    if (((pl->login_limit_def == LIMITS_DEF_USER)
 	         || (pl->login_limit_def == LIMITS_DEF_GROUP)
 		 || (pl->login_limit_def == LIMITS_DEF_DEFAULT))
-		&& strncmp(name, ut->UT_USER, sizeof(ut->UT_USER)) != 0) {
+		&& strcmp(name, user) != 0) {
                 continue;
 	    }
 	    if ((pl->login_limit_def == LIMITS_DEF_ALLGROUP)
-		&& !pam_modutil_user_in_group_nam_nam(pamh, ut->UT_USER, pl->login_group)) {
+		&& !pam_modutil_user_in_group_nam_nam(pamh, user, pl->login_group)) {
                 continue;
+	    }
+	    if (kill(ut->ut_pid, 0) == -1 && errno == ESRCH) {
+		/* process does not exist anymore */
+		pam_syslog(pamh, LOG_INFO,
+			   "Stale utmp entry (pid %d) for '%s' ignored",
+			   ut->ut_pid, user);
+		continue;
 	    }
 	}
 	if (++count > limit) {
@@ -287,10 +299,10 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
     endutent();
     if (count > limit) {
 	if (name) {
-	    pam_syslog(pamh, LOG_WARNING,
+	    pam_syslog(pamh, LOG_NOTICE,
 		       "Too many logins (max %d) for %s", limit, name);
 	} else {
-	    pam_syslog(pamh, LOG_WARNING, "Too many system logins (max %d)", limit);
+	    pam_syslog(pamh, LOG_NOTICE, "Too many system logins (max %d)", limit);
 	}
         return LOGIN_ERR;
     }
@@ -990,7 +1002,7 @@ static int setup_limits(pam_handle_t *pamh,
 }
 
 /* now the session stuff */
-PAM_EXTERN int
+int
 pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -1013,7 +1025,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
     ctrl = _pam_parse(pamh, argc, argv, pl);
     retval = pam_get_item( pamh, PAM_USER, (void*) &user_name );
     if ( user_name == NULL || retval != PAM_SUCCESS ) {
-        pam_syslog(pamh, LOG_CRIT, "open_session - error recovering username");
+        pam_syslog(pamh, LOG_ERR, "open_session - error recovering username");
         return PAM_SESSION_ERR;
      }
 
@@ -1027,7 +1039,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 
     retval = init_limits(pamh, pl, ctrl);
     if (retval != PAM_SUCCESS) {
-        pam_syslog(pamh, LOG_WARNING, "cannot initialize");
+        pam_syslog(pamh, LOG_ERR, "cannot initialize");
         return PAM_ABORT;
     }
 
@@ -1070,7 +1082,7 @@ out:
     globfree(&globbuf);
     if (retval != PAM_SUCCESS)
     {
-	pam_syslog(pamh, LOG_WARNING, "error parsing the configuration file: '%s' ",CONF_FILE);
+	pam_syslog(pamh, LOG_ERR, "error parsing the configuration file: '%s' ",CONF_FILE);
 	return retval;
     }
 
@@ -1084,28 +1096,13 @@ out:
     return PAM_SUCCESS;
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		      int argc UNUSED, const char **argv UNUSED)
 {
      /* nothing to do */
      return PAM_SUCCESS;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_limits_modstruct = {
-     "pam_limits",
-     NULL,
-     NULL,
-     NULL,
-     pam_sm_open_session,
-     pam_sm_close_session,
-     NULL
-};
-#endif
 
 /*
  * Copyright (c) Cristian Gafton, 1996-1997, <gafton@redhat.com>

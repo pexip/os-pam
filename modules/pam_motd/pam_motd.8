@@ -2,12 +2,12 @@
 .\"     Title: pam_motd
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_MOTD" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_MOTD" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -45,6 +45,18 @@ The
 /path/filename
 file is displayed as message of the day\&.
 .RE
+.PP
+\fBmotd_dir=\fR\fB\fI/path/dirname\&.d\fR\fR
+.RS 4
+The
+/path/dirname\&.d
+directory is scanned and each file contained inside of it is displayed\&.
+.RE
+.PP
+When no options are given, the default is to display both
+/etc/motd
+and the contents of
+/etc/motd\&.d\&. Specifying either option (or both) will disable this default behavior\&.
 .SH "MODULE TYPES PROVIDED"
 .PP
 Only the
@@ -66,7 +78,39 @@ is:
 .RS 4
 .\}
 .nf
-session  optional  pam_motd\&.so  motd=/etc/motd
+session  optional  pam_motd\&.so
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+To use a
+motd
+file from a different location:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+session  optional  pam_motd\&.so motd=/elsewhere/motd
+      
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+To use a
+motd
+file from elsewhere, along with a corresponding
+\&.d
+directory:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+session  optional  pam_motd\&.so motd=/elsewhere/motd motd_dir=/elsewhere/motd\&.d
       
 .fi
 .if n \{\
@@ -82,3 +126,7 @@ session  optional  pam_motd\&.so  motd=/etc/motd
 .SH "AUTHOR"
 .PP
 pam_motd was written by Ben Collins <bcollins@debian\&.org>\&.
+.PP
+The
+\fBmotd_dir=\fR
+option was added by Allison Karlitskaya <allison\&.karlitskaya@redhat\&.com>\&.

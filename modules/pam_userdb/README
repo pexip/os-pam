@@ -13,14 +13,15 @@ OPTIONS
 crypt=[crypt|none]
 
     Indicates whether encrypted or plaintext passwords are stored in the
-    database. If it is crypt, passwords should be stored in the database in
+    database. If it is crypt, passwords should be stored in the database in 
     crypt(3) form. If none is selected, passwords should be stored in the
     database as plaintext.
 
 db=/path/database
 
     Use the /path/database database for performing lookup. There is no default;
-    the module will return PAM_IGNORE if no database is provided.
+    the module will return PAM_IGNORE if no database is provided. Note that the
+    path to the database file should be specified without the .db suffix.
 
 debug
 
@@ -65,7 +66,7 @@ key_only
 
 EXAMPLES
 
-auth  sufficient pam_userdb.so icase db=/etc/dbtest.db
+auth  sufficient pam_userdb.so icase db=/etc/dbtest
 
 
 AUTHOR

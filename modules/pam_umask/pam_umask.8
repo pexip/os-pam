@@ -2,12 +2,12 @@
 .\"     Title: pam_umask
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_UMASK" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_UMASK" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -46,17 +46,6 @@ The PAM module tries to get the umask value from the following places in the fol
 .sp -1
 .IP \(bu 2.3
 .\}
-umask= argument
-.RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
 umask= entry in the user\*(Aqs GECOS field
 .RE
 .sp
@@ -68,7 +57,7 @@ umask= entry in the user\*(Aqs GECOS field
 .sp -1
 .IP \(bu 2.3
 .\}
-UMASK= entry from /etc/default/login
+umask= argument
 .RE
 .sp
 .RS 4
@@ -80,6 +69,17 @@ UMASK= entry from /etc/default/login
 .IP \(bu 2.3
 .\}
 UMASK entry from /etc/login\&.defs
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+UMASK= entry from /etc/default/login
 .RE
 .PP
 The GECOS field is split on comma \*(Aq,\*(Aq characters\&. The module also in addition to the umask= entry recognizes pri= entry, which sets the nice priority value for the session, and ulimit= entry, which sets the maximum size of files the processes in the session can create\&.

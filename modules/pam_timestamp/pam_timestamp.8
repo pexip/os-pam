@@ -2,12 +2,12 @@
 .\"     Title: pam_timestamp
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TIMESTAMP" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TIMESTAMP" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pam_timestamp \- Authenticate using cached successful authentication attempts
 .SH "SYNOPSIS"
 .HP \w'\fBpam_timestamp\&.so\fR\ 'u
-\fBpam_timestamp\&.so\fR [timestamp_timeout=\fInumber\fR] [verbose] [debug]
+\fBpam_timestamp\&.so\fR [timestampdir=\fIdirectory\fR] [timestamp_timeout=\fInumber\fR] [verbose] [debug]
 .SH "DESCRIPTION"
 .PP
 In a nutshell,
@@ -47,9 +47,18 @@ directory for the user\&. When an application attempts to authenticate the user,
 will treat a sufficiently recent timestamp file as grounds for succeeding\&.
 .SH "OPTIONS"
 .PP
+\fBtimestampdir=\fR\fB\fIdirectory\fR\fR
+.RS 4
+Specify an alternate directory where
+\fIpam_timestamp\fR
+creates timestamp files\&.
+.RE
+.PP
 \fBtimestamp_timeout=\fR\fB\fInumber\fR\fR
 .RS 4
-How long should pam_timestamp treat timestamp as valid after their last modification date (in seconds)\&. Default is 300 seconds\&.
+How long should
+\fIpam_timestamp\fR
+treat timestamp as valid after their last modification date (in seconds)\&. Default is 300 seconds\&.
 .RE
 .PP
 \fBverbose\fR
@@ -106,7 +115,7 @@ session optional pam_timestamp\&.so
 .\}
 .SH "FILES"
 .PP
-/var/run/sudo/\&.\&.\&.
+/var/run/pam_timestamp/\&.\&.\&.
 .RS 4
 timestamp files and directories
 .RE

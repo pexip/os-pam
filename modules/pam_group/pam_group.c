@@ -91,7 +91,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
     if (! *buf) {
 	*buf = (char *) calloc(1, PAM_GROUP_BUFLEN+1);
 	if (! *buf) {
-	    pam_syslog(pamh, LOG_ERR, "out of memory");
+	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    D(("no memory"));
 	    *state = STATE_EOF;
 	    return -1;
@@ -656,7 +656,11 @@ static int check_account(pam_handle_t *pamh, const char *service,
 	}
 	/* If buffer starts with @, we are using netgroups */
 	if (buffer[0] == '@')
+#ifdef HAVE_INNETGR
 	  good &= innetgr (&buffer[1], NULL, user, NULL);
+#else
+	  pam_syslog (pamh, LOG_ERR, "pam_group does not have netgroup support");
+#endif
 	/* otherwise, if the buffer starts with %, it's a UNIX group */
 	else if (buffer[0] == '%')
           good &= pam_modutil_user_in_group_nam_nam(pamh, user, &buffer[1]);
@@ -739,14 +743,14 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 /* --- public authentication management functions --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		     int argc UNUSED, const char **argv UNUSED)
 {
     return PAM_IGNORE;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh, int flags,
 		int argc UNUSED, const char **argv UNUSED)
 {
@@ -817,18 +821,3 @@ pam_sm_setcred (pam_handle_t *pamh, int flags,
 }
 
 /* end of module definition */
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_group_modstruct = {
-    "pam_group",
-    pam_sm_authenticate,
-    pam_sm_setcred,
-    NULL,
-    NULL,
-    NULL,
-    NULL
-};
-#endif

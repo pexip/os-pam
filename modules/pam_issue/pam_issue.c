@@ -42,7 +42,7 @@ static int read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt);
 
 /* --- authentication management functions (only) --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -105,7 +105,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 	char *new_prompt = realloc(issue_prompt, size);
 
 	if (new_prompt == NULL) {
-	    pam_syslog(pamh, LOG_ERR, "out of memory");
+	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    retval = PAM_BUF_ERR;
 	    goto out;
 	}
@@ -120,7 +120,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     return (retval == PAM_SUCCESS) ? PAM_IGNORE : retval;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
@@ -141,7 +141,7 @@ read_issue_raw(pam_handle_t *pamh, FILE *fp, char **prompt)
     }
 
     if ((issue = malloc(st.st_size + 1)) == NULL) {
-	pam_syslog(pamh, LOG_ERR, "out of memory");
+	pam_syslog(pamh, LOG_CRIT, "out of memory");
 	return PAM_BUF_ERR;
     }
 
@@ -167,7 +167,7 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
     *prompt = NULL;
 
     if ((issue = malloc(size)) == NULL) {
-	pam_syslog(pamh, LOG_ERR, "out of memory");
+	pam_syslog(pamh, LOG_CRIT, "out of memory");
 	return PAM_BUF_ERR;
     }
 
@@ -277,8 +277,8 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
 		return PAM_BUF_ERR;
 	    }
 	    issue = new_issue;
-	    strcat(issue, buf);
 	}
+	strcat(issue, buf);
     }
 
     if (ferror(fp)) {
@@ -290,21 +290,5 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
     *prompt = issue;
     return PAM_SUCCESS;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_issue_modstruct = {
-     "pam_issue",
-     pam_sm_authenticate,
-     pam_sm_setcred,
-     NULL,
-     NULL,
-     NULL,
-     NULL,
-};
-
-#endif
 
 /* end of module definition */

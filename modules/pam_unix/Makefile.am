@@ -19,7 +19,7 @@ secureconfdir = $(SCONFIGDIR)
 AM_CFLAGS = -I$(top_srcdir)/libpam/include -I$(top_srcdir)/libpamc/include \
 	-DCHKPWD_HELPER=\"$(sbindir)/unix_chkpwd\" \
 	-DUPDATE_HELPER=\"$(sbindir)/unix_update\" \
-	$(NIS_CFLAGS)
+	@TIRPC_CFLAGS@ @NSL_CFLAGS@
 
 if HAVE_LIBSELINUX
   AM_CFLAGS += -D"WITH_SELINUX"
@@ -30,12 +30,11 @@ if HAVE_VERSIONING
   pam_unix_la_LDFLAGS += -Wl,--version-script=$(srcdir)/../modules.map
 endif
 pam_unix_la_LIBADD = $(top_builddir)/libpam/libpam.la \
-	@LIBCRYPT@ @LIBSELINUX@ $(NIS_LIBS)
+	@LIBCRYPT@ @LIBSELINUX@ @TIRPC_LIBS@ @NSL_LIBS@
 
 securelib_LTLIBRARIES = pam_unix.la
 
-noinst_HEADERS = md5.h support.h yppasswd.h bigcrypt.h passverify.h \
-		 pam_unix_static.h
+noinst_HEADERS = md5.h support.h yppasswd.h bigcrypt.h passverify.h
 
 sbin_PROGRAMS = unix_chkpwd unix_update
 
@@ -44,9 +43,6 @@ noinst_PROGRAMS = bigcrypt
 pam_unix_la_SOURCES = bigcrypt.c pam_unix_acct.c \
 	pam_unix_auth.c pam_unix_passwd.c pam_unix_sess.c support.c \
 	passverify.c yppasswd_xdr.c md5_good.c md5_broken.c
-if STATIC_MODULES
-pam_unix_la_SOURCES += pam_unix_static.c
-endif
 
 bigcrypt_SOURCES = bigcrypt.c bigcrypt_main.c
 bigcrypt_CFLAGS = $(AM_CFLAGS)

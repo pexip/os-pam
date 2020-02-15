@@ -2,12 +2,12 @@
 .\"     Title: pam_syslog
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_SYSLOG" "3" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_SYSLOG" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,9 +43,9 @@ pam_syslog, pam_vsyslog \- send messages to the system logger
 .fi
 .ft
 .HP \w'void\ pam_syslog('u
-.BI "void pam_syslog(pam_handle_t\ *" "pamh" ", int\ " "priority" ", const\ char\ *" "fmt" ", " "\&.\&.\&." ");"
+.BI "void pam_syslog(const\ pam_handle_t\ *" "pamh" ", int\ " "priority" ", const\ char\ *" "fmt" ", " "\&.\&.\&." ");"
 .HP \w'void\ pam_vsyslog('u
-.BI "void pam_vsyslog(pam_handle_t\ *" "pamh" ", int\ " "priority" ", const\ char\ *" "fmt" ", va_list\ " "args" ");"
+.BI "void pam_vsyslog(const\ pam_handle_t\ *" "pamh" ", int\ " "priority" ", const\ char\ *" "fmt" ", va_list\ " "args" ");"
 .SH "DESCRIPTION"
 .PP
 The

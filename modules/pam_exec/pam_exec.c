@@ -177,12 +177,15 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 		  return retval;
 		}
 
-	      pam_set_item (pamh, PAM_AUTHTOK, resp);
-	      authtok = strdupa (resp);
-	      _pam_drop (resp);
+	      if (resp)
+		{
+		  pam_set_item (pamh, PAM_AUTHTOK, resp);
+		  authtok = strndupa (resp, PAM_MAX_RESP_SIZE);
+		  _pam_drop (resp);
+		}
 	    }
 	  else
-	    authtok = void_pass;
+	    authtok = strndupa (void_pass, PAM_MAX_RESP_SIZE);
 
 	  if (pipe(fds) != 0)
 	    {
@@ -302,6 +305,10 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
       char **envlist, **tmp;
       int envlen, nitems;
       char *envstr;
+      enum pam_modutil_redirect_fd redirect_stdin =
+	      expose_authtok ? PAM_MODUTIL_IGNORE_FD : PAM_MODUTIL_PIPE_FD;
+      enum pam_modutil_redirect_fd redirect_stdout =
+	      (use_stdout || logfile) ? PAM_MODUTIL_IGNORE_FD : PAM_MODUTIL_NULL_FD;
 
       /* First, move all the pipes off of stdin, stdout, and stderr, to ensure
        * that calls to dup2 won't close them. */
@@ -327,18 +334,6 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 	    {
 	      int err = errno;
 	      pam_syslog (pamh, LOG_ERR, "dup2 of STDIN failed: %m");
-	      _exit (err);
-	    }
-	}
-      else
-	{
-	  close (STDIN_FILENO);
-
-	  /* New stdin.  */
-	  if ((i = open ("/dev/null", O_RDWR)) < 0)
-	    {
-	      int err = errno;
-	      pam_syslog (pamh, LOG_ERR, "open of /dev/null failed: %m");
 	      _exit (err);
 	    }
 	}
@@ -368,32 +363,34 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 			  logfile);
 	      _exit (err);
 	    }
+	  if (i != STDOUT_FILENO)
+	    {
+	      if (dup2 (i, STDOUT_FILENO) == -1)
+		{
+		  int err = errno;
+		  pam_syslog (pamh, LOG_ERR, "dup2 failed: %m");
+		  _exit (err);
+		}
+	      close (i);
+	    }
 	  if (asprintf (&buffer, "*** %s", ctime (&tm)) > 0)
 	    {
-	      pam_modutil_write (i, buffer, strlen (buffer));
+	      pam_modutil_write (STDOUT_FILENO, buffer, strlen (buffer));
 	      free (buffer);
 	    }
 	}
-      else
-	{
-	  close (STDOUT_FILENO);
-	  if ((i = open ("/dev/null", O_RDWR)) < 0)
-	    {
-	      int err = errno;
-	      pam_syslog (pamh, LOG_ERR, "open of /dev/null failed: %m");
-	      _exit (err);
-	    }
-	}
 
-      if (dup2 (STDOUT_FILENO, STDERR_FILENO) == -1)
+      if ((use_stdout || logfile) &&
+	  dup2 (STDOUT_FILENO, STDERR_FILENO) == -1)
 	{
 	  int err = errno;
 	  pam_syslog (pamh, LOG_ERR, "dup2 failed: %m");
 	  _exit (err);
 	}
 
-      for (i = 3; i < sysconf (_SC_OPEN_MAX); i++)
-	close (i);
+      if (pam_modutil_sanitize_helper_fds(pamh, redirect_stdin,
+					  redirect_stdout, redirect_stdout) < 0)
+	_exit(1);
 
       if (call_setuid)
 	if (setuid (geteuid ()) == -1)
@@ -432,7 +429,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
       if (tmp == NULL)
       {
         free(envlist);
-        pam_syslog (pamh, LOG_ERR, "realloc environment failed: %m");
+        pam_syslog (pamh, LOG_CRIT, "realloc environment failed: %m");
         _exit (ENOMEM);
       }
       envlist = tmp;
@@ -445,7 +442,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
         if (asprintf(&envstr, "%s=%s", env_items[i].name, (const char *)item) < 0)
         {
           free(envlist);
-          pam_syslog (pamh, LOG_ERR, "prepare environment failed: %m");
+          pam_syslog (pamh, LOG_CRIT, "prepare environment failed: %m");
           _exit (ENOMEM);
         }
         envlist[envlen++] = envstr;
@@ -455,7 +452,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
       if (asprintf(&envstr, "PAM_TYPE=%s", pam_type) < 0)
         {
           free(envlist);
-          pam_syslog (pamh, LOG_ERR, "prepare environment failed: %m");
+          pam_syslog (pamh, LOG_CRIT, "prepare environment failed: %m");
           _exit (ENOMEM);
         }
       envlist[envlen++] = envstr;
@@ -473,14 +470,14 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
   return PAM_SYSTEM_ERR; /* will never be reached. */
 }
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
   return call_exec ("auth", pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
@@ -489,7 +486,7 @@ pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 
 /* password updating functions */
 
-PAM_EXTERN int
+int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 int argc, const char **argv)
 {
@@ -498,35 +495,23 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
   return call_exec ("password", pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
 		 int argc, const char **argv)
 {
   return call_exec ("account", pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
 		    int argc, const char **argv)
 {
   return call_exec ("open_session", pamh, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
   return call_exec ("close_session", pamh, argc, argv);
 }
-
-#ifdef PAM_STATIC
-struct pam_module _pam_exec_modstruct = {
-  "pam_exec",
-  pam_sm_authenticate,
-  pam_sm_setcred,
-  pam_sm_acct_mgmt,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  pam_sm_chauthtok,
-};
-#endif

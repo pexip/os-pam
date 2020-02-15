@@ -2,12 +2,12 @@
 .\"     Title: pam_tally2
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TALLY2" "8" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TALLY2" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pam_tally2 \- The login counter (tallying) module
 .SH "SYNOPSIS"
 .HP \w'\fBpam_tally2\&.so\fR\ 'u
-\fBpam_tally2\&.so\fR [file=\fI/path/to/counter\fR] [onerr=[\fIfail\fR|\fIsucceed\fR]] [magic_root] [even_deny_root] [deny=\fIn\fR] [lock_time=\fIn\fR] [unlock_time=\fIn\fR] [root_unlock_time=\fIn\fR] [serialize] [audit] [silent] [no_log_info]
+\fBpam_tally2\&.so\fR [file=\fI/path/to/counter\fR] [onerr=[\fIfail\fR|\fIsucceed\fR]] [magic_root] [even_deny_root] [deny=\fIn\fR] [lock_time=\fIn\fR] [unlock_time=\fIn\fR] [root_unlock_time=\fIn\fR] [serialize] [audit] [silent] [no_log_info] [debug]
 .HP \w'\fBpam_tally2\fR\ 'u
 \fBpam_tally2\fR [\-\-file\ \fI/path/to/counter\fR] [\-\-user\ \fIusername\fR] [\-\-reset[=\fIn\fR]] [\-\-quiet]
 .SH "DESCRIPTION"
@@ -43,7 +43,7 @@ pam_tally2 comes in two parts:
 and
 \fBpam_tally2\fR\&. The former is the PAM module and the latter, a stand\-alone program\&.
 \fBpam_tally2\fR
-is an (optional) application which can be used to interrogate and manipulate the counter file\&. It can display users\*(Aq counts, set individual counts, or clear all counts\&. Setting artificially high counts may be useful for blocking users without changing their passwords\&. For example, one might find it useful to clear all counts every midnight from a cron job\&.
+is an (optional) application which can be used to interrogate and manipulate the counter file\&. It can display user counts, set individual counts, or clear all counts\&. Setting artificially high counts may be useful for blocking users without changing their passwords\&. For example, one might find it useful to clear all counts every midnight from a cron job\&.
 .PP
 Normally, failed attempts to access
 \fIroot\fR
@@ -91,6 +91,11 @@ Don\*(Aqt print informative messages\&.
 .RS 4
 Don\*(Aqt log informative messages via
 \fBsyslog\fR(3)\&.
+.RE
+.PP
+\fBdebug\fR
+.RS 4
+Always log tally count when it is incremented as a debug level message to the system log\&.
 .RE
 .RE
 .PP

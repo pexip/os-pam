@@ -1,9 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT
+AC_INIT([Linux-PAM], [1.3.1], , [Linux-PAM])
 AC_CONFIG_SRCDIR([conf/pam_conv1/pam_conv_y.y])
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE("Linux-PAM", 1.1.8)
-LT_INIT([disable-static])
+AM_INIT_AUTOMAKE([-Wall -Wno-portability])
 AC_PREREQ([2.61])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -28,7 +27,7 @@ dnl If we use /usr as prefix, use /etc for config files
         fi
 	if test ${libdir} = '${exec_prefix}/lib'
 	then
-		case "`uname -m`" in
+		case "$host_cpu" in
 		    x86_64|ppc64|s390x|sparc64)
 			libdir="/lib64" ;;
 		    *)
@@ -58,25 +57,14 @@ dnl Add /var directory
 
 fi
 
-dnl
-dnl check if we should link everything static into libpam
-dnl
-AC_ARG_ENABLE(static-modules,AS_HELP_STRING([--enable-static-modules],
-	[do not make the modules dynamically loadable]),
-	STATIC_MODULES=$enableval,STATIC_MODULES=no)
-if test "$STATIC_MODULES" != "no" ; then
-        CFLAGS="$CFLAGS -DPAM_STATIC"
-	AC_ENABLE_STATIC([yes])
-	AC_ENABLE_SHARED([no])
-else
-# per default don't build static libraries
-	AC_ENABLE_STATIC([no])
-	AC_ENABLE_SHARED([yes])
-fi
-AM_CONDITIONAL([STATIC_MODULES], [test "$STATIC_MODULES" != "no"])
+dnl This should be called before any macros that run the C compiler.
+AC_USE_SYSTEM_EXTENSIONS
+
+LT_INIT([disable-static])
+AC_ENABLE_STATIC([no])
+AC_ENABLE_SHARED([yes])
 
 dnl Checks for programs.
-AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CC
 AC_PROG_YACC
 AM_PROG_LEX
@@ -140,6 +128,15 @@ fi
 AC_MSG_CHECKING([for CC_FOR_BUILD])
 AC_MSG_RESULT([$CC_FOR_BUILD])
 AC_SUBST(CC_FOR_BUILD)
+
+if test "x${BUILD_CPPFLAGS+set}" != "xset" ; then
+  if test "x$cross_compiling" = "xyes" ; then
+    BUILD_CPPFLAGS=
+  else
+    BUILD_CPPFLAGS=${CPPFLAGS}
+  fi
+fi
+AC_SUBST(BUILD_CPPFLAGS)
 
 if test "x${BUILD_CFLAGS+set}" != "xset" ; then
   if test "x$cross_compiling" = "xyes" ; then
@@ -253,7 +250,7 @@ dnl
 AC_ARG_ENABLE([prelude],
 	AS_HELP_STRING([--disable-prelude],[do not use prelude]),
 	WITH_PRELUDE=$enableval, WITH_PRELUDE=yes)
-if test "$WITH_PRELUDE" == "yes" ; then
+if test "$WITH_PRELUDE" = "yes" ; then
   AM_PATH_LIBPRELUDE([0.9.0])
   if test "$LIBPRELUDE_CONFIG" != "no" ; then
     LIBPRELUDE_CFLAGS="$LIBPRELUDE_CFLAGS -DPRELUDE=1"
@@ -306,7 +303,7 @@ fi
 AC_ARG_ENABLE([lckpwdf],
 	AS_HELP_STRING([--disable-lckpwdf],[do not use the lckpwdf function]),
 	WITH_LCKPWDF=$enableval, WITH_LCKPWDF=yes)
-if test "$WITH_LCKPWDF" == "yes" ; then
+if test "$WITH_LCKPWDF" = "yes" ; then
     AC_DEFINE([USE_LCKPWDF], 1,
 		[Define to 1 if the lckpwdf function should be used])
 fi
@@ -336,10 +333,10 @@ AC_ARG_WITH(xauth,
 [  --with-xauth            additional path to check for xauth when it is called from pam_xauth
                           [added to the default of /usr/X11R6/bin/xauth, /usr/bin/xauth, /usr/bin/X11/xauth]],
 pam_xauth_path=${withval})
-if test x$with_xauth == x ; then
+if test x$with_xauth = x ; then
 	AC_PATH_PROG(pam_xauth_path, xauth)
 dnl There is no sense in adding the first default path
-	if test x$pam_xauth_path == x/usr/X11R6/bin/xauth ; then
+	if test x$pam_xauth_path = x/usr/X11R6/bin/xauth ; then
 		unset pam_xauth_path
 	fi
 fi
@@ -404,7 +401,7 @@ AS_IF([test "x$ac_cv_header_xcrypt_h" = "xyes"],
   [crypt_libs="crypt"])
 
 BACKUP_LIBS=$LIBS
-AC_SEARCH_LIBS([crypt],[$crypt_libs], LIBCRYPT="-l$ac_lib", LIBCRYPT="")
+AC_SEARCH_LIBS([crypt],[$crypt_libs], LIBCRYPT="${ac_lib:+-l$ac_lib}", LIBCRYPT="")
 AC_CHECK_FUNCS(crypt_r crypt_gensalt_r)
 LIBS=$BACKUP_LIBS
 AC_SUBST(LIBCRYPT)
@@ -450,22 +447,29 @@ AC_SUBST(LIBDB)
 AM_CONDITIONAL([HAVE_LIBDB], [test ! -z "$LIBDB"])
 
 AC_ARG_ENABLE([nis],
-        AS_HELP_STRING([--disable-nis], [Disable building NIS/YP support in pam_unix and pam_access]))
+        AS_HELP_STRING([--disable-nis], [Disable building NIS/YP support in pam_unix]))
 
 AS_IF([test "x$enable_nis" != "xno"], [
-  CFLAGS=$old_CFLAGS
-  LIBS=$old_LIBS
+  old_CFLAGS=$CFLAGS
+  old_CPPFLAGS=$CPPFLAGS
+  old_LIBS=$LIBS
 
   dnl if there's libtirpc available, prefer that over the system
   dnl implementation.
-  PKG_CHECK_MODULES([libtirpc], [libtirpc], [
-    CFLAGS="$CFLAGS $libtirpc_CFLAGS"
-    LIBS="$LIBS $libtirpc_LIBS"
+  PKG_CHECK_MODULES([TIRPC], [libtirpc], [
+    CFLAGS="$CFLAGS $TIRPC_CFLAGS"
+    CPPFLAGS="$CPPFLAGS $TIRPC_CFLAGS"
+    LIBS="$LIBS $TIRPC_LIBS"
   ], [:;])
 
-  AC_SEARCH_LIBS([yp_get_default_domain], [nsl])
+  PKG_CHECK_MODULES([NSL], [libnsl], [],
+    [AC_CHECK_LIB([nsl],[yp_match],[NSL_LIBS="-lnsl"],[NSL_LIBS=""])])
+  CFLAGS="$CFLAGS $NSL_CFLAGS"
+  CPPFLAGS="$CPPFLAGS $NSL_CFLAGS"
+  LIBS="$LIBS $NSL_LIBS"
 
   AC_CHECK_FUNCS([yp_get_default_domain yperr_string yp_master yp_bind yp_match yp_unbind])
+  AC_CHECK_FUNCS([getrpcport rpcb_getaddr])
   AC_CHECK_HEADERS([rpc/rpc.h rpcsvc/ypclnt.h rpcsvc/yp_prot.h])
   AC_CHECK_DECLS([getrpcport], , , [
     #if HAVE_RPC_RPC_H
@@ -473,10 +477,8 @@ AS_IF([test "x$enable_nis" != "xno"], [
     #endif
   ])
 
-  NIS_CFLAGS="${CFLAGS%${old_CFLAGS}}"
-  NIS_LIBS="${LIBS%${old_LIBS}}"
-
   CFLAGS="$old_CFLAGS"
+  CPPFLAGS="$old_CPPFLAGS"
   LIBS="$old_LIBS"
 ])
 
@@ -486,7 +488,7 @@ AC_SUBST([NIS_LIBS])
 AC_ARG_ENABLE([selinux],
         AS_HELP_STRING([--disable-selinux],[do not use SELinux]),
         WITH_SELINUX=$enableval, WITH_SELINUX=yes)
-if test "$WITH_SELINUX" == "yes" ; then
+if test "$WITH_SELINUX" = "yes" ; then
   AC_CHECK_LIB([selinux],[getfilecon], LIBSELINUX="-lselinux", LIBSELINUX="")
 else
   LIBSELINUX=""
@@ -556,7 +558,12 @@ AC_PATH_PROG([BROWSER], [w3m])
 if test ! -z "$BROWSER"; then
      BROWSER="$BROWSER -T text/html -dump"
 else
-     enable_docu=no
+     AC_PATH_PROG([BROWSER], [elinks])
+     if test ! -z "$BROWSER"; then
+          BROWSER="$BROWSER -no-numbering -no-references -dump"
+     else
+          enable_docu=no
+     fi
 fi
 
 AC_PATH_PROG([FO2PDF], [fop])
@@ -565,7 +572,7 @@ AM_CONDITIONAL(ENABLE_REGENERATE_MAN, test x$enable_docu != xno)
 AM_CONDITIONAL(ENABLE_GENERATE_PDF, test ! -z "$FO2PDF")
 
 
-AM_GNU_GETTEXT_VERSION([0.15])
+AM_GNU_GETTEXT_VERSION([0.18.3])
 AM_GNU_GETTEXT([external])
 AC_CHECK_FUNCS(dngettext)
 

@@ -36,6 +36,7 @@
    USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
    DAMAGE. */
 
+#include "config.h"
 #include <errno.h>
 #include <fnmatch.h>
 #include <stdlib.h>
@@ -108,7 +109,7 @@ nl_recv (int fd, unsigned type, void *buf, size_t size)
   struct msghdr msg;
   struct nlmsghdr nlm;
   struct iovec iov[2];
-  ssize_t res;
+  ssize_t res, resdiff;
 
  again:
   iov[0].iov_base = &nlm;
@@ -119,6 +120,7 @@ nl_recv (int fd, unsigned type, void *buf, size_t size)
   msg.msg_iovlen = 1;
   msg.msg_control = NULL;
   msg.msg_controllen = 0;
+  msg.msg_flags = 0;
   if (type != NLMSG_ERROR)
     {
       res = recvmsg (fd, &msg, MSG_PEEK);
@@ -160,11 +162,16 @@ nl_recv (int fd, unsigned type, void *buf, size_t size)
   res = recvmsg (fd, &msg, 0);
   if (res == -1)
     return -1;
-  if ((size_t)res != NLMSG_LENGTH (size)
+  resdiff = NLMSG_LENGTH(size) - (size_t)res;
+  if (resdiff < 0
       || nlm.nlmsg_type != type)
     {
       errno = EIO;
       return -1;
+    }
+  else if (resdiff > 0)
+    {
+      memset((char *)buf + size - resdiff, 0, resdiff);
     }
   return 0;
 }
@@ -192,6 +199,54 @@ cleanup_old_status (pam_handle_t *pamh, void *data, int error_status)
   free (data);
 }
 
+enum uid_range { UID_RANGE_NONE, UID_RANGE_MM, UID_RANGE_MIN,
+    UID_RANGE_ONE, UID_RANGE_ERR };
+
+static enum uid_range
+parse_uid_range(pam_handle_t *pamh, const char *s,
+                uid_t *min_uid, uid_t *max_uid)
+{
+    const char *range = s;
+    const char *pmax;
+    char *endptr;
+    enum uid_range rv = UID_RANGE_MM;
+
+    if ((pmax=strchr(range, ':')) == NULL)
+        return UID_RANGE_NONE;
+    ++pmax;
+
+    if (range[0] == ':')
+        rv = UID_RANGE_ONE;
+    else {
+            errno = 0;
+            *min_uid = strtoul (range, &endptr, 10);
+            if (errno != 0 || (range == endptr) || *endptr != ':') {
+                pam_syslog(pamh, LOG_DEBUG,
+                           "wrong min_uid value in '%s'", s);
+                return UID_RANGE_ERR;
+            }
+    }
+
+    if (*pmax == '\0') {
+        if (rv == UID_RANGE_ONE)
+            return UID_RANGE_ERR;
+
+        return UID_RANGE_MIN;
+    }
+
+    errno = 0;
+    *max_uid = strtoul (pmax, &endptr, 10);
+    if (errno != 0 || (pmax == endptr) || *endptr != '\0') {
+        pam_syslog(pamh, LOG_DEBUG,
+                   "wrong max_uid value in '%s'", s);
+        return UID_RANGE_ERR;
+    }
+
+    if (rv == UID_RANGE_ONE)
+        *min_uid = *max_uid;
+    return rv;
+}
+
 int
 pam_sm_open_session (pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
@@ -201,6 +256,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc, const char **argv)
   struct audit_tty_status *old_status, new_status;
   const char *user;
   int i, fd, open_only;
+  struct passwd *pwd;
 #ifdef HAVE_STRUCT_AUDIT_TTY_STATUS_LOG_PASSWD
   int log_passwd;
 #endif /* HAVE_STRUCT_AUDIT_TTY_STATUS_LOG_PASSWD */
@@ -210,6 +266,14 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc, const char **argv)
   if (pam_get_user (pamh, &user, NULL) != PAM_SUCCESS)
     {
       pam_syslog (pamh, LOG_ERR, "error determining target user's name");
+      return PAM_SESSION_ERR;
+    }
+
+  pwd = pam_modutil_getpwnam(pamh, user);
+  if (pwd == NULL)
+    {
+      pam_syslog(pamh, LOG_WARNING,
+                 "open_session unknown user '%s'", user);
       return PAM_SESSION_ERR;
     }
 
@@ -230,13 +294,31 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc, const char **argv)
 	  copy = strdup (strchr (argv[i], '=') + 1);
 	  if (copy == NULL)
 	    return PAM_SESSION_ERR;
-	  for (tok = strtok_r (copy, ",", &tok_data); tok != NULL;
+	  for (tok = strtok_r (copy, ",", &tok_data);
+	       tok != NULL && command != this_command;
 	       tok = strtok_r (NULL, ",", &tok_data))
 	    {
-	      if (fnmatch (tok, user, 0) == 0)
+	      uid_t min_uid = 0, max_uid = 0;
+	      switch (parse_uid_range(pamh, tok, &min_uid, &max_uid))
 		{
-		  command = this_command;
-		  break;
+		case UID_RANGE_NONE:
+		    if (fnmatch (tok, user, 0) == 0)
+			command = this_command;
+		    break;
+		case UID_RANGE_MM:
+		    if (pwd->pw_uid >= min_uid && pwd->pw_uid <= max_uid)
+			command = this_command;
+		    break;
+		case UID_RANGE_MIN:
+		    if (pwd->pw_uid >= min_uid)
+			command = this_command;
+		    break;
+		case UID_RANGE_ONE:
+		    if (pwd->pw_uid == max_uid)
+			command = this_command;
+		    break;
+		case UID_RANGE_ERR:
+		    break;
 		}
 	    }
 	  free (copy);
@@ -274,6 +356,8 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc, const char **argv)
       free (old_status);
       return PAM_SESSION_ERR;
     }
+
+  memcpy(&new_status, old_status, sizeof(new_status));
 
   new_status.enabled = (command == CMD_ENABLE ? 1 : 0);
 #ifdef HAVE_STRUCT_AUDIT_TTY_STATUS_LOG_PASSWD
@@ -351,16 +435,3 @@ pam_sm_close_session (pam_handle_t *pamh, int flags, int argc,
     }
   return PAM_SUCCESS;
 }
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_tty_audit_modstruct = {
-  "pam_tty_audit",
-  NULL,
-  NULL,
-  NULL,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  NULL
-};
-#endif

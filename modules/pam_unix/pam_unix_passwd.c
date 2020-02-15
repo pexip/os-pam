@@ -64,11 +64,7 @@
 
 /* indicate the following groups are defined */
 
-#ifdef PAM_STATIC
-# include "pam_unix_static.h"
-#else
-# define PAM_SM_PASSWORD
-#endif
+#define PAM_SM_PASSWORD
 
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
@@ -96,7 +92,7 @@
 
 # include "yppasswd.h"
 
-# if !HAVE_DECL_GETRPCPORT
+# if !HAVE_DECL_GETRPCPORT &&!HAVE_RPCB_GETADDR
 extern int getrpcport(const char *host, unsigned long prognum,
 		      unsigned long versnum, unsigned int proto);
 # endif				/* GNU libc 2.1 */
@@ -118,11 +114,48 @@ extern int getrpcport(const char *host, unsigned long prognum,
 #define MAX_PASSWD_TRIES	3
 
 #ifdef HAVE_NIS
+#ifdef HAVE_RPCB_GETADDR
+static unsigned short
+__taddr2port (const struct netconfig *nconf, const struct netbuf *nbuf)
+{
+  unsigned short port = 0;
+  struct __rpc_sockinfo si;
+  struct sockaddr_in *sin;
+  struct sockaddr_in6 *sin6;
+  if (!__rpc_nconf2sockinfo(nconf, &si))
+    return 0;
+
+  switch (si.si_af)
+    {
+    case AF_INET:
+      sin = nbuf->buf;
+      port = sin->sin_port;
+      break;
+    case AF_INET6:
+      sin6 = nbuf->buf;
+      port = sin6->sin6_port;
+      break;
+    default:
+      break;
+    }
+
+  return htons (port);
+}
+#endif
+
 static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
 {
 	char *master;
 	char *domainname;
 	int port, err;
+#if defined(HAVE_RPCB_GETADDR)
+	struct netconfig *nconf;
+	struct netbuf svcaddr;
+	char addrbuf[INET6_ADDRSTRLEN];
+	void *handle;
+	int found;
+#endif
+
 
 #ifdef HAVE_YP_GET_DEFAULT_DOMAIN
 	if ((err = yp_get_default_domain(&domainname)) != 0) {
@@ -150,7 +183,41 @@ static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
 			 yperr_string(err));
 		return NULL;
 	}
+#ifdef HAVE_RPCB_GETADDR
+	svcaddr.len = 0;
+	svcaddr.maxlen = sizeof (addrbuf);
+	svcaddr.buf = addrbuf;
+	port = 0;
+	found = 0;
+
+	handle = setnetconfig();
+	while ((nconf = getnetconfig(handle)) != NULL) {
+	  if (!strcmp(nconf->nc_proto, "udp")) {
+	    if (rpcb_getaddr(YPPASSWDPROG, YPPASSWDPROC_UPDATE,
+			     nconf, &svcaddr, master)) {
+              port = __taddr2port (nconf, &svcaddr);
+              endnetconfig (handle);
+              found=1;
+              break;
+            }
+
+	    if (rpc_createerr.cf_stat != RPC_UNKNOWNHOST) {
+	      clnt_pcreateerror (master);
+              pam_syslog (pamh, LOG_ERR,
+			  "rpcb_getaddr (%s) failed!", master);
+              return NULL;
+            }
+	  }
+	}
+
+	if (!found) {
+	  pam_syslog (pamh, LOG_ERR,
+		      "Cannot find suitable transport for protocol 'udp'");
+	  return NULL;
+	}
+#else
 	port = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE, IPPROTO_UDP);
+#endif
 	if (port == 0) {
 		pam_syslog(pamh, LOG_WARNING,
 		         "yppasswdd not running on NIS master host");
@@ -201,39 +268,37 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
     /* fork */
     child = fork();
     if (child == 0) {
-        int i=0;
-        struct rlimit rlim;
 	static char *envp[] = { NULL };
-	char *args[] = { NULL, NULL, NULL, NULL, NULL, NULL };
+	const char *args[] = { NULL, NULL, NULL, NULL, NULL, NULL };
         char buffer[16];
 
 	/* XXX - should really tidy up PAM here too */
 
 	/* reopen stdin as pipe */
-	dup2(fds[0], STDIN_FILENO);
+	if (dup2(fds[0], STDIN_FILENO) != STDIN_FILENO) {
+		pam_syslog(pamh, LOG_ERR, "dup2 of %s failed: %m", "stdin");
+		_exit(PAM_AUTHINFO_UNAVAIL);
+	}
 
-	if (getrlimit(RLIMIT_NOFILE,&rlim)==0) {
-	  if (rlim.rlim_max >= MAX_FD_NO)
-	    rlim.rlim_max = MAX_FD_NO;
-	  for (i=0; i < (int)rlim.rlim_max; i++) {
-	    if (i != STDIN_FILENO)
-		close(i);
-	  }
+	if (pam_modutil_sanitize_helper_fds(pamh, PAM_MODUTIL_IGNORE_FD,
+					    PAM_MODUTIL_PIPE_FD,
+					    PAM_MODUTIL_PIPE_FD) < 0) {
+		_exit(PAM_AUTHINFO_UNAVAIL);
 	}
 
 	/* exec binary helper */
-	args[0] = x_strdup(UPDATE_HELPER);
-	args[1] = x_strdup(user);
-	args[2] = x_strdup("update");
+	args[0] = UPDATE_HELPER;
+	args[1] = user;
+	args[2] = "update";
 	if (on(UNIX_SHADOW, ctrl))
-		args[3] = x_strdup("1");
+		args[3] = "1";
 	else
-		args[3] = x_strdup("0");
+		args[3] = "0";
 
         snprintf(buffer, sizeof(buffer), "%d", remember);
-        args[4] = x_strdup(buffer);
+        args[4] = buffer;
 
-	execve(UPDATE_HELPER, args, envp);
+	execve(UPDATE_HELPER, (char *const *) args, envp);
 
 	/* should not get here: exit with error */
 	D(("helper binary is not available"));
@@ -242,15 +307,22 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
 	/* wait for child */
 	/* if the stored password is NULL */
         int rc=0;
-	if (fromwhat)
-	  pam_modutil_write(fds[1], fromwhat, strlen(fromwhat)+1);
-	else
-	  pam_modutil_write(fds[1], "", 1);
-	if (towhat) {
-	  pam_modutil_write(fds[1], towhat, strlen(towhat)+1);
+	if (fromwhat) {
+	    int len = strlen(fromwhat);
+
+	    if (len > PAM_MAX_RESP_SIZE)
+	      len = PAM_MAX_RESP_SIZE;
+	    pam_modutil_write(fds[1], fromwhat, len);
 	}
-	else
-	  pam_modutil_write(fds[1], "", 1);
+        pam_modutil_write(fds[1], "", 1);
+	if (towhat) {
+	    int len = strlen(towhat);
+
+	    if (len > PAM_MAX_RESP_SIZE)
+	      len = PAM_MAX_RESP_SIZE;
+	    pam_modutil_write(fds[1], towhat, len);
+        }
+        pam_modutil_write(fds[1], "", 1);
 
 	close(fds[0]);       /* close here to avoid possible SIGPIPE above */
 	close(fds[1]);
@@ -303,7 +375,7 @@ static int check_old_password(const char *forwho, const char *newpass)
 			s_pas = strtok_r(NULL, ":,", &sptr);
 			while (s_pas != NULL) {
 				char *md5pass = Goodcrypt_md5(newpass, s_pas);
-				if (!strcmp(md5pass, s_pas)) {
+				if (md5pass == NULL || !strcmp(md5pass, s_pas)) {
 					_pam_delete(md5pass);
 					retval = PAM_AUTHTOK_ERR;
 					break;
@@ -540,7 +612,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 
 	/* <DO NOT free() THESE> */
 	const char *user;
-	const void *pass_old, *pass_new;
+	const void *item;
+	const char *pass_old, *pass_new;
 	/* </DO NOT free() THESE> */
 
 	D(("called."));
@@ -608,30 +681,19 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		 * obtain and verify the current password (OLDAUTHTOK) for
 		 * the user.
 		 */
-		char *Announce;
-
 		D(("prelim check"));
 
 		if (_unix_blankpasswd(pamh, ctrl, user)) {
 			return PAM_SUCCESS;
-		} else if (off(UNIX__IAMROOT, ctrl)) {
+		} else if (off(UNIX__IAMROOT, ctrl) ||
+			   (on(UNIX_NIS, ctrl) && _unix_comesfromsource(pamh, user, 0, 1))) {
 			/* instruct user what is happening */
-			if (asprintf(&Announce, _("Changing password for %s."),
-				user) < 0) {
-				pam_syslog(pamh, LOG_CRIT,
-				         "password - out of memory");
-				return PAM_BUF_ERR;
+			if (off(UNIX__QUIET, ctrl)) {
+				retval = pam_info(pamh, _("Changing password for %s."), user);
+				if (retval != PAM_SUCCESS)
+					return retval;
 			}
-
-			lctrl = ctrl;
-			set(UNIX__OLD_PASSWD, lctrl);
-			retval = _unix_read_password(pamh, lctrl
-						     ,Announce
-					     ,_("(current) UNIX password: ")
-						     ,NULL
-						     ,_UNIX_OLD_AUTHTOK
-					     ,&pass_old);
-			free(Announce);
+			retval = pam_get_authtok(pamh, PAM_OLDAUTHTOK, &pass_old, NULL);
 
 			if (retval != PAM_SUCCESS) {
 				pam_syslog(pamh, LOG_NOTICE,
@@ -652,12 +714,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			pass_old = NULL;
 			return retval;
 		}
-		retval = pam_set_item(pamh, PAM_OLDAUTHTOK, (const void *) pass_old);
 		pass_old = NULL;
-		if (retval != PAM_SUCCESS) {
-			pam_syslog(pamh, LOG_CRIT,
-			         "failed to set PAM_OLDAUTHTOK");
-		}
 		retval = _unix_verify_shadow(pamh,user, ctrl);
 		if (retval == PAM_AUTHTOK_ERR) {
 			if (off(UNIX__IAMROOT, ctrl))
@@ -687,23 +744,14 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		 * previous call to this function].
 		 */
 
-		if (off(UNIX_NOT_SET_PASS, ctrl)) {
-			retval = pam_get_item(pamh, PAM_OLDAUTHTOK
-					      ,&pass_old);
-		} else {
-			retval = pam_get_data(pamh, _UNIX_OLD_AUTHTOK
-					      ,&pass_old);
-			if (retval == PAM_NO_MODULE_DATA) {
-				retval = PAM_SUCCESS;
-				pass_old = NULL;
-			}
-		}
-		D(("pass_old [%s]", pass_old));
+		retval = pam_get_item(pamh, PAM_OLDAUTHTOK, &item);
 
 		if (retval != PAM_SUCCESS) {
 			pam_syslog(pamh, LOG_NOTICE, "user not authenticated");
 			return retval;
 		}
+		pass_old = item;
+		D(("pass_old [%s]", pass_old));
 
 		D(("get new password now"));
 
@@ -712,7 +760,9 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if (on(UNIX_USE_AUTHTOK, lctrl)) {
 			set(UNIX_USE_FIRST_PASS, lctrl);
 		}
-		retry = 0;
+		if (on(UNIX_USE_FIRST_PASS, lctrl)) {
+			retry = MAX_PASSWD_TRIES-1;
+		}
 		retval = PAM_AUTHTOK_ERR;
 		while ((retval != PAM_SUCCESS) && (retry++ < MAX_PASSWD_TRIES)) {
 			/*
@@ -720,16 +770,11 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			 * password -- needed for pluggable password strength checking
 			 */
 
-			retval = _unix_read_password(pamh, lctrl
-						     ,NULL
-					     ,_("Enter new UNIX password: ")
-					    ,_("Retype new UNIX password: ")
-						     ,_UNIX_NEW_AUTHTOK
-					     ,&pass_new);
+			retval = pam_get_authtok(pamh, PAM_AUTHTOK, &pass_new, NULL);
 
 			if (retval != PAM_SUCCESS) {
 				if (on(UNIX_DEBUG, ctrl)) {
-					pam_syslog(pamh, LOG_ALERT,
+					pam_syslog(pamh, LOG_ERR,
 						 "password - new password not obtained");
 				}
 				pass_old = NULL;	/* tidy up */
@@ -749,7 +794,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			retval = _pam_unix_approve_pass(pamh, ctrl, pass_old,
 			                                pass_new, pass_min_len);
 
-			if (retval != PAM_SUCCESS && off(UNIX_NOT_SET_PASS, ctrl)) {
+			if (retval != PAM_SUCCESS) {
 				pam_set_item(pamh, PAM_AUTHTOK, NULL);
 			}
 		}
@@ -819,7 +864,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		_pam_delete(tpass);
 		pass_old = pass_new = NULL;
 	} else {		/* something has broken with the module */
-		pam_syslog(pamh, LOG_ALERT,
+		pam_syslog(pamh, LOG_CRIT,
 		         "password received unknown request");
 		retval = PAM_ABORT;
 	}
