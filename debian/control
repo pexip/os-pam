@@ -11,7 +11,7 @@ Build-Conflicts: libdb4.2-dev, libxcrypt-dev
 Vcs-Bzr: https://alioth.debian.org/scm/loggerhead/pkg-pam/debian/sid
 Vcs-Browser: https://alioth.debian.org/scm/loggerhead/pkg-pam/debian/sid/files
 Homepage: http://www.linux-pam.org/
-XS-Pexip-Upstream: http://ftp.debian.org/debian/ stretch
+XS-Pexip-Upstream: http://ftp.debian.org/debian/ buster
 
 Package: libpam0g
 Priority: required
