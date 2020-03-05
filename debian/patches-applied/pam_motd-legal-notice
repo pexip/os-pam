@@ -8,15 +8,13 @@ Authors: Dustin Kirkland <kirkland@canonical.com>
 
 Upstream status: Ubuntu-specific, maybe submit to Debian
 
-Index: pam.ubuntu/modules/pam_motd/pam_motd.c
-===================================================================
---- pam.ubuntu.orig/modules/pam_motd/pam_motd.c
-+++ pam.ubuntu/modules/pam_motd/pam_motd.c
-@@ -73,6 +73,61 @@
- 	close(fd);
+--- a/modules/pam_motd/pam_motd.c
++++ b/modules/pam_motd/pam_motd.c
+@@ -97,6 +97,66 @@
+     }
  }
  
-+int display_legal(pam_handle_t *pamh)
++static int display_legal(pam_handle_t *pamh)
 +{
 +    int retval = PAM_IGNORE, rc;
 +    char *user = NULL;
@@ -26,7 +24,7 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.c
 +    struct stat s;
 +    int f;
 +    /* Get the user name to determine if we need to print the disclaimer */
-+    rc = pam_get_item(pamh, PAM_USER, &user);
++    rc = pam_get_item(pamh, PAM_USER, (const void **)&user);
 +    if (rc == PAM_SUCCESS && user != NULL && *(const char *)user != '\0')
 +    {
 +        PAM_MODUTIL_DEF_PRIVS(privs);
@@ -50,7 +48,12 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.c
 +
 +            if (stat(flag, &s) != 0)
 +            {
-+                display_file(pamh, "/etc/legal");
++		int fd = open("/etc/legal", O_RDONLY, 0);
++		if (fd >= 0) {
++		    try_to_display_fd(pamh, fd);
++		    close(fd);
++		}
++
 +                mkdir(dir, 0700);
 +                f = open(flag, O_WRONLY|O_CREAT|O_EXCL,
 +                         S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
@@ -71,12 +74,12 @@ Index: pam.ubuntu/modules/pam_motd/pam_motd.c
 +    return retval;
 +}
 +
- PAM_EXTERN
  int pam_sm_open_session(pam_handle_t *pamh, int flags,
  			int argc, const char **argv)
-@@ -116,6 +171,9 @@
-     /* Display the updated motd */
-     display_file(pamh, motd_path);
+ {
+@@ -170,6 +230,9 @@
+     if (motd_dir_path != NULL)
+ 	try_to_display_directory(pamh, motd_dir_path);
  
 +    /* Display the legal disclaimer only if necessary */
 +    retval = display_legal(pamh);
