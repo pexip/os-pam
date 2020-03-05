@@ -4,10 +4,10 @@ Authors: Jan Christoph Nordholz <hesso@pool.math.tu-berlin.de>
 
 Upstream status: not yet submitted
 
-Index: pam.debian/libpam/pam_handlers.c
+Index: pam/libpam/pam_handlers.c
 ===================================================================
---- pam.debian.orig/libpam/pam_handlers.c
-+++ pam.debian/libpam/pam_handlers.c
+--- pam.orig/libpam/pam_handlers.c
++++ pam/libpam/pam_handlers.c
 @@ -122,6 +122,10 @@
  		    module_type = PAM_T_ACCT;
  		} else if (!strcasecmp("password", tok)) {

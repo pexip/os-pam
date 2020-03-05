@@ -33,8 +33,6 @@
 
 #include "pam_private.h"
 
-#ifndef PAM_STATIC
-
 #ifdef PAM_SHL
 # include <dl.h>
 #elif defined(PAM_DYLD)
@@ -138,5 +136,3 @@ _pam_dlerror (void)
         return dlerror ();
 #endif
 }
-
-#endif

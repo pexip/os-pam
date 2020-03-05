@@ -24,12 +24,13 @@
 
 /* the Linux-PAM configuration file */
 
-#define PAM_CONFIG    "/etc/pam.conf"
-#define PAM_CONFIG_D  "/etc/pam.d"
-#define PAM_CONFIG_DF "/etc/pam.d/%s"
+#define PAM_CONFIG         "/etc/pam.conf"
+#define PAM_CONFIG_D       "/etc/pam.d"
+#define PAM_CONFIG_DF      "/etc/pam.d/%s"
+#define PAM_CONFIG_DIST_D  "/usr/lib/pam.d"
+#define PAM_CONFIG_DIST_DF "/usr/lib/pam.d/%s"
 
 #define PAM_DEFAULT_SERVICE        "other"     /* lower case */
-#define PAM_DEFAULT_SERVICE_FILE   PAM_CONFIG_D "/" PAM_DEFAULT_SERVICE
 
 #ifdef PAM_LOCKING
 /*
@@ -55,6 +56,7 @@ struct handler {
     struct handler *next;
     char *mod_name;
     int stack_level;
+    int grantor;
 };
 
 #define PAM_HT_MODULE       0
@@ -239,22 +241,10 @@ void _pam_await_timer(pam_handle_t *pamh, int status);
 typedef void (*voidfunc(void))(void);
 typedef int (*servicefn)(pam_handle_t *, int, int, char **);
 
-#ifdef PAM_STATIC
-/* The next two in ../modules/_pam_static/pam_static.c */
-
-/* Return pointer to data structure used to define a static module */
-struct pam_module * _pam_open_static_handler (pam_handle_t *pamh,
-					      const char *path);
-
-/* Return pointer to function requested from static module */
-
-voidfunc *_pam_get_static_sym(struct pam_module *mod, const char *symname);
-#else
 void *_pam_dlopen (const char *mod_path);
 servicefn _pam_dlsym (void *handle, const char *symbol);
 void _pam_dlclose (void *handle);
 const char *_pam_dlerror (void);
-#endif
 
 /* For now we just use a stack and linear search for module data. */
 /* If it becomes apparent that there is a lot of data, it should  */
@@ -316,7 +306,7 @@ if ((pamh) == NULL) {                             \
         do { (pamh)->caller_is = _PAM_CALLED_FROM_APP; } while (0)
 
 #ifdef HAVE_LIBAUDIT
-extern int _pam_auditlog(pam_handle_t *pamh, int action, int retval, int flags);
+extern int _pam_auditlog(pam_handle_t *pamh, int action, int retval, int flags, struct handler *h);
 extern int _pam_audit_end(pam_handle_t *pamh, int pam_status);
 #endif
 

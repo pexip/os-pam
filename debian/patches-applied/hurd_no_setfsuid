@@ -5,10 +5,10 @@ Authors: Steve Langasek <vorlon@debian.org>
 Upstream status: to be forwarded, now that pam_modutil_{drop,regain}_priv
  are implemented
 
-Index: pam.debian/libpam/pam_modutil_priv.c
+Index: pam/libpam/pam_modutil_priv.c
 ===================================================================
---- pam.debian.orig/libpam/pam_modutil_priv.c
-+++ pam.debian/libpam/pam_modutil_priv.c
+--- pam.orig/libpam/pam_modutil_priv.c
++++ pam/libpam/pam_modutil_priv.c
 @@ -14,7 +14,9 @@
  #include <syslog.h>
  #include <pwd.h>

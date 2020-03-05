@@ -7,11 +7,11 @@ Authors: Quentin Godfroy <godfroy@clipper.ens.fr>
 
 Upstream status: should be submitted
 
-Index: pam.deb/modules/pam_unix/pam_unix_passwd.c
+Index: pam/modules/pam_unix/pam_unix_passwd.c
 ===================================================================
---- pam.deb.orig/modules/pam_unix/pam_unix_passwd.c
-+++ pam.deb/modules/pam_unix/pam_unix_passwd.c
-@@ -551,7 +551,7 @@
+--- pam.orig/modules/pam_unix/pam_unix_passwd.c
++++ pam/modules/pam_unix/pam_unix_passwd.c
+@@ -669,7 +669,7 @@
  		return PAM_USER_UNKNOWN;
  	} else {
  		struct passwd *pwd;

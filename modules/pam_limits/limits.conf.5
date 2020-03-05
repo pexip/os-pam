@@ -2,12 +2,12 @@
 .\"     Title: limits.conf
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "LIMITS\&.CONF" "5" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "LIMITS\&.CONF" "5" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -202,7 +202,7 @@ maximum locked\-in\-memory address space (KB)
 .PP
 \fBnofile\fR
 .RS 4
-maximum number of open files
+maximum number of open file descriptors
 .RE
 .PP
 \fBrss\fR
@@ -232,13 +232,14 @@ address space limit (KB)
 .PP
 \fBmaxlogins\fR
 .RS 4
-maximum number of logins for this user except for this with
-\fIuid=0\fR
+maximum number of logins for this user (this limit does not apply to user with
+\fIuid=0\fR)
 .RE
 .PP
 \fBmaxsyslogins\fR
 .RS 4
-maximum number of all logins on system
+maximum number of all logins on system; user is not allowed to log\-in if total number of all user logins is greater than specified number (this limit does not apply to user with
+\fIuid=0\fR)
 .RE
 .PP
 \fBpriority\fR
@@ -330,7 +331,8 @@ ftp             hard    nproc           0
 \fBpam_limits\fR(8),
 \fBpam.d\fR(5),
 \fBpam\fR(8),
-\fBgetrlimit\fR(2)\fBgetrlimit\fR(3p)
+\fBgetrlimit\fR(2),
+\fBgetrlimit\fR(3p)
 .SH "AUTHOR"
 .PP
 pam_limits was initially written by Cristian Gafton <gafton@redhat\&.com>

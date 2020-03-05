@@ -2,12 +2,12 @@
 .\"     Title: pam_fail_delay
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_FAIL_DELAY" "3" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_FAIL_DELAY" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -46,7 +46,7 @@ function provides a mechanism by which an application or module can suggest a mi
 \fIusec\fR
 micro\-seconds\&. The function keeps a record of the longest time requested with this function\&. Should
 \fBpam_authenticate\fR(3)
-fail, the failing return to the application is delayed by an amount of time randomly distributed (by up to 25%) about this longest value\&.
+fail, the failing return to the application is delayed by an amount of time randomly distributed (by up to 50%) about this longest value\&.
 .PP
 Independent of success, the delay time is reset to its zero default value when the PAM service module returns control to the application\&. The delay occurs
 \fIafter\fR
@@ -126,7 +126,7 @@ For example, a login application may require a failure delay of roughly 3 second
 .RE
 .\}
 .PP
-if the modules do not request a delay, the failure delay will be between 2\&.25 and 3\&.75 seconds\&.
+if the modules do not request a delay, the failure delay will be between 1\&.5 and 4\&.5 seconds\&.
 .PP
 However, the modules, invoked in the authentication process, may also request delays:
 .sp
@@ -142,7 +142,7 @@ module #2:    pam_fail_delay (pamh, 4000000);
 .RE
 .\}
 .PP
-in this case, it is the largest requested value that is used to compute the actual failed delay: here between 3 and 5 seconds\&.
+in this case, it is the largest requested value that is used to compute the actual failed delay: here between 2 and 6 seconds\&.
 .SH "RETURN VALUES"
 .PP
 PAM_SUCCESS

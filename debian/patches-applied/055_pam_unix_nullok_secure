@@ -7,11 +7,11 @@ Authors: Sam Hartman <hartmans@debian.org>,
 
 Upstream status: not yet submitted
 
-Index: pam.debian/modules/pam_unix/support.c
+Index: pam/modules/pam_unix/support.c
 ===================================================================
---- pam.debian.orig/modules/pam_unix/support.c
-+++ pam.debian/modules/pam_unix/support.c
-@@ -189,13 +189,22 @@
+--- pam.orig/modules/pam_unix/support.c
++++ pam/modules/pam_unix/support.c
+@@ -183,13 +183,22 @@
  	/* now parse the arguments to this module */
  
  	for (; argc-- > 0; ++argv) {
@@ -37,20 +37,19 @@ Index: pam.debian/modules/pam_unix/support.c
  			}
  		}
  
-@@ -565,6 +574,7 @@
+@@ -558,6 +567,7 @@
+     /* fork */
      child = fork();
      if (child == 0) {
-         int i=0;
-+        int nullok = off(UNIX__NONULL, ctrl);
-         struct rlimit rlim;
++	int nullok = off(UNIX__NONULL, ctrl);
  	static char *envp[] = { NULL };
- 	char *args[] = { NULL, NULL, NULL, NULL };
-@@ -595,7 +605,18 @@
+ 	const char *args[] = { NULL, NULL, NULL, NULL };
+ 
+@@ -587,7 +597,17 @@
  	/* exec binary helper */
- 	args[0] = strdup(CHKPWD_HELPER);
- 	args[1] = x_strdup(user);
+ 	args[0] = CHKPWD_HELPER;
+ 	args[1] = user;
 -	if (off(UNIX__NONULL, ctrl)) {	/* this means we've succeeded */
-+
 +	if (on(UNIX_NULLOK_SECURE, ctrl)) {
 +	    const void *uttyname;
 +	    retval = pam_get_item(pamh, PAM_TTY, &uttyname);
@@ -62,10 +61,10 @@ Index: pam.debian/modules/pam_unix/support.c
 +	}
 +
 +	if (nullok) {
- 	  args[2]=strdup("nullok");
+ 	  args[2]="nullok";
  	} else {
- 	  args[2]=strdup("nonull");
-@@ -675,6 +696,17 @@
+ 	  args[2]="nonull";
+@@ -672,6 +692,17 @@
  	if (on(UNIX__NONULL, ctrl))
  		return 0;	/* will fail but don't let on yet */
  
@@ -83,7 +82,7 @@ Index: pam.debian/modules/pam_unix/support.c
  	/* UNIX passwords area */
  
  	retval = get_pwd_hash(pamh, name, &pwd, &salt);
-@@ -761,7 +793,8 @@
+@@ -758,7 +789,8 @@
  			}
  		}
  	} else {
@@ -93,23 +92,24 @@ Index: pam.debian/modules/pam_unix/support.c
  	}
  
  	if (retval == PAM_SUCCESS) {
-Index: pam.debian/modules/pam_unix/support.h
+Index: pam/modules/pam_unix/support.h
 ===================================================================
---- pam.debian.orig/modules/pam_unix/support.h
-+++ pam.debian/modules/pam_unix/support.h
-@@ -98,8 +98,9 @@
- #define UNIX_BLOWFISH_PASS       26	/* new password hashes will use blowfish */
- #define UNIX_MIN_PASS_LEN        27	/* min length for password */
- #define UNIX_OBSCURE_CHECKS      28	/* enable obscure checks on passwords */
-+#define UNIX_NULLOK_SECURE       29	/* NULL passwords allowed only on secure ttys */
+--- pam.orig/modules/pam_unix/support.h
++++ pam/modules/pam_unix/support.h
+@@ -99,8 +99,10 @@
+ #define UNIX_NO_PASS_EXPIRY      29     /* Don't check for password expiration if not used for authentication */
+ #define UNIX_DES                 30     /* DES, default */
+ #define UNIX_OBSCURE_CHECKS      31     /* enable obscure checks on passwords */
++#define UNIX_NULLOK_SECURE       32     /* NULL passwords allowed only on secure ttys */
++
  /* -------------- */
--#define UNIX_CTRLS_              29	/* number of ctrl arguments defined */
-+#define UNIX_CTRLS_              30	/* number of ctrl arguments defined */
+-#define UNIX_CTRLS_              32	/* number of ctrl arguments defined */
++#define UNIX_CTRLS_              33	/* number of ctrl arguments defined */
  
  #define UNIX_DES_CRYPT(ctrl)	(off(UNIX_MD5_PASS,ctrl)&&off(UNIX_BIGCRYPT,ctrl)&&off(UNIX_SHA256_PASS,ctrl)&&off(UNIX_SHA512_PASS,ctrl)&&off(UNIX_BLOWFISH_PASS,ctrl))
  
-@@ -117,7 +118,7 @@
- /* UNIX_NOT_SET_PASS */    {"not_set_pass",    _ALL_ON_,                 0x40, 0},
+@@ -118,7 +120,7 @@
+ /* UNIX_AUTHTOK_TYPE */    {"authtok_type=",   _ALL_ON_,                 0x40, 0},
  /* UNIX__PRELIM */         {NULL,              _ALL_ON_^(0x180),         0x80, 0},
  /* UNIX__UPDATE */         {NULL,              _ALL_ON_^(0x180),        0x100, 0},
 -/* UNIX__NONULL */         {NULL,              _ALL_ON_,                0x200, 0},
@@ -117,15 +117,15 @@ Index: pam.debian/modules/pam_unix/support.h
  /* UNIX__QUIET */          {NULL,              _ALL_ON_,                0x400, 0},
  /* UNIX_USE_AUTHTOK */     {"use_authtok",     _ALL_ON_,                0x800, 0},
  /* UNIX_SHADOW */          {"shadow",          _ALL_ON_,               0x1000, 0},
-@@ -137,6 +138,7 @@
- /* UNIX_BLOWFISH_PASS */   {"blowfish",        _ALL_ON_^(0x2C22000),0x2000000, 1},
- /* UNIX_MIN_PASS_LEN */    {"minlen=",         _ALL_ON_,            0x4000000, 0},
- /* UNIX_OBSCURE_CHECKS */  {"obscure",         _ALL_ON_,            0x8000000, 0},
-+/* UNIX_NULLOK_SECURE */   {"nullok_secure",   _ALL_ON_^(0x200),   0x10000000, 0},
+@@ -141,6 +143,7 @@
+ /* UNIX_NO_PASS_EXPIRY */  {"no_pass_expiry",  _ALL_ON_,           0x10000000, 0},
+ /* UNIX_DES */             {"des",             _ALL_ON_^(0x2C22000),        0, 1},
+ /* UNIX_OBSCURE_CHECKS */  {"obscure",         _ALL_ON_,           0x20000000, 0},
++/* UNIX_NULLOK_SECURE */   {"nullok_secure",   _ALL_ON_^(0x200),   0x40000000, 0},
  };
  
  #define UNIX_DEFAULTS  (unix_args[UNIX__NONULL].flag)
-@@ -172,6 +174,9 @@
+@@ -174,6 +177,9 @@
  			,const char *data_name
  			,const void **pass);
  
@@ -135,25 +135,25 @@ Index: pam.debian/modules/pam_unix/support.h
  extern int _unix_run_verify_binary(pam_handle_t *pamh,
  			unsigned int ctrl, const char *user, int *daysleft);
  #endif /* _PAM_UNIX_SUPPORT_H */
-Index: pam.debian/modules/pam_unix/Makefile.am
+Index: pam/modules/pam_unix/Makefile.am
 ===================================================================
---- pam.debian.orig/modules/pam_unix/Makefile.am
-+++ pam.debian/modules/pam_unix/Makefile.am
+--- pam.orig/modules/pam_unix/Makefile.am
++++ pam/modules/pam_unix/Makefile.am
 @@ -30,7 +30,8 @@
    pam_unix_la_LDFLAGS += -Wl,--version-script=$(srcdir)/../modules.map
  endif
  pam_unix_la_LIBADD = $(top_builddir)/libpam/libpam.la \
--	@LIBCRYPT@ @LIBSELINUX@ $(NIS_LIBS)
-+	@LIBCRYPT@ @LIBSELINUX@ $(NIS_LIBS) \
+-	@LIBCRYPT@ @LIBSELINUX@ @TIRPC_LIBS@ @NSL_LIBS@
++	@LIBCRYPT@ @LIBSELINUX@ @TIRPC_LIBS@ @NSL_LIBS@ \
 +	../pam_securetty/tty_secure.lo
  
  securelib_LTLIBRARIES = pam_unix.la
  
-Index: pam.debian/modules/pam_unix/README
+Index: pam/modules/pam_unix/README
 ===================================================================
---- pam.debian.orig/modules/pam_unix/README
-+++ pam.debian/modules/pam_unix/README
-@@ -58,7 +58,16 @@
+--- pam.orig/modules/pam_unix/README
++++ pam/modules/pam_unix/README
+@@ -67,7 +67,16 @@
  
      The default action of this module is to not permit the user access to a
      service if their official password is blank. The nullok argument overrides
@@ -171,11 +171,11 @@ Index: pam.debian/modules/pam_unix/README
  
  try_first_pass
  
-Index: pam.debian/modules/pam_unix/pam_unix.8
+Index: pam/modules/pam_unix/pam_unix.8
 ===================================================================
---- pam.debian.orig/modules/pam_unix/pam_unix.8
-+++ pam.debian/modules/pam_unix/pam_unix.8
-@@ -82,7 +82,14 @@
+--- pam.orig/modules/pam_unix/pam_unix.8
++++ pam/modules/pam_unix/pam_unix.8
+@@ -92,7 +92,14 @@
  .RS 4
  The default action of this module is to not permit the user access to a service if their official password is blank\&. The
  \fBnullok\fR
@@ -191,11 +191,11 @@ Index: pam.debian/modules/pam_unix/pam_unix.8
  .RE
  .PP
  \fBtry_first_pass\fR
-Index: pam.debian/modules/pam_unix/pam_unix.8.xml
+Index: pam/modules/pam_unix/pam_unix.8.xml
 ===================================================================
---- pam.debian.orig/modules/pam_unix/pam_unix.8.xml
-+++ pam.debian/modules/pam_unix/pam_unix.8.xml
-@@ -137,7 +137,24 @@
+--- pam.orig/modules/pam_unix/pam_unix.8.xml
++++ pam/modules/pam_unix/pam_unix.8.xml
+@@ -159,7 +159,24 @@
            <para>
              The default action of this module is to not permit the
              user access to a service if their official password is blank.

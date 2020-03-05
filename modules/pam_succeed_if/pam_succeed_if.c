@@ -68,20 +68,20 @@
  * PAM_SERVICE_ERR if the arguments can't be parsed as numbers. */
 static int
 evaluate_num(const pam_handle_t *pamh, const char *left,
-	     const char *right, int (*cmp)(int, int))
+	     const char *right, int (*cmp)(long long, long long))
 {
-	long l, r;
+	long long l, r;
 	char *p;
 	int ret = PAM_SUCCESS;
 
 	errno = 0;
-	l = strtol(left, &p, 0);
+	l = strtoll(left, &p, 0);
 	if ((p == NULL) || (*p != '\0') || errno) {
 		pam_syslog(pamh, LOG_INFO, "\"%s\" is not a number", left);
 		ret = PAM_SERVICE_ERR;
 	}
 
-	r = strtol(right, &p, 0);
+	r = strtoll(right, &p, 0);
 	if ((p == NULL) || (*p != '\0') || errno) {
 		pam_syslog(pamh, LOG_INFO, "\"%s\" is not a number", right);
 		ret = PAM_SERVICE_ERR;
@@ -96,32 +96,32 @@ evaluate_num(const pam_handle_t *pamh, const char *left,
 
 /* Simple numeric comparison callbacks. */
 static int
-eq(int i, int j)
+eq(long long i, long long j)
 {
 	return i == j;
 }
 static int
-ne(int i, int j)
+ne(long long i, long long j)
 {
 	return i != j;
 }
 static int
-lt(int i, int j)
+lt(long long i, long long j)
 {
 	return i < j;
 }
 static int
-le(int i, int j)
+le(long long i, long long j)
 {
 	return lt(i, j) || eq(i, j);
 }
 static int
-gt(int i, int j)
+gt(long long i, long long j)
 {
 	return i > j;
 }
 static int
-ge(int i, int j)
+ge(long long i, long long j)
 {
 	return gt(i, j) || eq(i, j);
 }
@@ -231,18 +231,27 @@ evaluate_notingroup(pam_handle_t *pamh, const char *user, const char *group)
 }
 /* Return PAM_SUCCESS if the (host,user) is in the netgroup. */
 static int
-evaluate_innetgr(const char *host, const char *user, const char *group)
+evaluate_innetgr(const pam_handle_t* pamh, const char *host, const char *user, const char *group)
 {
+#ifdef HAVE_INNETGR
 	if (innetgr(group, host, user, NULL) == 1)
 		return PAM_SUCCESS;
+#else
+	pam_syslog (pamh, LOG_ERR, "pam_succeed_if does not have netgroup support");
+#endif
+
 	return PAM_AUTH_ERR;
 }
 /* Return PAM_SUCCESS if the (host,user) is NOT in the netgroup. */
 static int
-evaluate_notinnetgr(const char *host, const char *user, const char *group)
+evaluate_notinnetgr(const pam_handle_t* pamh, const char *host, const char *user, const char *group)
 {
+#ifdef HAVE_INNETGR
 	if (innetgr(group, host, user, NULL) == 0)
 		return PAM_SUCCESS;
+#else
+	pam_syslog (pamh, LOG_ERR, "pam_succeed_if does not have netgroup support");
+#endif
 	return PAM_AUTH_ERR;
 }
 
@@ -298,7 +307,7 @@ evaluate(pam_handle_t *pamh, int debug,
 	}
 	if (strcasecmp(left, "rhost") == 0) {
 		const void *rhost;
-		if (pam_get_item(pamh, PAM_SERVICE, &rhost) != PAM_SUCCESS ||
+		if (pam_get_item(pamh, PAM_RHOST, &rhost) != PAM_SUCCESS ||
 			rhost == NULL)
 			rhost = "";
 		snprintf(buf, sizeof(buf), "%s", (const char *)rhost);
@@ -306,7 +315,7 @@ evaluate(pam_handle_t *pamh, int debug,
 	}
 	if (strcasecmp(left, "tty") == 0) {
 		const void *tty;
-		if (pam_get_item(pamh, PAM_SERVICE, &tty) != PAM_SUCCESS ||
+		if (pam_get_item(pamh, PAM_TTY, &tty) != PAM_SUCCESS ||
 			tty == NULL)
 			tty = "";
 		snprintf(buf, sizeof(buf), "%s", (const char *)tty);
@@ -314,7 +323,7 @@ evaluate(pam_handle_t *pamh, int debug,
 	}
 	/* If we have no idea what's going on, return an error. */
 	if (left != buf) {
-		pam_syslog(pamh, LOG_CRIT, "unknown attribute \"%s\"", left);
+		pam_syslog(pamh, LOG_ERR, "unknown attribute \"%s\"", left);
 		return PAM_SERVICE_ERR;
 	}
 	if (debug) {
@@ -387,20 +396,20 @@ evaluate(pam_handle_t *pamh, int debug,
 		const void *rhost;
 		if (pam_get_item(pamh, PAM_RHOST, &rhost) != PAM_SUCCESS)
 			rhost = NULL;
-		return evaluate_innetgr(rhost, user, right);
+		return evaluate_innetgr(pamh, rhost, user, right);
 	}
 	/* (Rhost, user) is not in this group. */
 	if (strcasecmp(qual, "notinnetgr") == 0) {
 		const void *rhost;
 		if (pam_get_item(pamh, PAM_RHOST, &rhost) != PAM_SUCCESS)
 			rhost = NULL;
-		return evaluate_notinnetgr(rhost, user, right);
+		return evaluate_notinnetgr(pamh, rhost, user, right);
 	}
 	/* Fail closed. */
 	return PAM_SERVICE_ERR;
 }
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -446,7 +455,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		/* Get information about the user. */
 		pwd = pam_modutil_getpwuid(pamh, getuid());
 		if (pwd == NULL) {
-			pam_syslog(pamh, LOG_CRIT,
+			pam_syslog(pamh, LOG_ERR,
 				   "error retrieving information about user %lu",
 				   (unsigned long)getuid());
 			return PAM_USER_UNKNOWN;
@@ -456,7 +465,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		/* Get the user's name. */
 		ret = pam_get_user(pamh, &user, prompt);
 		if ((ret != PAM_SUCCESS) || (user == NULL)) {
-			pam_syslog(pamh, LOG_CRIT,
+			pam_syslog(pamh, LOG_ERR,
 				   "error retrieving user name: %s",
 				   pam_strerror(pamh, ret));
 			return ret;
@@ -534,7 +543,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 
 	if (left || qual || right) {
 		ret = PAM_SERVICE_ERR;
-		pam_syslog(pamh, LOG_CRIT,
+		pam_syslog(pamh, LOG_ERR,
 			"incomplete condition detected");
 	} else if (count == 0) {
 		pam_syslog(pamh, LOG_INFO,
@@ -544,46 +553,33 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 	return ret;
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
                int argc UNUSED, const char **argv UNUSED)
 {
 	return PAM_IGNORE;
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
 	return pam_sm_authenticate(pamh, flags, argc, argv);
 }
-
-/* static module data */
-#ifdef PAM_STATIC
-struct pam_module _pam_succeed_if_modstruct = {
-    "pam_succeed_if",
-    pam_sm_authenticate,
-    pam_sm_setcred,
-    pam_sm_acct_mgmt,
-    pam_sm_open_session,
-    pam_sm_close_session,
-    pam_sm_chauthtok
-};
-#endif

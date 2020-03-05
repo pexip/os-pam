@@ -44,9 +44,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
-#ifdef HAVE_RPCSVC_YPCLNT_H
-#include <rpcsvc/ypclnt.h>
-#endif
+#include <glob.h>
 #ifdef HAVE_LIBAUDIT
 #include <libaudit.h>
 #endif
@@ -90,6 +88,7 @@
 #define ALL             2
 #define YES             1
 #define NO              0
+#define NOMATCH        -1
 
  /*
   * A structure to bundle up all login-related information to keep the
@@ -412,13 +411,17 @@ login_access (pam_handle_t *pamh, struct login_info *item)
 	return NO;
     }
 #ifdef HAVE_LIBAUDIT
-    if (!item->noaudit && line[0] == '-' && (match == YES || (match == ALL &&
-	nonall_match == YES))) {
+    if (!item->noaudit && (match == YES || (match == ALL &&
+	nonall_match == YES)) && line[0] == '-') {
 	pam_modutil_audit_write(pamh, AUDIT_ANOM_LOGIN_LOCATION,
 	    "pam_access", 0);
     }
 #endif
-    return (match == NO || (line[0] == '+'));
+    if (match == NO)
+	return NOMATCH;
+    if (line[0] == '+')
+	return YES;
+    return NO;
 }
 
 
@@ -470,8 +473,6 @@ netgroup_match (pam_handle_t *pamh, const char *netgroup,
 {
   int retval;
   char *mydomain = NULL;
-
-#if defined(HAVE_GETDOMAINNAME)
   char domainname_res[256];
 
   if (getdomainname (domainname_res, sizeof (domainname_res)) == 0)
@@ -481,9 +482,6 @@ netgroup_match (pam_handle_t *pamh, const char *netgroup,
           mydomain = domainname_res;
         }
     }
-#elif defined(HAVE_YP_GET_DEFAULT_DOMAIN)
-  yp_get_default_domain(&mydomain);
-#endif
 
 #ifdef HAVE_INNETGR
   retval = innetgr (netgroup, machine, user, mydomain);
@@ -524,7 +522,9 @@ user_match (pam_handle_t *pamh, char *tok, struct login_info *item)
     /* Try to split on a pattern (@*[^@]+)(@+.*) */
     for (at = tok; *at == '@'; ++at);
 
-    if ((at = strchr(at, '@')) != NULL) {
+    if (tok[0] == '(' && tok[strlen(tok) - 1] == ')') {
+      return (group_match (pamh, tok, string, item->debug));
+    } else if ((at = strchr(at, '@')) != NULL) {
         /* split user@host pattern */
 	if (item->hostname == NULL)
 	    return NO;
@@ -549,9 +549,7 @@ user_match (pam_handle_t *pamh, char *tok, struct login_info *item)
 		hostname = item->hostname;
 	}
         return (netgroup_match (pamh, tok + 1, hostname, string, item->debug));
-    } else if (tok[0] == '(' && tok[strlen(tok) - 1] == ')')
-      return (group_match (pamh, tok, string, item->debug));
-    else if ((rv=string_match (pamh, tok, string, item->debug)) != NO) /* ALL or exact match */
+    } else if ((rv=string_match (pamh, tok, string, item->debug)) != NO) /* ALL or exact match */
       return rv;
     else if (item->only_new_group_syntax == NO &&
 	     pam_modutil_user_in_group_nam_nam (pamh,
@@ -573,7 +571,7 @@ group_match (pam_handle_t *pamh, const char *tok, const char* usr,
 
     if (debug)
         pam_syslog (pamh, LOG_DEBUG,
-		    "group_match: grp=%s, user=%s", grptok, usr);
+		    "group_match: grp=%s, user=%s", tok, usr);
 
     if (strlen(tok) < 3)
         return NO;
@@ -735,7 +733,7 @@ network_netmask_match (pam_handle_t *pamh,
 	  { /* netmask as integre value */
 	    char *endptr = NULL;
 	    netmask = strtol(netmask_ptr, &endptr, 0);
-	    if ((endptr == NULL) || (*endptr != '\0'))
+	    if ((endptr == netmask_ptr) || (*endptr != '\0'))
 		{ /* invalid netmask value */
 		  return NO;
 		}
@@ -800,7 +798,7 @@ network_netmask_match (pam_handle_t *pamh,
 
 /* --- public PAM management functions --- */
 
-PAM_EXTERN int
+int
 pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
@@ -808,6 +806,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     const char *user=NULL;
     const void *void_from=NULL;
     const char *from;
+    const char const *default_config = PAM_ACCESS_CONFIG;
     struct passwd *user_pw;
     char hostname[MAXHOSTNAMELEN + 1];
     int rv;
@@ -829,7 +828,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
      */
     memset(&loginfo, '\0', sizeof(loginfo));
     loginfo.user = user_pw;
-    loginfo.config_file = PAM_ACCESS_CONFIG;
+    loginfo.config_file = default_config;
 
     /* parse the argument list */
 
@@ -900,6 +899,26 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 
     rv = login_access(pamh, &loginfo);
 
+    if (rv == NOMATCH && loginfo.config_file == default_config) {
+	glob_t globbuf;
+	int i, glob_rv;
+
+	/* We do not manipulate locale as setlocale() is not
+	 * thread safe. We could use uselocale() in future.
+	 */
+	glob_rv = glob(ACCESS_CONF_GLOB, GLOB_ERR, NULL, &globbuf);
+	if (!glob_rv) {
+	    /* Parse the *.conf files. */
+	    for (i = 0; globbuf.gl_pathv[i] != NULL; i++) {
+		loginfo.config_file = globbuf.gl_pathv[i];
+		rv = login_access(pamh, &loginfo);
+		if (rv != NOMATCH)
+		    break;
+	    }
+	    globfree(&globbuf);
+	}
+    }
+
     if (loginfo.gai_rv == 0 && loginfo.res)
 	freeaddrinfo(loginfo.res);
 
@@ -912,35 +931,35 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
     }
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
   return PAM_IGNORE;
 }
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt (pam_handle_t *pamh, int flags,
 		  int argc, const char **argv)
 {
   return pam_sm_authenticate (pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_open_session(pam_handle_t *pamh, int flags,
 		    int argc, const char **argv)
 {
   return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_close_session(pam_handle_t *pamh, int flags,
 		     int argc, const char **argv)
 {
   return pam_sm_authenticate(pamh, flags, argc, argv);
 }
 
-PAM_EXTERN int
+int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		 int argc, const char **argv)
 {
@@ -948,18 +967,3 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 }
 
 /* end of module definition */
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_access_modstruct = {
-    "pam_access",
-    pam_sm_authenticate,
-    pam_sm_setcred,
-    pam_sm_acct_mgmt,
-    pam_sm_open_session,
-    pam_sm_close_session,
-    pam_sm_chauthtok
-};
-#endif

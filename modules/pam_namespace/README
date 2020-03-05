@@ -173,7 +173,7 @@ the tmpfs instance that is created by the mount call. See mount(8) for details.
 
 The directory where polyinstantiated instances are to be created, must exist
 and must have, by default, the mode of 0000. The requirement that the instance
-parent be of mode 0000 can be overridden with the command line option
+parent be of mode 0000 can be overridden with the command line option 
 ignore_instance_parent_mode
 
 In case of context or level polyinstantiation the SELinux context which is used

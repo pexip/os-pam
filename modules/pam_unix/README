@@ -12,9 +12,9 @@ shadow file as well if shadow is enabled.
 The account component performs the task of establishing the status of the
 user's account and password based on the following shadow elements: expire,
 last_change, max_change, min_change, warn_change. In the case of the latter, it
-may offer advice to the user on changing their password or, through the
+may offer advice to the user on changing their password or, through the 
 PAM_AUTHTOKEN_REQD return, delay giving service to the user until they have
-established a new password. The entries listed above are documented in the
+established a new password. The entries listed above are documented in the 
 shadow(5) manual page. Should the user's record not contain one or more of
 these entries, the corresponding shadow check is not performed.
 
@@ -33,6 +33,10 @@ thing to do, as many applications are not prepared to handle this signal from a
 child they didn't know was fork()d. The noreap module argument can be used to
 suppress this temporary shielding and may be needed for use with certain
 applications.
+
+The maximum length of a password supported by the pam_unix module via the
+helper binary is PAM_MAX_RESP_SIZE - currently 512 bytes. The rest of the
+password provided by the conversation function to the module will be ignored.
 
 The password component of this module performs the task of updating the user's
 password. The default encryption hash is taken from the ENCRYPT_METHOD variable
@@ -53,6 +57,11 @@ debug
 audit
 
     A little more extreme than debug.
+
+quiet
+
+    Turns off informational messages namely messages about session open and
+    close via syslog(3).
 
 nullok
 
@@ -86,11 +95,10 @@ use_authtok
     one provided by a previously stacked password module (this is used in the
     example of the stacking of the pam_cracklib module documented below).
 
-not_set_pass
+authtok_type=type
 
-    This argument is used to inform the module that it is not to pay attention
-    to/make available the old or new passwords from/to other (stacked) password
-    modules.
+    This argument can be used to modify the password prompt when changing
+    passwords to include the type of the password. Empty by default.
 
 nis
 
@@ -100,7 +108,8 @@ remember=n
 
     The last n passwords for each user are saved in /etc/security/opasswd in
     order to force password change history and keep the user from alternating
-    between the same password too frequently. Instead of this option the
+    between the same password too frequently. The MD5 password hash algorithm
+    is used for storing the old passwords. Instead of this option the 
     pam_pwhistory module should be used.
 
 shadow
@@ -149,6 +158,15 @@ minlen=n
     Set a minimum password length of n characters. The max. for DES crypt based
     passwords are 8 characters.
 
+no_pass_expiry
+
+    When set ignore password expiration as defined by the shadow entry of the
+    user. The option has an effect only in case pam_unix was not used for the
+    authentication or it returned authentication failure meaning that other
+    authentication source or method succeeded. The example can be public key
+    authentication in sshd. The module will return PAM_SUCCESS instead of
+    eventual PAM_NEW_AUTHTOK_REQD or PAM_AUTHTOK_EXPIRED.
+
 Invalid arguments are logged with syslog(3).
 
 EXAMPLES
@@ -159,7 +177,7 @@ An example usage for /etc/pam.d/login would be:
 auth       required   pam_unix.so
 # Ensure users account and password are still active
 account    required   pam_unix.so
-# Change the users password, but at first check the strength
+# Change the user's password, but at first check the strength
 # with pam_cracklib(8)
 password   required   pam_cracklib.so retry=3 minlen=6 difok=3
 password   required   pam_unix.so use_authtok nullok md5

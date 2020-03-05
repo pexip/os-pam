@@ -7,7 +7,7 @@ ifeq ($(shell dpkg-architecture -qDEB_BUILD_ARCH_OS),hurd)
 DEB_LDFLAGS_MAINT_APPEND += -lpthread
 endif
 
-DEB_HOST_MULTIARCH	:= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DEB_HOST_MULTIARCH	?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
 LC_COLLATE=C
 export LC_COLLATE
@@ -21,7 +21,7 @@ dl = $(d)/local
 	dh $@ --with quilt,autoreconf
 
 # avoid libaudit-dev when bootstrapping
-ifneq (,$(filter $(DEB_BUILD_PROFILE),stage1))
+ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
   CONFIGURE_OPTS += --disable-audit
 endif  
 

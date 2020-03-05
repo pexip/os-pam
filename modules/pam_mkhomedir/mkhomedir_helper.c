@@ -231,7 +231,7 @@ create_homedir(const struct passwd *pwd,
       if ((srcfd = open(newsource, O_RDONLY)) < 0 || fstat(srcfd, &st) != 0)
       {
          pam_syslog(NULL, LOG_DEBUG,
-		    "unable to open src file %s: %m", newsource);
+		    "unable to open or stat src file %s: %m", newsource);
          closedir(d);
 
 #ifndef PATH_MAX
@@ -241,20 +241,6 @@ create_homedir(const struct passwd *pwd,
 
 	 return PAM_PERM_DENIED;
       }
-      if (stat(newsource, &st) != 0)
-	{
-	  pam_syslog(NULL, LOG_DEBUG, "unable to stat src file %s: %m",
-		     newsource);
-	  close(srcfd);
-	  closedir(d);
-
-#ifndef PATH_MAX
-	  free(newsource); newsource = NULL;
-	  free(newdest); newdest = NULL;
-#endif
-
-	  return PAM_PERM_DENIED;
-	}
 
       /* Open the dest file */
       if ((destfd = open(newdest, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0)
@@ -352,16 +338,18 @@ make_parent_dirs(char *dir, int make)
   char *cp = strrchr(dir, '/');
   struct stat st;
 
-  if (!cp || cp == dir)
+  if (!cp)
     return rc;
 
-  *cp = '\0';
-  if (stat(dir, &st) && errno == ENOENT)
-    rc = make_parent_dirs(dir, 1);
-  *cp = '/';
+  if (cp != dir) {
+    *cp = '\0';
+    if (stat(dir, &st) && errno == ENOENT)
+      rc = make_parent_dirs(dir, 1);
+    *cp = '/';
 
-  if (rc != PAM_SUCCESS)
-    return rc;
+    if (rc != PAM_SUCCESS)
+      return rc;
+  }
 
   if (make && mkdir(dir, 0755) && errno != EEXIST) {
     pam_syslog(NULL, LOG_ERR, "unable to create directory %s: %m", dir);

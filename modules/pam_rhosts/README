@@ -17,7 +17,7 @@ identical to their local one, or if their remote account has an entry in their
 personal configuration file.
 
 The module authenticates a remote user (internally specified by the item
-PAM_RUSER connecting from the remote host (internally specified by the item
+PAM_RUSER connecting from the remote host (internally specified by the item 
 PAM_RHOST). Accordingly, for applications to be compatible this authentication
 module they must set these items prior to calling pam_authenticate(). The
 module is not capable of independently probing the network connection for such

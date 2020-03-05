@@ -2,12 +2,12 @@
 .\"     Title: pam_prompt
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_PROMPT" "3" "09/19/2013" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_PROMPT" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,10 +36,10 @@ pam_prompt, pam_vprompt \- interface to conversation function
 #include <security/pam_ext\&.h>
 .fi
 .ft
-.HP \w'void\ pam_prompt('u
-.BI "void pam_prompt(pam_handle_t\ *" "pamh" ", int\ " "style" ", char\ **" "response" ", const\ char\ *" "fmt" ", " "\&.\&.\&." ");"
-.HP \w'void\ pam_vprompt('u
-.BI "void pam_vprompt(pam_handle_t\ *" "pamh" ", int\ " "style" ", char\ **" "response" ", const\ char\ *" "fmt" ", va_list\ " "args" ");"
+.HP \w'int\ pam_prompt('u
+.BI "int pam_prompt(pam_handle_t\ *" "pamh" ", int\ " "style" ", char\ **" "response" ", const\ char\ *" "fmt" ", " "\&.\&.\&." ");"
+.HP \w'int\ pam_vprompt('u
+.BI "int pam_vprompt(pam_handle_t\ *" "pamh" ", int\ " "style" ", char\ **" "response" ", const\ char\ *" "fmt" ", va_list\ " "args" ");"
 .SH "DESCRIPTION"
 .PP
 The
@@ -61,7 +61,7 @@ Conversation failure\&.
 .PP
 PAM_SUCCESS
 .RS 4
-Transaction was successful created\&.
+Conversation succeded, response is set\&.
 .RE
 .PP
 PAM_SYSTEM_ERR

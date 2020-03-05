@@ -2,12 +2,12 @@
 .\"     Title: group.conf
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2017
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "GROUP\&.CONF" "5" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "GROUP\&.CONF" "5" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -83,13 +83,13 @@ xsh;tty*&!ttyp*;us;Al0000\-2400;floppy
 .RE
 .\}
 .PP
-Running \*(Aqxsh\*(Aq on tty* (any ttyXXX device), the user \*(Aqsword\*(Aq is given access to games (through membership of the floppy group) after work hours\&.
+Running \*(Aqxsh\*(Aq on tty* (any ttyXXX device), the users \*(Aqsword\*(Aq, \*(Aqpike\*(Aq and \*(Aqshield\*(Aq are given access to games (through membership of the floppy group) after work hours\&.
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
-xsh; tty* ;sword;!Wk0900\-1800;games, sound
+xsh; tty* ;sword|pike|shield;!Wk0900\-1800;games, sound
 xsh; tty* ;*;Al0900\-1800;floppy
     
 .fi

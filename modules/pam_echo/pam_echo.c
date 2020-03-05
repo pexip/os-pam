@@ -76,7 +76,7 @@ replace_and_print (pam_handle_t *pamh, const char *mesg)
   output = malloc (length);
   if (output == NULL)
     {
-      pam_syslog (pamh, LOG_ERR, "running out of memory");
+      pam_syslog (pamh, LOG_CRIT, "running out of memory");
       return PAM_BUF_ERR;
     }
 
@@ -180,16 +180,23 @@ pam_echo (pam_handle_t *pamh, int flags, int argc, const char **argv)
 
       /* load file into message buffer. */
       if ((fstat (fd, &st) < 0) || !st.st_size)
-	return PAM_IGNORE;
+	{
+	  close (fd);
+	  return PAM_IGNORE;
+	}
 
       mtmp = malloc (st.st_size + 1);
       if (!mtmp)
-	return PAM_BUF_ERR;
+	{
+	  close (fd);
+	  return PAM_BUF_ERR;
+	}
 
       if (pam_modutil_read (fd, mtmp, st.st_size) == -1)
 	{
 	  pam_syslog (pamh, LOG_ERR, "Error while reading %s: %m", file);
 	  free (mtmp);
+	  close (fd);
 	  return PAM_IGNORE;
 	}
 
@@ -254,19 +261,3 @@ pam_sm_chauthtok (pam_handle_t *pamh, int flags, int argc,
   else
     return PAM_IGNORE;
 }
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_echo_modstruct = {
-  "pam_echo",
-  pam_sm_authenticate,
-  pam_sm_setcred,
-  pam_sm_acct_mgmt,
-  pam_sm_open_session,
-  pam_sm_close_session,
-  pam_sm_chauthtok,
-};
-
-#endif

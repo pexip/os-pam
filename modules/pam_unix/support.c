@@ -30,12 +30,6 @@
 
 #include "support.h"
 #include "passverify.h"
-#ifdef WITH_SELINUX
-#include <selinux/selinux.h>
-#define SELINUX_ENABLED is_selinux_enabled()>0
-#else
-#define SELINUX_ENABLED 0
-#endif
 
 static char *
 search_key (const char *key, const char *filename)
@@ -351,7 +345,7 @@ static void _cleanup_failures(pam_handle_t * pamh, void *fl, int err)
 				);
 
 				if (failure->count > UNIX_MAX_RETRIES) {
-					pam_syslog(pamh, LOG_ALERT,
+					pam_syslog(pamh, LOG_NOTICE,
 						 "service(%s) ignoring max retries; %d > %d",
 						 service == NULL ? "**unknown**" : (const char *)service,
 						 failure->count,
@@ -564,23 +558,21 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
     /* fork */
     child = fork();
     if (child == 0) {
-        int i=0;
-        struct rlimit rlim;
 	static char *envp[] = { NULL };
-	char *args[] = { NULL, NULL, NULL, NULL };
+	const char *args[] = { NULL, NULL, NULL, NULL };
 
 	/* XXX - should really tidy up PAM here too */
 
 	/* reopen stdin as pipe */
-	dup2(fds[0], STDIN_FILENO);
+	if (dup2(fds[0], STDIN_FILENO) != STDIN_FILENO) {
+		pam_syslog(pamh, LOG_ERR, "dup2 of %s failed: %m", "stdin");
+		_exit(PAM_AUTHINFO_UNAVAIL);
+	}
 
-	if (getrlimit(RLIMIT_NOFILE,&rlim)==0) {
-          if (rlim.rlim_max >= MAX_FD_NO)
-                rlim.rlim_max = MAX_FD_NO;
-	  for (i=0; i < (int)rlim.rlim_max; i++) {
-		if (i != STDIN_FILENO)
-		  close(i);
-	  }
+	if (pam_modutil_sanitize_helper_fds(pamh, PAM_MODUTIL_IGNORE_FD,
+					    PAM_MODUTIL_PIPE_FD,
+					    PAM_MODUTIL_PIPE_FD) < 0) {
+		_exit(PAM_AUTHINFO_UNAVAIL);
 	}
 
 	if (geteuid() == 0) {
@@ -593,15 +585,15 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 	}
 
 	/* exec binary helper */
-	args[0] = strdup(CHKPWD_HELPER);
-	args[1] = x_strdup(user);
+	args[0] = CHKPWD_HELPER;
+	args[1] = user;
 	if (off(UNIX__NONULL, ctrl)) {	/* this means we've succeeded */
-	  args[2]=strdup("nullok");
+	  args[2]="nullok";
 	} else {
-	  args[2]=strdup("nonull");
+	  args[2]="nonull";
 	}
 
-	execve(CHKPWD_HELPER, args, envp);
+	execve(CHKPWD_HELPER, (char *const *) args, envp);
 
 	/* should not get here: exit with error */
 	D(("helper binary is not available"));
@@ -611,7 +603,12 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 	/* if the stored password is NULL */
         int rc=0;
 	if (passwd != NULL) {            /* send the password to the child */
-	    if (write(fds[1], passwd, strlen(passwd)+1) == -1) {
+	    int len = strlen(passwd);
+
+	    if (len > PAM_MAX_RESP_SIZE)
+	      len = PAM_MAX_RESP_SIZE;
+	    if (write(fds[1], passwd, len) == -1 ||
+	        write(fds[1], "", 1) == -1) {
 	      pam_syslog (pamh, LOG_ERR, "Cannot send password to helper: %m");
 	      retval = PAM_AUTH_ERR;
 	    }
@@ -747,12 +744,12 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 			if (on(UNIX_AUDIT, ctrl)) {
 				/* this might be a typo and the user has given a password
 				   instead of a username. Careful with this. */
-				pam_syslog(pamh, LOG_WARNING,
+				pam_syslog(pamh, LOG_NOTICE,
 				         "check pass; user (%s) unknown", name);
 			} else {
 				name = NULL;
 				if (on(UNIX_DEBUG, ctrl) || pwd == NULL) {
-				    pam_syslog(pamh, LOG_WARNING,
+				    pam_syslog(pamh, LOG_NOTICE,
 				            "check pass; user unknown");
 				} else {
 				    /* don't log failure as another pam module can succeed */
@@ -788,10 +785,10 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 				login_name = "";
 			    }
 
-			        new->user = x_strdup(name ? name : "");
+			        new->user = strdup(name ? name : "");
 				new->uid = getuid();
 				new->euid = geteuid();
-				new->name = x_strdup(login_name);
+				new->name = strdup(login_name);
 
 				/* any previous failures for this user ? */
 				if (pam_get_data(pamh, data_name, &void_old)
@@ -854,160 +851,6 @@ cleanup:
 	D(("done [%d].", retval));
 
 	return retval;
-}
-
-/*
- * obtain a password from the user
- */
-
-int _unix_read_password(pam_handle_t * pamh
-			,unsigned int ctrl
-			,const char *comment
-			,const char *prompt1
-			,const char *prompt2
-			,const char *data_name
-			,const void **pass)
-{
-	int authtok_flag;
-	int retval = PAM_SUCCESS;
-	char *token;
-
-	D(("called"));
-
-	/*
-	 * make sure nothing inappropriate gets returned
-	 */
-
-	*pass = token = NULL;
-
-	/*
-	 * which authentication token are we getting?
-	 */
-
-	authtok_flag = on(UNIX__OLD_PASSWD, ctrl) ? PAM_OLDAUTHTOK : PAM_AUTHTOK;
-
-	/*
-	 * should we obtain the password from a PAM item ?
-	 */
-
-	if (on(UNIX_TRY_FIRST_PASS, ctrl) || on(UNIX_USE_FIRST_PASS, ctrl)) {
-		retval = pam_get_item(pamh, authtok_flag, pass);
-		if (retval != PAM_SUCCESS) {
-			/* very strange. */
-			pam_syslog(pamh, LOG_ALERT,
-				 "pam_get_item returned error to unix-read-password"
-			    );
-			return retval;
-		} else if (*pass != NULL) {	/* we have a password! */
-			return PAM_SUCCESS;
-		} else if (on(UNIX_USE_AUTHTOK, ctrl)
-			   && off(UNIX__OLD_PASSWD, ctrl)) {
-			return PAM_AUTHTOK_ERR;
-		} else if (on(UNIX_USE_FIRST_PASS, ctrl)) {
-			return PAM_AUTHTOK_RECOVERY_ERR;	  /* didn't work */
-		}
-	}
-	/*
-	 * getting here implies we will have to get the password from the
-	 * user directly.
-	 */
-
-	{
-		int replies=1;
-		char *resp[2] = { NULL, NULL };
-
-		if (comment != NULL && off(UNIX__QUIET, ctrl)) {
-			retval = pam_info(pamh, "%s", comment);
-		}
-
-		if (retval == PAM_SUCCESS) {
-			retval = pam_prompt(pamh, PAM_PROMPT_ECHO_OFF,
-			    &resp[0], "%s", prompt1);
-
-			if (retval == PAM_SUCCESS && prompt2 != NULL) {
-				retval = pam_prompt(pamh, PAM_PROMPT_ECHO_OFF,
-				    &resp[1], "%s", prompt2);
-				++replies;
-			}
-		}
-
-		if (resp[0] != NULL && resp[replies-1] != NULL) {
-			/* interpret the response */
-
-			if (retval == PAM_SUCCESS) {	/* a good conversation */
-
-				token = resp[0];
-				if (token != NULL) {
-					if (replies == 2) {
-						/* verify that password entered correctly */
-						if (strcmp(token, resp[replies - 1])) {
-							/* mistyped */
-							retval = PAM_AUTHTOK_RECOVERY_ERR;
-							_make_remark(pamh, ctrl,
-							    PAM_ERROR_MSG, MISTYPED_PASS);
-						}
-					}
-				} else {
-					pam_syslog(pamh, LOG_NOTICE,
-						    "could not recover authentication token");
-				}
-
-			}
-
-		} else {
-			retval = (retval == PAM_SUCCESS)
-			    ? PAM_AUTHTOK_RECOVERY_ERR : retval;
-		}
-
-		resp[0] = NULL;
-		if (replies > 1)
-			_pam_delete(resp[1]);
-	}
-
-	if (retval != PAM_SUCCESS) {
-		_pam_delete(token);
-
-		if (on(UNIX_DEBUG, ctrl))
-			pam_syslog(pamh, LOG_DEBUG,
-			         "unable to obtain a password");
-		return retval;
-	}
-	/* 'token' is the entered password */
-
-	if (off(UNIX_NOT_SET_PASS, ctrl)) {
-
-		/* we store this password as an item */
-
-		retval = pam_set_item(pamh, authtok_flag, token);
-		_pam_delete(token);	/* clean it up */
-		if (retval != PAM_SUCCESS
-		    || (retval = pam_get_item(pamh, authtok_flag, pass))
-		    != PAM_SUCCESS) {
-
-			*pass = NULL;
-			pam_syslog(pamh, LOG_CRIT, "error manipulating password");
-			return retval;
-
-		}
-	} else {
-		/*
-		 * then store it as data specific to this module. pam_end()
-		 * will arrange to clean it up.
-		 */
-
-		retval = pam_set_data(pamh, data_name, (void *) token, _cleanup);
-		if (retval != PAM_SUCCESS) {
-			pam_syslog(pamh, LOG_CRIT,
-			         "error manipulating password data [%s]",
-				 pam_strerror(pamh, retval));
-			_pam_delete(token);
-			return retval;
-		}
-		*pass = token;
-		token = NULL;	/* break link to password */
-	}
-
-	return PAM_SUCCESS;
 }
 
 /* ****************************************************************** *

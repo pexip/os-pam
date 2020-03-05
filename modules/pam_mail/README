@@ -25,7 +25,7 @@ debug
 
 dir=maildir
 
-    Look for the users' mail in an alternative location defined by maildir/
+    Look for the user's mail in an alternative location defined by maildir/
     <login>. The default location for mail is /var/mail/<login>. Note, if the
     supplied maildir is prefixed by a '~', the directory is interpreted as
     indicating a file in the user's home directory.
@@ -45,7 +45,7 @@ noenv
 
 nopen
 
-    Don't print any mail information on login. This flag is useful to get the
+    Don't print any mail information on login. This flag is useful to get the 
     MAIL environment variable set, but to not display any information about it.
 
 quiet

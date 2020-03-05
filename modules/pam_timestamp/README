@@ -15,6 +15,10 @@ recent timestamp file as grounds for succeeding.
 
 OPTIONS
 
+timestampdir=directory
+
+    Specify an alternate directory where pam_timestamp creates timestamp files.
+
 timestamp_timeout=number
 
     How long should pam_timestamp treat timestamp as valid after their last

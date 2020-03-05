@@ -101,7 +101,7 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
     retval = pam_get_item(pamh, PAM_TTY, &void_uttyname);
     uttyname = void_uttyname;
     if (retval != PAM_SUCCESS || uttyname == NULL) {
-        pam_syslog (pamh, LOG_WARNING, "cannot determine user's tty");
+        pam_syslog (pamh, LOG_ERR, "cannot determine user's tty");
 	return PAM_SERVICE_ERR;
     }
 
@@ -159,11 +159,10 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
         if (cmdlinefile != NULL) {
             char line[LINE_MAX], *p;
 
-            line[0] = 0;
-            fgets(line, sizeof(line), cmdlinefile);
+            p = fgets(line, sizeof(line), cmdlinefile);
             fclose(cmdlinefile);
 
-            for (p = line; p; p = strstr(p+1, "console=")) {
+            for (; p; p = strstr(p+1, "console=")) {
                 char *e;
 
                 /* Test whether this is a beginning of a word? */
@@ -215,7 +214,7 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
     }
 
     if (retval) {
-	    pam_syslog(pamh, LOG_WARNING, "access denied: tty '%s' is not secure !",
+	    pam_syslog(pamh, LOG_NOTICE, "access denied: tty '%s' is not secure !",
 		     uttyname);
 
 	    retval = PAM_AUTH_ERR;
@@ -236,7 +235,6 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
 
 /* --- authentication management functions --- */
 
-PAM_EXTERN
 int pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED, int argc,
 			const char **argv)
 {
@@ -248,7 +246,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED, int argc,
     return securetty_perform_check(pamh, ctrl, __FUNCTION__);
 }
 
-PAM_EXTERN int
+int
 pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 		int argc UNUSED, const char **argv UNUSED)
 {
@@ -257,7 +255,7 @@ pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 
 /* --- account management functions --- */
 
-PAM_EXTERN int
+int
 pam_sm_acct_mgmt (pam_handle_t *pamh, int flags UNUSED,
 		  int argc, const char **argv)
 {
@@ -269,22 +267,5 @@ pam_sm_acct_mgmt (pam_handle_t *pamh, int flags UNUSED,
     /* take the easy route */
     return securetty_perform_check(pamh, ctrl, __FUNCTION__);
 }
-
-
-#ifdef PAM_STATIC
-
-/* static module data */
-
-struct pam_module _pam_securetty_modstruct = {
-     "pam_securetty",
-     pam_sm_authenticate,
-     pam_sm_setcred,
-     pam_sm_acct_mgmt,
-     NULL,
-     NULL,
-     NULL,
-};
-
-#endif /* PAM_STATIC */
 
 /* end of module definition */

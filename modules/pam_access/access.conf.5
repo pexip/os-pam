@@ -2,12 +2,12 @@
 .\"     Title: access.conf
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 09/19/2013
+.\"      Date: 05/18/2018
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "ACCESS\&.CONF" "5" "09/19/2013" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "ACCESS\&.CONF" "5" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -35,15 +35,19 @@ The
 /etc/security/access\&.conf
 file specifies (\fIuser/group\fR,
 \fIhost\fR), (\fIuser/group\fR,
-\fInetwork/netmask\fR) or (\fIuser/group\fR,
-\fItty\fR) combinations for which a login will be either accepted or refused\&.
+\fInetwork/netmask\fR), (\fIuser/group\fR,
+\fItty\fR), (\fIuser/group\fR,
+\fIX\-$DISPLAY\-value\fR), or (\fIuser/group\fR,
+\fIpam\-service\-name\fR) combinations for which a login will be either accepted or refused\&.
 .PP
 When someone logs in, the file
 access\&.conf
 is scanned for the first entry that matches the (\fIuser/group\fR,
 \fIhost\fR) or (\fIuser/group\fR,
 \fInetwork/netmask\fR) combination, or, in case of non\-networked logins, the first entry that matches the (\fIuser/group\fR,
-\fItty\fR) combination\&. The permissions field of that table entry determines whether the login will be accepted or refused\&.
+\fItty\fR) combination, or in the case of non\-networked logins without a tty, the first entry that matches the (\fIuser/group\fR,
+\fIX\-$DISPLAY\-value\fR) or (\fIuser/group\fR,
+\fIpam\-service\-name/\fR) combination\&. The permissions field of that table entry determines whether the login will be accepted or refused\&.
 .PP
 Each line of the login access control table has three fields separated by a ":" character (colon):
 .PP
@@ -62,17 +66,31 @@ field, should be a list of one or more login names, group names, or
 .PP
 The third field, the
 \fIorigins\fR
-field, should be a list of one or more tty names (for non\-networked logins), host names, domain names (begin with "\&."), host addresses, internet network numbers (end with "\&."), internet network addresses with network mask (where network mask can be a decimal number or an internet address also),
+field, should be a list of one or more tty names (for non\-networked logins), X
+\fI$DISPLAY\fR
+values or PAM service names (for non\-networked logins without a tty), host names, domain names (begin with "\&."), host addresses, internet network numbers (end with "\&."), internet network addresses with network mask (where network mask can be a decimal number or an internet address also),
 \fIALL\fR
 (which always matches) or
-\fILOCAL\fR\&.
+\fILOCAL\fR\&. The
 \fILOCAL\fR
-keyword matches if and only if the
-\fIPAM_RHOST\fR
-is not set and <origin> field is thus set from
+keyword matches if and only if
+\fBpam_get_item\fR(3), when called with an
+\fIitem_type\fR
+of
+\fIPAM_RHOST\fR, returns
+NULL
+or an empty string (and therefore the
+\fIorigins\fR
+field is compared against the return value of
+\fBpam_get_item\fR(3)
+called with an
+\fIitem_type\fR
+of
 \fIPAM_TTY\fR
-or
-\fIPAM_SERVICE\fR"\&. If supported by the system you can use
+or, absent that,
+\fIPAM_SERVICE\fR)\&.
+.PP
+If supported by the system you can use
 \fI@netgroupname\fR
 in host or user patterns\&. The
 \fI@@netgroupname\fR
@@ -101,15 +119,15 @@ should be allowed to get access via
 \fItty5\fR,
 \fItty6\fR\&.
 .PP
-+ : root : crond :0 tty1 tty2 tty3 tty4 tty5 tty6
++:root:crond :0 tty1 tty2 tty3 tty4 tty5 tty6
 .PP
 User
 \fIroot\fR
 should be allowed to get access from hosts which own the IPv4 addresses\&. This does not mean that the connection have to be a IPv4 one, a IPv6 connection from a host with one of this IPv4 addresses does work, too\&.
 .PP
-+ : root : 192\&.168\&.200\&.1 192\&.168\&.200\&.4 192\&.168\&.200\&.9
++:root:192\&.168\&.200\&.1 192\&.168\&.200\&.4 192\&.168\&.200\&.9
 .PP
-+ : root : 127\&.0\&.0\&.1
++:root:127\&.0\&.0\&.1
 .PP
 User
 \fIroot\fR
@@ -122,7 +140,7 @@ is
 or
 \fI192\&.168\&.201\&.0/255\&.255\&.255\&.0\fR\&.
 .PP
-+ : root : 192\&.168\&.201\&.
++:root:192\&.168\&.201\&.
 .PP
 User
 \fIroot\fR
@@ -132,7 +150,7 @@ and
 \fIfoo2\&.bar\&.org\fR
 (uses string matching also)\&.
 .PP
-+ : root : foo1\&.bar\&.org foo2\&.bar\&.org
++:root:foo1\&.bar\&.org foo2\&.bar\&.org
 .PP
 User
 \fIroot\fR
@@ -140,13 +158,13 @@ should be able to have access from domain
 \fIfoo\&.bar\&.org\fR
 (uses string matching also)\&.
 .PP
-+ : root : \&.foo\&.bar\&.org
++:root:\&.foo\&.bar\&.org
 .PP
 User
 \fIroot\fR
 should be denied to get access from all other sources\&.
 .PP
-\- : root : ALL
+\-:root:ALL
 .PP
 User
 \fIfoo\fR
@@ -154,7 +172,7 @@ and members of netgroup
 \fIadmins\fR
 should be allowed to get access from all sources\&. This will only work if netgroup service is available\&.
 .PP
-+ : @admins foo : ALL
++:@admins foo:ALL
 .PP
 User
 \fIjohn\fR
@@ -162,13 +180,13 @@ and
 \fIfoo\fR
 should get access from IPv6 host address\&.
 .PP
-+ : john foo : 2001:db8:0:101::1
++:john foo:2001:db8:0:101::1
 .PP
 User
 \fIjohn\fR
 should get access from IPv6 net/mask\&.
 .PP
-+ : john : 2001:db8:0:101::/64
++:john:2001:db8:0:101::/64
 .PP
 Disallow console logins to all but the shutdown, sync and all other accounts, which are a member of the wheel group\&.
 .PP
@@ -176,7 +194,12 @@ Disallow console logins to all but the shutdown, sync and all other accounts, wh
 .PP
 All other users should be denied to get access from all sources\&.
 .PP
-\- : ALL : ALL
+\-:ALL:ALL
+.SH "NOTES"
+.PP
+The default separators of list items in a field are space, \*(Aq,\*(Aq, and tabulator characters\&. Thus conveniently if spaces are put at the beginning and the end of the fields they are ignored\&. However if the list separator is changed with the
+\fIlistsep\fR
+option, the spaces will become part of the actual item and the line will be most probably ignored\&. For this reason, it is not recommended to put spaces around the \*(Aq:\*(Aq characters\&.
 .SH "SEE ALSO"
 .PP
 \fBpam_access\fR(8),
