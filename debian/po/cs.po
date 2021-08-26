@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
 "PO-Revision-Date: 2012-01-27 07:56+0100\n"
 "Last-Translator: Miroslav Kure <kurem@debian.cz>\n"
 "Language-Team: Czech <debian-l10n-czech@lists.debian.org>\n"
@@ -25,11 +25,16 @@ msgstr "Služby, které se mají restartovat po aktualizaci knihovny PAM:"
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
+#, fuzzy
+#| msgid ""
+#| "Most services that use PAM need to be restarted to use modules built for "
+#| "this new version of libpam.  Please review the following space-separated "
+#| "list of init.d scripts for services to be restarted now, and correct it "
+#| "if needed."
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "Aby se začaly používat moduly z nové verze knihovny libpam, musí se většina "
 "služeb používajících PAM restartovat. Zkontrolujte prosím následující seznam "
@@ -98,12 +103,12 @@ msgid ""
 "necessary restarts will be done for you automatically so you can avoid being "
 "asked questions on each library upgrade."
 msgstr ""
-"V systému jsou nainstalovány služby, které je nutno při aktualizaci "
-"určitých knihoven (libpam, libc nebo libssl) restartovat. Během restartu "
-"služeb jsou tyto po nějakou dobu nedostupné. Abychom předešli nechtěné "
-"nedostupnosti, je při každé aktualizaci nabídnut seznam služeb, které se "
-"mají restartovat. Povolíte-li tuto možnost, budou se všechny potřebné "
-"služby restartovat při aktualizaci knihoven automaticky bez ptaní."
+"V systému jsou nainstalovány služby, které je nutno při aktualizaci určitých "
+"knihoven (libpam, libc nebo libssl) restartovat. Během restartu služeb jsou "
+"tyto po nějakou dobu nedostupné. Abychom předešli nechtěné nedostupnosti, je "
+"při každé aktualizaci nabídnut seznam služeb, které se mají restartovat. "
+"Povolíte-li tuto možnost, budou se všechny potřebné služby restartovat při "
+"aktualizaci knihoven automaticky bez ptaní."
 
 #. Type: title
 #. Description
@@ -224,3 +229,42 @@ msgstr ""
 "autentizovat. To jinými slovy znamená, že se uživatelé nedostanou ke svým "
 "uzamčeným sezením. Abyste tomu předešli, měli byste před aktualizací zmíněné "
 "programy zastavit, nebo je ve vhodný čas restartovat."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr ""

@@ -12,14 +12,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2009-01-01 12:30+0800\n"
-"Last-Translator: Deng Xiyue <manphiz-guest@users.alioth.debian.org>\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"PO-Revision-Date: 2021-02-26 21:04-0500\n"
+"Last-Translator: Boyuan Yang <byang@debian.org>\n"
 "Language-Team: Debian Chinese [GB] <debian-chinese-gb@lists.debian.org>\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.2\n"
 
 #. Type: string
 #. Description
@@ -33,12 +34,11 @@ msgstr "因 PAM 库升级而需要重新启动的服务："
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "为了使用基于这个新版本 libpam 编译的模块，绝大部分使用 PAM 的服务都需要被重新"
-"启动。请复查下面这个需要重新启动的服务所对应的 init.d script 列表，script 名"
-"称之间以半角空格分隔。如列表有误，请直接更正。"
+"启动。请复查下面这个需要重新启动的服务所对应的列表，script 名称之间以半角空格"
+"分隔。如列表有误，请直接更正。"
 
 #. Type: error
 #. Description
@@ -49,22 +49,15 @@ msgstr "必须手动重新启动显示管理器"
 #. Type: error
 #. Description
 #: ../libpam0g.templates:2001
-#, fuzzy
-#| msgid ""
-#| "The kdm, wdm, and xdm display managers require a restart for the new "
-#| "version of libpam, but there are X login sessions active on your system "
-#| "that would be terminated by this restart.  You will therefore need to "
-#| "restart these services by hand before further X logins will be possible."
 msgid ""
 "The wdm and xdm display managers require a restart for the new version of "
 "libpam, but there are X login sessions active on your system that would be "
 "terminated by this restart.  You will therefore need to restart these "
 "services by hand before further X logins will be possible."
 msgstr ""
-"由于 lipam 更新到新版本，显示管理器 kdm、wdm 和 xdm 需要被重新启动。但是您的"
-"系统上有正在运行的 X 登录会话，而如果重新启动显示管理器服务，这些 X 会话就会"
-"被强行结束。因此，您需要手动重新启动这些服务，否则您将无法再登录进 X 窗口系"
-"统。"
+"由于 libpam 更新到新版本，wdm 和 xdm 等显示管理器需要被重新启动。但是您的系统"
+"上有正在运行的 X 登录会话，而如果重新启动显示管理器服务，这些 X 会话就会被强"
+"行结束。因此，您需要手动重新启动这些服务，否则您将无法再登录进 X 窗口系统。"
 
 #. Type: error
 #. Description
@@ -91,7 +84,7 @@ msgstr "您需要运行“/etc/init.d/<服务> start”来手动启动这些服�
 #. Description
 #: ../libpam0g.templates:4001
 msgid "Restart services during package upgrades without asking?"
-msgstr ""
+msgstr "是否在软件包升级过程中不经询问直接重新启动服务？"
 
 #. Type: boolean
 #. Description
@@ -105,18 +98,23 @@ msgid ""
 "necessary restarts will be done for you automatically so you can avoid being "
 "asked questions on each library upgrade."
 msgstr ""
+"您的系统上有一些正在运行的服务需要在特定的软件库（如 libpam、libc、libssl）的"
+"升级过程中重新启动。因为重新启动这些服务可能造成系统功能的中断，通常情况下您"
+"会在每次升级时收到决定是否重启服务的提醒。您也可以选择本选项以避免收到提醒；"
+"在此情况下，所有必需的服务重启均会自动进行，您也不会在各个库进行更新时收到询"
+"问。"
 
 #. Type: title
 #. Description
 #: ../libpam-runtime.templates:1001
 msgid "PAM configuration"
-msgstr ""
+msgstr "PAM 配置"
 
 #. Type: multiselect
 #. Description
 #: ../libpam-runtime.templates:2001
 msgid "PAM profiles to enable:"
-msgstr ""
+msgstr "要启用的 PAM 配置策略："
 
 #. Type: multiselect
 #. Description
@@ -127,6 +125,8 @@ msgid ""
 "allowing configuration of additional actions to take when starting user "
 "sessions."
 msgstr ""
+"可插入身份验证模块（PAM）决定系统上的身份验证、授权和密码更改应当如何进行，同"
+"时允许配置启动用户会话时要进行的额外操作。"
 
 #. Type: multiselect
 #. Description
@@ -136,12 +136,14 @@ msgid ""
 "adjust the behavior of all PAM-using applications on the system.  Please "
 "indicate which of these behaviors you wish to enable."
 msgstr ""
+"某些 PAM 模块软件包提供了配置策略（profile），可用来自动调整系统上所有使用 "
+"PAM 的应用程序的行为。请选择您希望启用其中的哪些行为。"
 
 #. Type: error
 #. Description
 #: ../libpam-runtime.templates:3001
 msgid "Incompatible PAM profiles selected."
-msgstr ""
+msgstr "选中了不兼容的 PAM 配置策略。"
 
 #. Type: error
 #. Description
@@ -149,19 +151,19 @@ msgstr ""
 #. PAM profile names.
 #: ../libpam-runtime.templates:3001
 msgid "The following PAM profiles cannot be used together:"
-msgstr ""
+msgstr "以下的 PAM 配置策略不能共同使用："
 
 #. Type: error
 #. Description
 #: ../libpam-runtime.templates:3001
 msgid "Please select a different set of modules to enable."
-msgstr ""
+msgstr "请选择另一组要启用的模块。"
 
 #. Type: boolean
 #. Description
 #: ../libpam-runtime.templates:4001
 msgid "Override local changes to /etc/pam.d/common-*?"
-msgstr ""
+msgstr "覆盖 /etc/pam.d/common-* 的本地修改吗？"
 
 #. Type: boolean
 #. Description
@@ -173,12 +175,15 @@ msgid ""
 "decline this option, you will need to manage your system's authentication "
 "configuration by hand."
 msgstr ""
+"在 /etc/pam.d/common-{auth,account,password,session} 中的一个或多个文件有本地"
+"的修改。请选择是否应当使用系统提供的配置覆盖这些本地修改。如果您拒绝本选项，"
+"您需要稍后手动管理您系统上的验证配置。"
 
 #. Type: error
 #. Description
 #: ../libpam-runtime.templates:5001
 msgid "No PAM profiles have been selected."
-msgstr ""
+msgstr "未选择任何 PAM 配置策略。"
 
 #. Type: error
 #. Description
@@ -188,6 +193,8 @@ msgid ""
 "all users access without authenticating, and is not allowed.  Please select "
 "at least one PAM profile from the available list."
 msgstr ""
+"未选中任何用于本系统的 PAM 配置策略。如果这样做会允许所有用户不经验证进行访"
+"问，而这种行为是不允许出现的。请从可用列表中选择至少一个 PAM 配置策略。"
 
 #. Type: error
 #. Description
@@ -209,3 +216,48 @@ msgstr ""
 "检测到一个或多个 xscreensaver 或 xlockmore 运行实例。因为不兼容的库的变化，"
 "libpam-module 软件包的升级将使您无法向这些程序认证。您需要在继续此升级前安排"
 "这些程序重新启动或者停止运行，以避免将您的用户锁在他们的当前会话之外。"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "已禁用带有已弃用模块的 PAM 配置策略"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"您的系统上存在带有 ${modules} PAM 模块的 PAM 配置策略。这些模块已从 PAM 中移"
+"除。如继续启用这些 PAM 配置策略则用户将无法经此方式验证并访问系统。因此，这些"
+"配置策略已被禁用。"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "您的配置文件中正在使用 pam_tally 或 pam_tally2"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"请注意，pam_tally 和 pam_tally2 模块已从 PAM 中移除。您正在系统上 /etc/pam.d "
+"中的配置文件中使用其中某个模块。在 PAM 更新之前，您必须移除对这些模块的使用；"
+"在升级后依旧于 PAM 配置中使用这些模块将导致用户无法使用该方式登录系统。"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "请考虑使用 pam_faillock 模块作为 pam_tally 的替代。"

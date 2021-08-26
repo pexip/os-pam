@@ -50,6 +50,12 @@ range is specified as min_uid:max_uid where one of these values can be empty.
 If min_uid is empty only user with the uid max_uid will be matched. If max_uid
 is empty users with the uid greater than or equal to min_uid will be matched.
 
+Please note that passwords in some circumstances may be logged by TTY auditing
+even if the log_passwd is not used. For example, all input to an ssh session
+will be logged - even if there is a password being typed into some software
+running at the remote host because only the local TTY state affects the local
+TTY auditing.
+
 EXAMPLES
 
 Audit all administrative actions.

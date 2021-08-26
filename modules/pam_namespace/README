@@ -169,7 +169,10 @@ contain the user name and will be shared among all users.
 
 mntopts=value - value of this flag is passed to the mount call when the tmpfs
 mount is done. It allows for example the specification of the maximum size of
-the tmpfs instance that is created by the mount call. See mount(8) for details.
+the tmpfs instance that is created by the mount call. In addition to options
+specified in the tmpfs(5) manual the nosuid, noexec, and nodev flags can be
+used to respectively disable setuid bit effect, disable running executables,
+and disable devices to be interpreted on the mounted tmpfs filesystem.
 
 The directory where polyinstantiated instances are to be created, must exist
 and must have, by default, the mode of 0000. The requirement that the instance

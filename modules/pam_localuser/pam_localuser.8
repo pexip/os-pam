@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_localuser
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_LOCALUSER" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_LOCALUSER" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -65,9 +65,24 @@ PAM_SUCCESS
 The new localuser was set successfully\&.
 .RE
 .PP
+PAM_BUF_ERR
+.RS 4
+Memory buffer error\&.
+.RE
+.PP
+PAM_CONV_ERR
+.RS 4
+The conversation method supplied by the application failed to obtain the username\&.
+.RE
+.PP
+PAM_INCOMPLETE
+.RS 4
+The conversation method supplied by the application returned PAM_CONV_AGAIN\&.
+.RE
+.PP
 PAM_SERVICE_ERR
 .RS 4
-No username was given\&.
+The user name is not valid or the passwd file is unavailable\&.
 .RE
 .PP
 PAM_PERM_DENIED

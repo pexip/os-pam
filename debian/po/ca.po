@@ -7,16 +7,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam 1.1.3-6.1\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2012-01-21 08:33+0100\n"
-"Last-Translator: Innocent De Marchi <tangram.peces@gmail.com>\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"PO-Revision-Date: 2021-03-05 11:06+0100\n"
+"Last-Translator: Alex Muntada <alexm@debian.org>\n"
 "Language-Team: Catalan <debian-l10n-catalan@lists.debian.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Catalan\n"
-"X-Poedit-Country: SPAIN\n"
+"X-Generator: Poedit 2.2.1\n"
 
 #. Type: string
 #. Description
@@ -31,13 +30,12 @@ msgstr ""
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "És necessari reiniciar la majoria dels serveis que fan servir PAM per a que "
 "facin servir els mòduls d'aquesta versió de «libpam». Reviseu la següent "
-"llista separada per espais dels scripts «init.d» que indica els serveis que "
-"es reiniciaran ara i modificau-la si és necessari."
+"llista separada per espais dels serveis que es reiniciaran ara i modificau-"
+"la si és necessari."
 
 #. Type: error
 #. Description
@@ -108,8 +106,8 @@ msgid ""
 "asked questions on each library upgrade."
 msgstr ""
 "Hi ha serveis instal·lats en el seu sistema que necessiten ser reiniciats en "
-"actualitzar certes biblioteques, com libpam, libc i libssl. Ja que el procés "
-"de reinicii pot causar interrupcions en el sistema, normalment se vos "
+"actualitzar certes biblioteques, com libpam, libc i libssl. Com que el "
+"procés de reinici pot causar interrupcions en el sistema, normalment se vos "
 "demanarà, a cada actualització, per a la llista de serveis que voleu "
 "reiniciar. Podeu triar aquesta opció per evitar que se vos demani; en canvi, "
 "es faran automàticament tots els reinicis necessaris sense demanar-vos "
@@ -136,7 +134,7 @@ msgid ""
 "allowing configuration of additional actions to take when starting user "
 "sessions."
 msgstr ""
-"Els «Pluggable Authentication Modules» (PAM, o Mòduls d'autenticació "
+"Els «Pluggable Authentication Modules» (PAM, o mòduls d'autenticació "
 "inseribles) determinen com es gestionen en el sistema l'autenticació, "
 "autorització i modificació de contrasenyes. També permet la definició "
 "d'accions addicionals a realitzar quan s'inicia la sessió d'un usuari."
@@ -181,7 +179,7 @@ msgstr "Seleccioneu un conjunt distint de mòduls a activar."
 #: ../libpam-runtime.templates:4001
 msgid "Override local changes to /etc/pam.d/common-*?"
 msgstr ""
-"Desitjau descartar els canvis locals realitzats a «/etc/pam.d/common-*»?"
+"Desitjau sobreescriure els canvis locals realitzats a «/etc/pam.d/common-*»?"
 
 #. Type: boolean
 #. Description
@@ -239,3 +237,51 @@ msgstr ""
 "biblioteca. Heu de procurar que aquests programes es reinicien o s'aturin "
 "abans de continuar amb l'actualització. Així evitareu que els usuaris quedin "
 "bloquejats i no puguin continuar les seves sessions actuals."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "Perfils de PAM amb mòduls descartats desactivats"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"El vostre sistema tenia perfils de PAM activats amb els mòduls PAM "
+"${modules}. Aquests mòduls s'han eliminat de PAM. Deixant aquests perfils "
+"activats els usuaris no podrien accedir al vostre sistema. Com a resultat, "
+"aquests perfils s'han desactivat."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "esteu utilitzant pam_tally o pam_tally2 a la vostra configuració"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"Els mòduls pam_tally i pam_tally2 s'han eliminat de PAM. Esteu utilitzant un "
+"d'aquests mòduls a la vostra configuració de PAM a /etc/pam.d. Heu "
+"d'eliminar els usos d'aquests mòduls abans que es pugui actualitzar PAM ja "
+"que, amb aquests mòduls inclosos a la vostra configuració de PAM, després de "
+"l'actualització els usuaris deixarien de poder entrar al sistema."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "Valoreu el mòdul pam_faillock com a substitut de pam_tally."

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_env
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_ENV" "8" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_ENV" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -50,10 +50,10 @@ pairs on separate lines will be read\&. With the
 \fIenvfile\fR
 option an alternate file can be specified\&. And with the
 \fIreadenv\fR
-option this can be completly disabled\&.
+option this can be completely disabled\&.
 .PP
 Third it will read a user configuration file ($HOME/\&.pam_environment
-by default)\&. The default file file can be changed with the
+by default)\&. The default file can be changed with the
 \fIuser_envfile\fR
 option and it can be turned on and off with the
 \fIuser_readenv\fR
@@ -96,12 +96,12 @@ Turns on or off the reading of the file specified by envfile (0 is off, 1 is on)
 Indicate an alternative
 \&.pam_environment
 file to override the default\&.The syntax is the same as for
-\fI/etc/environment\fR\&. The filename is relative to the user home directory\&. This can be useful when different services need different environments\&.
+\fI/etc/security/pam_env\&.conf\fR\&. The filename is relative to the user home directory\&. This can be useful when different services need different environments\&.
 .RE
 .PP
 \fBuser_readenv=\fR\fB\fI0|1\fR\fR
 .RS 4
-Turns on or off the reading of the user specific environment file\&. 0 is off, 1 is on\&. By default this option is on\&.
+Turns on or off the reading of the user specific environment file\&. 0 is off, 1 is on\&. By default this option is off\&.
 .RE
 .SH "MODULE TYPES PROVIDED"
 .PP

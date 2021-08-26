@@ -14,12 +14,14 @@ do_not_check_nis_accidentally
 hurd_no_setfsuid
 040_pam_limits_log_failure
 045_pam_dispatch_jump_is_ignore
-054_pam_security_abstract_securetty_handling
-055_pam_unix_nullok_secure
-cve-2010-4708.patch
 PAM-manpage-section 
 update-motd
 no_PATH_MAX_on_hurd
 lib_security_multiarch_compat
 pam-limits-nofile-fd-setsize-cap
 fix-autoreconf.patch
+nullok_secure-compat.patch
+
+pam_unix_initialize_daysleft
+pam_faillock_create_directory
+pam_mkhomedir_stat_before_opendir

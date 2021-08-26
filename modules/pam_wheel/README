@@ -5,7 +5,7 @@ pam_wheel — Only permit root access to members of group wheel
 DESCRIPTION
 
 The pam_wheel PAM module is used to enforce the so-called wheel group. By
-default it permits root access to the system if the applicant user is a member
+default it permits access to the target user if the applicant user is a member
 of the wheel group. If no group with this name exist, the module is using the
 group with the group-ID 0.
 

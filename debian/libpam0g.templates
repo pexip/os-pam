@@ -3,7 +3,7 @@ Type: string
 _Description: Services to restart for PAM library upgrade:
  Most services that use PAM need to be restarted to use modules built for
  this new version of libpam.  Please review the following space-separated
- list of init.d scripts for services to be restarted now, and correct it
+ list of  services to be restarted now, and correct it
  if needed.
 
 Template: libpam0g/xdm-needs-restart

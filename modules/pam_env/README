@@ -14,11 +14,11 @@ option.
 
 Second a file (/etc/environment by default) with simple KEY=VAL pairs on
 separate lines will be read. With the envfile option an alternate file can be
-specified. And with the readenv option this can be completly disabled.
+specified. And with the readenv option this can be completely disabled.
 
 Third it will read a user configuration file ($HOME/.pam_environment by
-default). The default file file can be changed with the user_envfile option and
-it can be turned on and off with the user_readenv option.
+default). The default file can be changed with the user_envfile option and it
+can be turned on and off with the user_readenv option.
 
 Since setting of PAM environment variables can have side effects to other
 modules, this module should be the last one on the stack.
@@ -50,14 +50,14 @@ readenv=0|1
 user_envfile=filename
 
     Indicate an alternative .pam_environment file to override the default.The
-    syntax is the same as for /etc/environment. The filename is relative to the
-    user home directory. This can be useful when different services need
-    different environments.
+    syntax is the same as for /etc/security/pam_env.conf. The filename is
+    relative to the user home directory. This can be useful when different
+    services need different environments.
 
 user_readenv=0|1
 
     Turns on or off the reading of the user specific environment file. 0 is
-    off, 1 is on. By default this option is on.
+    off, 1 is on. By default this option is off.
 
 EXAMPLES
 

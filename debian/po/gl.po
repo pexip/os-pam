@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam_1.1.1-3_gl\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
 "PO-Revision-Date: 2011-03-29 13:01-0700\n"
 "Last-Translator: Jorge Barreiro <yortx.barry@gmail.com>\n"
 "Language-Team: Galician <proxecto@trasno.net>\n"
@@ -29,11 +29,16 @@ msgstr "Servizos a reiniciar para a actualización da biblioteca PAM:"
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
+#, fuzzy
+#| msgid ""
+#| "Most services that use PAM need to be restarted to use modules built for "
+#| "this new version of libpam.  Please review the following space-separated "
+#| "list of init.d scripts for services to be restarted now, and correct it "
+#| "if needed."
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "A maioría dos servizos que empregan PAM deben reiniciarse para empregar os "
 "módulos compilados para esta versión de libpam. Revise a seguinte lista de "
@@ -223,3 +228,42 @@ msgstr ""
 "quen de autenticarse nestes programas. Deber reiniciar ou deter estes "
 "programas antes de continuar coa actualización, para evitar deixar trancados "
 "os usuarios fora das súas sesións de traballo actuais."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr ""

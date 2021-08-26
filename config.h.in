@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Defines the value usergroups option should have by default */
+#undef DEFAULT_USERGROUPS_SETTING
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
@@ -10,9 +13,6 @@
 /* Define to the type of elements in the array set by `getgroups'. Usually
    this is either `int' or `gid_t'. */
 #undef GETGROUPS_T
-
-/* Define to 1 if struct audit_tty_status exists. */
-#undef HAVE_AUDIT_TTY_STATUS
 
 /* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
    CoreFoundation framework. */
@@ -91,6 +91,9 @@
 /* Define to 1 if you have the `getline' function. */
 #undef HAVE_GETLINE
 
+/* Define to 1 if you have the `getmntent_r' function. */
+#undef HAVE_GETMNTENT_R
+
 /* Define to 1 if you have the `getpwnam_r' function. */
 #undef HAVE_GETPWNAM_R
 
@@ -133,9 +136,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Defined if the kernel key management facility is available */
-#undef HAVE_KEY_MANAGEMENT
-
 /* Define to 1 if you have the <lastlog.h> header file. */
 #undef HAVE_LASTLOG_H
 
@@ -145,14 +145,17 @@
 /* Define to 1 if audit support should be compiled in. */
 #undef HAVE_LIBAUDIT
 
-/* Define to 1 if you have cracklib. */
-#undef HAVE_LIBCRACK
-
 /* Define to 1 if xcrypt support should be compiled in. */
 #undef HAVE_LIBXCRYPT
 
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/magic.h> header file. */
+#undef HAVE_LINUX_MAGIC_H
+
+/* Define to 1 if you have the `logwtmp' function. */
+#undef HAVE_LOGWTMP
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #undef HAVE_MALLOC_H
@@ -175,6 +178,9 @@
 /* Define to 1 if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
 
+/* Define to 1 if you have the `quotactl' function. */
+#undef HAVE_QUOTACTL
+
 /* Define to 1 if you have the `rpcb_getaddr' function. */
 #undef HAVE_RPCB_GETADDR
 
@@ -186,6 +192,9 @@
 
 /* Define to 1 if you have the <rpc/rpc.h> header file. */
 #undef HAVE_RPC_RPC_H
+
+/* Define to 1 if you have the `ruserok' function. */
+#undef HAVE_RUSEROK
 
 /* Define to 1 if you have the `ruserok_af' function. */
 #undef HAVE_RUSEROK_AF
@@ -255,6 +264,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/vfs.h> header file. */
+#undef HAVE_SYS_VFS_H
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
@@ -300,12 +312,8 @@
 /* Define to 1 if you have the `yp_unbind' function. */
 #undef HAVE_YP_UNBIND
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
-
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-#undef NO_MINUS_C_MINUS_O
 
 /* Name of package */
 #undef PACKAGE
@@ -346,6 +354,15 @@
 /* read both /etc/pam.d and /etc/pam.conf files */
 #undef PAM_READ_BOTH_CONFS
 
+/* Kernel overflow uid. */
+#undef PAM_USERTYPE_OVERFLOW_UID
+
+/* Minimum system user uid. */
+#undef PAM_USERTYPE_SYSUIDMIN
+
+/* Minimum regular user uid. */
+#undef PAM_USERTYPE_UIDMIN
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -382,6 +399,9 @@
 # undef __EXTENSIONS__
 #endif
 
+
+/* Directory for distribution provided configuration files */
+#undef VENDORDIR
 
 /* Version number of package */
 #undef VERSION

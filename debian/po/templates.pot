@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the pam package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
+"POT-Creation-Date: 2021-03-15 18:23-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,8 +29,7 @@ msgstr ""
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 
 #. Type: error
@@ -188,4 +187,43 @@ msgid ""
 "to these programs.  You should arrange for these programs to be restarted or "
 "stopped before continuing this upgrade, to avoid locking your users out of "
 "their current sessions."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
 msgstr ""

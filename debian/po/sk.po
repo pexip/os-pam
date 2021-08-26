@@ -6,14 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2012-01-19 22:37+0100\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"PO-Revision-Date: 2021-03-09 11:35+0100\n"
 "Last-Translator: Ivan Masár <helix84@centrum.sk>\n"
 "Language-Team: Slovak <sk-i18n@lists.linux.sk>\n"
 "Language: sk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.1\n"
 
 #. Type: string
 #. Description
@@ -27,13 +28,12 @@ msgstr "Pri aktualizácii knižnice PAM reštartovať nasledovné služby:"
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
-"Väčšinu služieb využívajúcich PAM je potrebné reštartovať, aby začali "
-"používať moduly zostavené pre túto novú verziu libpam. Prosím, skontrolujte "
-"nasledovný zoznam init.d skriptov (oddelené čiarkami), ktoré sa majú teraz "
-"reštartovať a ak je to potrebné, opravte ho."
+"Väčšinu služieb, ktoré používajú PAM, je nutné reštartovať, aby sa použili "
+"moduly vytvorené pre túto novú verziu libpamu.  Skontrolujte prosím "
+"nasledujúci zoznam služieb oddelených medzerou, ktoré sa teraz reštartujú. V "
+"prípade potreby ho opravte."
 
 #. Type: error
 #. Description
@@ -114,7 +114,7 @@ msgstr "Konfigurácia PAM"
 #. Description
 #: ../libpam-runtime.templates:2001
 msgid "PAM profiles to enable:"
-msgstr "Zapnúř nasledovné profily PAM:"
+msgstr "Zapnúť nasledovné profily PAM:"
 
 #. Type: multiselect
 #. Description
@@ -177,11 +177,10 @@ msgid ""
 "decline this option, you will need to manage your system's authentication "
 "configuration by hand."
 msgstr ""
-"Jeden alebo viac zo súborov /etc/pam.d/common-{auth,account,password,"
-"session} bolo na lokálnom systéme zmenených. Uveďte prosím, či sa majú tieto "
+"Jeden alebo viacero zo súborov /etc/pam.d/common-{auth,account,password,"
+"session} bolo na lokálnom systéme zmenených. Zvoľte prosím, či sa majú tieto "
 "lokálne zmeny prepísať štandardnými konfiguračnými voľbami. Ak túto možnosť "
-"zamietnete, budete musieť spravovať nastavenia autentifikácie tohto systému "
-"ručne."
+"zamietnete, budete musieť nastaviť autentifikácie tohto systému ručne."
 
 #. Type: error
 #. Description
@@ -205,7 +204,7 @@ msgstr ""
 #. Description
 #: ../libpam-modules.templates:1001
 msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr "Pred aktualizáciou je potrebné reštartovať xscreensaver a xlockmore"
+msgstr "je nutné reštartovať xscreensaver a xlockmore pred aktualizáciou"
 
 #. Type: error
 #. Description
@@ -220,8 +219,55 @@ msgid ""
 msgstr ""
 "Na tomto systéme bola zistená jedna alebo viacero bežiacich inštancií "
 "programov xscreensaver alebo xlockmore. Z dôvodu nekomaptibilných zmien v "
-"knižniciach balíka libpam-modules by ste po aktualizácii neboli schopní "
-"overiť sa týmto programom. Mali by ste zariadiť, aby sa tieto programy "
+"knižniciach balíka libpam-modules nebudete schopní po aktualizácii overiť "
+"identitu týmto programom. Mali by ste zariadiť, aby sa tieto programy "
 "reštartovali alebo zastavili predtým, než budete v tejto aktualizácii "
 "pokračovať, aby ste predišli tomu, že používatelia sa nebudú môcť prihlásiť "
 "zo svojich súčasných relácií."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "Profily PAM s vypnutými zastaranými modulmi"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"Váš systém mal povolené PAM profily s modulmi ${modules}. Tieto moduly boli "
+"odstránené z PAM. Ponechanie týchto PAM profilov by zabránilo používateľom v "
+"prístupe k vášmu systému. V dôsledku toho boli tieto profily vypnuté."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "používate pam_tally alebo pam_tally2 vo vašej konfigurácii"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"Moduly pam_tally a pam_tally2 boli z PAM odstránené. Používate jeden z "
+"týchto modulov v konfigurácii PAM v /etc/pam.d. Pred aktualizáciou PAM "
+"musíte odstrániť použitie týchto modulov. Zahrnutie týchto modulov do "
+"konfigurácie PAM by po aktualizácii znemožnilo používateľom prihlásiť sa do "
+"systému."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "Zvážte pam_faillock modul ako náhradu za pam_tally."

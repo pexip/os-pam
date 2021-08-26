@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_wheel
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_WHEEL" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_WHEEL" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,7 +36,7 @@ pam_wheel \- Only permit root access to members of group wheel
 .PP
 The pam_wheel PAM module is used to enforce the so\-called
 \fIwheel\fR
-group\&. By default it permits root access to the system if the applicant user is a member of the
+group\&. By default it permits access to the target user if the applicant user is a member of the
 \fIwheel\fR
 group\&. If no group with this name exist, the module is using the group with the group\-ID
 \fB0\fR\&.

@@ -42,7 +42,9 @@ GLOBAL OPTIONS
 
     silent
 
-        Don't print informative messages.
+        Don't print informative messages. The messages printed without the 
+        silent option leak presence of accounts on the system because they are
+        not printed for non-existing accounts.
 
     no_log_info
 

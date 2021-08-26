@@ -2,7 +2,8 @@
 
 DEB_LDFLAGS_MAINT_APPEND := -Wl,-z,defs
 DEB_CFLAGS_MAINT_APPEND  := $(shell getconf LFS_CFLAGS)
-export DEB_LDFLAGS_MAINT_APPEND DEB_CFLAGS_MAINT_APPEND
+DEB_BUILD_MAINT_OPTIONS  := hardening=+bindnow
+export DEB_LDFLAGS_MAINT_APPEND DEB_CFLAGS_MAINT_APPEND DEB_BUILD_MAINT_OPTIONS
 ifeq ($(shell dpkg-architecture -qDEB_BUILD_ARCH_OS),hurd)
 DEB_LDFLAGS_MAINT_APPEND += -lpthread
 endif
@@ -29,6 +30,7 @@ override_dh_auto_configure:
 	dh_auto_configure -- --enable-static --enable-shared \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
 		--enable-isadir=/lib/security \
+		--enable-cracklib \
 		$(CONFIGURE_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude
@@ -39,6 +41,19 @@ ifneq (,$(findstring libpam-modules, $(shell dh_listpackages)))
 	dh_install -plibpam-modules -Xpam_cracklib
 endif
 	dh_install -Nlibpam-modules
+	# Make sure the md5sums for the templates we ship are
+	# recognized by pam-auth-update.
+	for f in common-auth common-session common-session-noninteractive common-account common-password; do \
+	if grep -q $$(perl debian/template-md5sum debian/local/$$f ) debian/local/pam-auth-update; then \
+	    echo $$f okay; \
+	else \
+	    echo md5sum for $$f not registered in debian/local/pam-auth-update; \
+	    echo use debian/template-md5sum to compute; \
+	    exit 2; \
+	fi; \
+	done
+
+
 
 # again, excluding files by hand; also, build our local manpage for pam_getenv
 # from the XML
