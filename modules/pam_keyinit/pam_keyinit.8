@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_keyinit
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_KEYINIT" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_KEYINIT" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -36,18 +36,25 @@ pam_keyinit \- Kernel session keyring initialiser module
 .PP
 The pam_keyinit PAM module ensures that the invoking process has a session keyring other than the user default session keyring\&.
 .PP
-The session component of the module checks to see if the process\*(Aqs session keyring is the user default, and, if it is, creates a new anonymous session keyring with which to replace it\&.
+The module checks to see if the process\*(Aqs session keyring is the
+\fBuser-session-keyring\fR(7), and, if it is, creates a new
+\fBsession-keyring\fR(7)
+with which to replace it\&. If a new session keyring is created, it will install a link to the
+\fBuser-keyring\fR(7)
+in the session keyring so that keys common to the user will be automatically accessible through it\&. The session keyring of the invoking process will thenceforth be inherited by all its children unless they override it\&.
 .PP
-If a new session keyring is created, it will install a link to the user common keyring in the session keyring so that keys common to the user will be automatically accessible through it\&.
-.PP
-The session keyring of the invoking process will thenceforth be inherited by all its children unless they override it\&.
+In order to allow other PAM modules to attach tokens to the keyring, this module provides both an
+\fIauth\fR
+(limited to
+\fBpam_setcred\fR(3)
+and a
+\fIsession\fR
+component\&. The session keyring is created in the module called\&. Moreover this module should be included as early as possible in a PAM configuration\&.
 .PP
 This module is intended primarily for use by login processes\&. Be aware that after the session keyring has been replaced, the old session keyring and the keys it contains will no longer be accessible\&.
 .PP
 This module should not, generally, be invoked by programs like
 \fBsu\fR, since it is usually desirable for the key set to percolate through to the alternate context\&. The keys have their own permissions system to manage this\&.
-.PP
-This module should be included as early as possible in a PAM configuration, so that other PAM modules can attach tokens to the keyring\&.
 .PP
 The keyutils package is used to manipulate keys more directly\&. This can be obtained from:
 .PP
@@ -130,7 +137,8 @@ This will prevent keys from one session leaking into another session for the sam
 .PP
 \fBpam.conf\fR(5),
 \fBpam.d\fR(5),
-\fBpam\fR(8)\fBkeyctl\fR(1)
+\fBpam\fR(8),
+\fBkeyctl\fR(1)
 .SH "AUTHOR"
 .PP
 pam_keyinit was written by David Howells, <dhowells@redhat\&.com>\&.

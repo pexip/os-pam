@@ -28,6 +28,9 @@
         usergroups
       </arg>
       <arg choice="opt">
+        nousergroups
+      </arg>
+      <arg choice="opt">
         umask=<replaceable>mask</replaceable>
       </arg>
     </cmdsynopsis>
@@ -121,6 +124,19 @@
 
         <varlistentry>
           <term>
+            <option>nousergroups</option>
+          </term>
+          <listitem>
+            <para>
+              This is the direct opposite of the usergroups option described above,
+              which can be useful in case pam_umask has been compiled with
+              usergroups enabled by default and you want to disable it at runtime.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>
             <option>umask=<replaceable>mask</replaceable></option>
           </term>
           <listitem>
@@ -154,6 +170,35 @@
           <listitem>
             <para>
               The new umask was set successfully.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_BUF_ERR</term>
+          <listitem>
+            <para>
+              Memory buffer error.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_CONV_ERR</term>
+          <listitem>
+            <para>
+              The conversation method supplied by the application
+              failed to obtain the username.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_INCOMPLETE</term>
+          <listitem>
+            <para>
+              The conversation method supplied by the application
+              returned PAM_CONV_AGAIN.
             </para>
           </listitem>
         </varlistentry>

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: access.conf
 .\"    Author: [see the "AUTHORS" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "ACCESS\&.CONF" "5" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "ACCESS\&.CONF" "5" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -187,6 +187,12 @@ User
 should get access from IPv6 net/mask\&.
 .PP
 +:john:2001:db8:0:101::/64
+.PP
+Members of group
+\fIwheel\fR
+should be allowed to get access from all sources\&.
+.PP
++:(wheel):ALL
 .PP
 Disallow console logins to all but the shutdown, sync and all other accounts, which are a member of the wheel group\&.
 .PP

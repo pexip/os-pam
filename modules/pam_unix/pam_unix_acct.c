@@ -1,6 +1,8 @@
 /*
+ * pam_unix account management
+ *
  * Copyright Elliot Lee, 1996.  All rights reserved.
- * Copyright Jan Rêkorajski, 1999.  All rights reserved.
+ * Copyright Jan RÄ™korajski, 1999.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,18 +53,15 @@
 
 #include <security/_pam_macros.h>
 
-/* indicate that the following groups are defined */
-
-#define PAM_SM_ACCOUNT
-
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
+#include "pam_cc_compat.h"
 #include "support.h"
 #include "passverify.h"
 
-int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
+int _unix_run_verify_binary(pam_handle_t *pamh, unsigned long long ctrl,
 	const char *user, int *daysleft)
 {
   int retval=0, child, fds[2];
@@ -127,7 +126,9 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
     args[1] = user;
     args[2] = "chkexpiry";
 
+    DIAG_PUSH_IGNORE_CAST_QUAL;
     execve(CHKPWD_HELPER, (char *const *) args, envp);
+    DIAG_POP_IGNORE_CAST_QUAL;
 
     pam_syslog(pamh, LOG_ERR, "helper binary execve failed: %m");
     /* should not get here: exit with error */
@@ -185,12 +186,10 @@ int _unix_run_verify_binary(pam_handle_t *pamh, unsigned int ctrl,
 int
 pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-	unsigned int ctrl;
+	unsigned long long ctrl;
 	const void *void_uname;
 	const char *uname;
 	int retval, daysleft;
-	struct spwd *spent;
-	struct passwd *pwent;
 	char buf[256];
 
 	D(("called."));
@@ -207,29 +206,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		return PAM_USER_UNKNOWN;
 	}
 
-	retval = get_account_info(pamh, uname, &pwent, &spent);
-	if (retval == PAM_USER_UNKNOWN) {
-		pam_syslog(pamh, LOG_ERR,
-			 "could not identify user (from getpwnam(%s))",
-			 uname);
-		return retval;
-	}
-
-	if (retval == PAM_SUCCESS && spent == NULL)
-		return PAM_SUCCESS;
-
-	if (retval == PAM_UNIX_RUN_HELPER) {
-		retval = _unix_run_verify_binary(pamh, ctrl, uname, &daysleft);
-		if (retval == PAM_AUTHINFO_UNAVAIL &&
-			on(UNIX_BROKEN_SHADOW, ctrl))
-			return PAM_SUCCESS;
-	} else if (retval != PAM_SUCCESS) {
-		if (on(UNIX_BROKEN_SHADOW,ctrl))
-			return PAM_SUCCESS;
-		else
-			return retval;
-	} else
-		retval = check_shadow_expiry(pamh, spent, &daysleft);
+	retval = _unix_verify_user(pamh, ctrl, uname, &daysleft);
 
 	if (on(UNIX_NO_PASS_EXPIRY, ctrl)) {
 		const void *pretval = NULL;
@@ -250,7 +227,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			"account %s has expired (account expired)",
 			uname);
 		_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-			_("Your account has expired; please contact your system administrator"));
+			_("Your account has expired; please contact your system administrator."));
 		break;
 	case PAM_NEW_AUTHTOK_REQD:
 		if (daysleft == 0) {
@@ -258,13 +235,13 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 				"expired password for user %s (root enforced)",
 				uname);
 			_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-				_("You are required to change your password immediately (administrator enforced)"));
+				_("You are required to change your password immediately (administrator enforced)."));
 		} else {
 			pam_syslog(pamh, LOG_DEBUG,
 				"expired password for user %s (password aged)",
 				uname);
 			_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-				_("You are required to change your password immediately (password expired)"));
+				_("You are required to change your password immediately (password expired)."));
 		}
 		break;
 	case PAM_AUTHTOK_EXPIRED:
@@ -272,7 +249,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 			"account %s has expired (failed to change password)",
 			uname);
 		_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-			_("Your account has expired; please contact your system administrator"));
+			_("Your account has expired; please contact your system administrator."));
 		break;
 	case PAM_AUTHTOK_ERR:
 		retval = PAM_SUCCESS;
@@ -285,19 +262,19 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
 #if defined HAVE_DNGETTEXT && defined ENABLE_NLS
 			snprintf (buf, sizeof (buf),
 				dngettext(PACKAGE,
-				  "Warning: your password will expire in %d day",
-				  "Warning: your password will expire in %d days",
+				  "Warning: your password will expire in %d day.",
+				  "Warning: your password will expire in %d days.",
 				  daysleft),
 				daysleft);
 #else
 			if (daysleft == 1)
 			    snprintf(buf, sizeof (buf),
-				_("Warning: your password will expire in %d day"),
+				_("Warning: your password will expire in %d day."),
 				daysleft);
 			else
 			    snprintf(buf, sizeof (buf),
 			    /* TRANSLATORS: only used if dngettext is not supported */
-				_("Warning: your password will expire in %d days"),
+				_("Warning: your password will expire in %d days."),
 				daysleft);
 #endif
 			_make_remark(pamh, ctrl, PAM_TEXT_INFO, buf);

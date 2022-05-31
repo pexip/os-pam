@@ -1,6 +1,6 @@
-/* pam_wheel module */
-
 /*
+ * pam_wheel module
+ *
  * Written by Cristian Gafton <gafton@redhat.com> 1996/09/10
  * See the end of the file for Copyright Information
  *
@@ -39,12 +39,10 @@
  * modules include file to define the function prototypes.
  */
 
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-
 #include <security/pam_modules.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
+#include "pam_inline.h"
 
 /* checks if a user is on a list of members of the GID 0 group */
 static int is_on_list(char * const *list, const char *member)
@@ -75,6 +73,7 @@ _pam_parse (const pam_handle_t *pamh, int argc, const char **argv,
 
      /* step through arguments */
      for (ctrl=0; argc-- > 0; ++argv) {
+          const char *str;
 
           /* generic options */
 
@@ -88,8 +87,8 @@ _pam_parse (const pam_handle_t *pamh, int argc, const char **argv,
                ctrl |= PAM_DENY_ARG;
           else if (!strcmp(*argv,"root_only"))
                ctrl |= PAM_ROOT_ONLY_ARG;
-          else if (!strncmp(*argv,"group=",6))
-	       strncpy(use_group,*argv+6,group_length-1);
+	  else if ((str = pam_str_skip_prefix(*argv, "group=")) != NULL)
+	       strncpy(use_group, str, group_length - 1);
           else {
                pam_syslog(pamh, LOG_ERR, "unknown option: %s", *argv);
           }
@@ -108,9 +107,10 @@ perform_check (pam_handle_t *pamh, int ctrl, const char *use_group)
     int retval = PAM_AUTH_ERR;
 
     retval = pam_get_user(pamh, &username, NULL);
-    if ((retval != PAM_SUCCESS) || (!username)) {
+    if (retval != PAM_SUCCESS) {
         if (ctrl & PAM_DEBUG_ARG) {
-            pam_syslog(pamh, LOG_DEBUG, "can not get the username");
+	    pam_syslog(pamh, LOG_DEBUG, "cannot determine user name: %s",
+		       pam_strerror(pamh, retval));
 	}
         return PAM_SERVICE_ERR;
     }

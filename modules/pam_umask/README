@@ -40,6 +40,12 @@ usergroups
     the umask group bits are set to be the same as owner bits (examples: 022 ->
     002, 077 -> 007).
 
+nousergroups
+
+    This is the direct opposite of the usergroups option described above, which
+    can be useful in case pam_umask has been compiled with usergroups enabled
+    by default and you want to disable it at runtime.
+
 umask=mask
 
     Sets the calling process's file mode creation mask (umask) to mask & 0777.

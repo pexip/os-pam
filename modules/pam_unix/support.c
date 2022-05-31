@@ -28,86 +28,14 @@
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
+#include "pam_cc_compat.h"
+#include "pam_inline.h"
 #include "support.h"
 #include "passverify.h"
 
-static char *
-search_key (const char *key, const char *filename)
-{
-  FILE *fp;
-  char *buf = NULL;
-  size_t buflen = 0;
-  char *retval = NULL;
-
-  fp = fopen (filename, "r");
-  if (NULL == fp)
-    return NULL;
-
-  while (!feof (fp))
-    {
-      char *tmp, *cp;
-#if defined(HAVE_GETLINE)
-      ssize_t n = getline (&buf, &buflen, fp);
-#elif defined (HAVE_GETDELIM)
-      ssize_t n = getdelim (&buf, &buflen, '\n', fp);
-#else
-      ssize_t n;
-
-      if (buf == NULL)
-        {
-          buflen = BUF_SIZE;
-          buf = malloc (buflen);
-	  if (buf == NULL) {
-	    fclose (fp);
-	    return NULL;
-	  }
-        }
-      buf[0] = '\0';
-      if (fgets (buf, buflen - 1, fp) == NULL)
-        break;
-      else if (buf != NULL)
-        n = strlen (buf);
-      else
-        n = 0;
-#endif /* HAVE_GETLINE / HAVE_GETDELIM */
-      cp = buf;
-
-      if (n < 1)
-        break;
-
-      tmp = strchr (cp, '#');  /* remove comments */
-      if (tmp)
-        *tmp = '\0';
-      while (isspace ((int)*cp))    /* remove spaces and tabs */
-        ++cp;
-      if (*cp == '\0')        /* ignore empty lines */
-        continue;
-
-      if (cp[strlen (cp) - 1] == '\n')
-        cp[strlen (cp) - 1] = '\0';
-
-      tmp = strsep (&cp, " \t=");
-      if (cp != NULL)
-        while (isspace ((int)*cp) || *cp == '=')
-          ++cp;
-
-      if (strcasecmp (tmp, key) == 0)
-        {
-          retval = strdup (cp);
-          break;
-        }
-    }
-  fclose (fp);
-
-  free (buf);
-
-  return retval;
-}
-
-
 /* this is a front-end for module-application conversations */
 
-int _make_remark(pam_handle_t * pamh, unsigned int ctrl,
+int _make_remark(pam_handle_t * pamh, unsigned long long ctrl,
 		    int type, const char *text)
 {
 	int retval = PAM_SUCCESS;
@@ -122,10 +50,11 @@ int _make_remark(pam_handle_t * pamh, unsigned int ctrl,
  * set the control flags for the UNIX module.
  */
 
-int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
-	      int *pass_min_len, int argc, const char **argv)
+unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
+			     int *rounds, int *pass_min_len, int argc,
+			     const char **argv)
 {
-	unsigned int ctrl;
+	unsigned long long ctrl;
 	char *val;
 	int j;
 
@@ -153,7 +82,7 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 	}
 
 	/* preset encryption method with value from /etc/login.defs */
-	val = search_key ("ENCRYPT_METHOD", LOGIN_DEFS);
+	val = pam_modutil_search_key(pamh, LOGIN_DEFS, "ENCRYPT_METHOD");
 	if (val) {
 	  for (j = 0; j < UNIX_CTRLS_; ++j) {
 	    if (unix_args[j].token && unix_args[j].is_hash_algo
@@ -171,10 +100,11 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 
 	  /* read number of rounds for crypt algo */
 	  if (rounds && (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl))) {
-	    val=search_key ("SHA_CRYPT_MAX_ROUNDS", LOGIN_DEFS);
+	    val = pam_modutil_search_key(pamh, LOGIN_DEFS, "SHA_CRYPT_MAX_ROUNDS");
 
 	    if (val) {
 	      *rounds = strtol(val, NULL, 10);
+	      set(UNIX_ALGO_ROUNDS, ctrl);
 	      free (val);
 	    }
 	  }
@@ -183,17 +113,20 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 	/* now parse the arguments to this module */
 
 	for (; argc-- > 0; ++argv) {
+		const char *str = NULL;
 
 		D(("pam_unix arg: %s", *argv));
 
 		for (j = 0; j < UNIX_CTRLS_; ++j) {
 			if (unix_args[j].token
-			    && !strncmp(*argv, unix_args[j].token, strlen(unix_args[j].token))) {
+			    && (str = pam_str_skip_prefix_len(*argv,
+							      unix_args[j].token,
+							      strlen(unix_args[j].token))) != NULL) {
 				break;
 			}
 		}
 
-		if (j >= UNIX_CTRLS_) {
+		if (str == NULL) {
 			pam_syslog(pamh, LOG_ERR,
 			         "unrecognized option [%s]", *argv);
 		} else {
@@ -204,7 +137,7 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 					    "option remember not allowed for this module type");
 					continue;
 				}
-				*remember = strtol(*argv + 9, NULL, 10);
+				*remember = strtol(str, NULL, 10);
 				if ((*remember == INT_MIN) || (*remember == INT_MAX))
 					*remember = -1;
 				if (*remember > 400)
@@ -215,14 +148,14 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 					    "option minlen not allowed for this module type");
 					continue;
 				}
-				*pass_min_len = atoi(*argv + 7);
+				*pass_min_len = atoi(str);
 			} else if (j == UNIX_ALGO_ROUNDS) {
 				if (rounds == NULL) {
 					pam_syslog(pamh, LOG_ERR,
 					    "option rounds not allowed for this module type");
 					continue;
 				}
-				*rounds = strtol(*argv + 7, NULL, 10);
+				*rounds = strtol(str, NULL, 10);
 			}
 
 			ctrl &= unix_args[j].mask;	/* for turning things off */
@@ -242,23 +175,33 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 		set(UNIX__NONULL, ctrl);
 	}
 
-	/* Set default rounds for blowfish */
-	if (on(UNIX_BLOWFISH_PASS, ctrl) && off(UNIX_ALGO_ROUNDS, ctrl) && rounds != NULL) {
-		*rounds = 5;
-		set(UNIX_ALGO_ROUNDS, ctrl);
+	/* Set default rounds for blowfish, gost-yescrypt and yescrypt */
+	if (off(UNIX_ALGO_ROUNDS, ctrl) && rounds != NULL) {
+		if (on(UNIX_BLOWFISH_PASS, ctrl) ||
+		    on(UNIX_GOST_YESCRYPT_PASS, ctrl) ||
+		    on(UNIX_YESCRYPT_PASS, ctrl)) {
+			*rounds = 5;
+			set(UNIX_ALGO_ROUNDS, ctrl);
+		}
 	}
 
 	/* Enforce sane "rounds" values */
 	if (on(UNIX_ALGO_ROUNDS, ctrl)) {
-		if (on(UNIX_BLOWFISH_PASS, ctrl)) {
+		if (on(UNIX_GOST_YESCRYPT_PASS, ctrl) ||
+		    on(UNIX_YESCRYPT_PASS, ctrl)) {
+			if (*rounds < 3 || *rounds > 11)
+				*rounds = 5;
+		} else if (on(UNIX_BLOWFISH_PASS, ctrl)) {
 			if (*rounds < 4 || *rounds > 31)
 				*rounds = 5;
 		} else if (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl)) {
-			if ((*rounds < 1000) || (*rounds == INT_MAX))
+			if ((*rounds < 1000) || (*rounds == INT_MAX)) {
 				/* don't care about bogus values */
+				*rounds = 0;
 				unset(UNIX_ALGO_ROUNDS, ctrl);
-			if (*rounds >= 10000000)
+			} else if (*rounds >= 10000000) {
 				*rounds = 9999999;
+			}
 		}
 	}
 
@@ -271,11 +214,6 @@ int _set_ctrl(pam_handle_t *pamh, int flags, int *remember, int *rounds,
 
 	D(("done."));
 	return ctrl;
-}
-
-static void _cleanup(pam_handle_t * pamh UNUSED, void *x, int error_status UNUSED)
-{
-	_pam_delete(x);
 }
 
 /* ************************************************************** *
@@ -417,7 +355,7 @@ int _unix_getpwnam(pam_handle_t *pamh, const char *name,
 	}
 #else
 	/* we don't have NIS support, make compiler happy. */
-	nis = 0;
+	(void) nis;
 #endif
 
 	if (matched && (ret != NULL)) {
@@ -529,7 +467,7 @@ int _unix_comesfromsource(pam_handle_t *pamh,
 #include <sys/wait.h>
 
 static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
-				   unsigned int ctrl, const char *user)
+				   unsigned long long ctrl, const char *user)
 {
     int retval, child, fds[2];
     struct sigaction newsa, oldsa;
@@ -593,7 +531,9 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 	  args[2]="nonull";
 	}
 
+	DIAG_PUSH_IGNORE_CAST_QUAL;
 	execve(CHKPWD_HELPER, (char *const *) args, envp);
+	DIAG_POP_IGNORE_CAST_QUAL;
 
 	/* should not get here: exit with error */
 	D(("helper binary is not available"));
@@ -655,10 +595,11 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
  */
 
 int
-_unix_blankpasswd (pam_handle_t *pamh, unsigned int ctrl, const char *name)
+_unix_blankpasswd (pam_handle_t *pamh, unsigned long long ctrl, const char *name)
 {
 	struct passwd *pwd = NULL;
 	char *salt = NULL;
+	int daysleft;
 	int retval;
 
 	D(("called"));
@@ -668,6 +609,15 @@ _unix_blankpasswd (pam_handle_t *pamh, unsigned int ctrl, const char *name)
 	 * wrong, return FALSE and let this case to be treated somewhere
 	 * else (CG)
 	 */
+
+	if (on(UNIX_NULLRESETOK, ctrl)) {
+	    retval = _unix_verify_user(pamh, ctrl, name, &daysleft);
+	    if (retval == PAM_NEW_AUTHTOK_REQD) {
+	        /* password reset is enforced, allow authentication with empty password */
+	        pam_syslog(pamh, LOG_DEBUG, "user [%s] has expired blank password, enabling nullok", name);
+	        set(UNIX__NULLOK, ctrl);
+	    }
+	}
 
 	if (on(UNIX__NONULL, ctrl))
 		return 0;	/* will fail but don't let on yet */
@@ -703,11 +653,12 @@ _unix_blankpasswd (pam_handle_t *pamh, unsigned int ctrl, const char *name)
 }
 
 int _unix_verify_password(pam_handle_t * pamh, const char *name
-			  ,const char *p, unsigned int ctrl)
+			  ,const char *p, unsigned long long ctrl)
 {
 	struct passwd *pwd = NULL;
 	char *salt = NULL;
 	char *data_name;
+	char pw[MAXPASS + 1];
 	int retval;
 
 
@@ -734,6 +685,11 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 		strcpy(data_name + sizeof(FAIL_PREFIX) - 1, name);
 	}
 
+	if (p != NULL && strlen(p) > MAXPASS) {
+		memset(pw, 0, sizeof(pw));
+		p = strncpy(pw, p, sizeof(pw) - 1);
+	}
+
 	if (retval != PAM_SUCCESS) {
 		if (retval == PAM_UNIX_RUN_HELPER) {
 			D(("running helper binary"));
@@ -758,7 +714,7 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 			}
 		}
 	} else {
-		retval = verify_pwd_hash(p, salt, off(UNIX__NONULL, ctrl));
+		retval = verify_pwd_hash(pamh, p, salt, off(UNIX__NONULL, ctrl));
 	}
 
 	if (retval == PAM_SUCCESS) {
@@ -843,6 +799,7 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 	}
 
 cleanup:
+	memset(pw, 0, sizeof(pw)); /* clear memory of the password */
 	if (data_name)
 		_pam_delete(data_name);
 	if (salt)
@@ -853,8 +810,45 @@ cleanup:
 	return retval;
 }
 
+int
+_unix_verify_user(pam_handle_t *pamh,
+                  unsigned long long ctrl,
+                  const char *name,
+                  int *daysleft)
+{
+    int retval;
+    struct spwd *spent;
+    struct passwd *pwent;
+
+    retval = get_account_info(pamh, name, &pwent, &spent);
+    if (retval == PAM_USER_UNKNOWN) {
+        pam_syslog(pamh, LOG_ERR,
+             "could not identify user (from getpwnam(%s))",
+             name);
+        return retval;
+    }
+
+    if (retval == PAM_SUCCESS && spent == NULL)
+        return PAM_SUCCESS;
+
+    if (retval == PAM_UNIX_RUN_HELPER) {
+        retval = _unix_run_verify_binary(pamh, ctrl, name, daysleft);
+        if (retval == PAM_AUTHINFO_UNAVAIL &&
+            on(UNIX_BROKEN_SHADOW, ctrl))
+            return PAM_SUCCESS;
+    } else if (retval != PAM_SUCCESS) {
+        if (on(UNIX_BROKEN_SHADOW,ctrl))
+            return PAM_SUCCESS;
+        else
+            return retval;
+    } else
+        retval = check_shadow_expiry(pamh, spent, daysleft);
+
+    return retval;
+}
+
 /* ****************************************************************** *
- * Copyright (c) Jan Rêkorajski 1999.
+ * Copyright (c) Jan Rękorajski 1999.
  * Copyright (c) Andrew G. Morgan 1996-8.
  * Copyright (c) Alex O. Yuriev, 1996.
  * Copyright (c) Cristian Gafton 1996.

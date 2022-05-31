@@ -1,6 +1,6 @@
-/* pam_mail module */
-
 /*
+ * pam_mail module
+ *
  * Written by Andrew Morgan <morgan@linux.kernel.org> 1996/3/11
  * $HOME additions by David Kinchlea <kinch@kinch.ark.com> 1997/1/7
  * mailhash additions by Chris Adams <cadams@ro.com> 1998/7/11
@@ -30,20 +30,11 @@
 #define MAIL_ENV_NAME             "MAIL"
 #define MAIL_ENV_FORMAT           MAIL_ENV_NAME "=%s"
 
-/*
- * here, we make a definition for the externally accessible function
- * in this file (this definition is required for static a module
- * but strongly encouraged generally) it is used to instruct the
- * modules include file to define the function prototypes.
- */
-
-#define PAM_SM_SESSION
-#define PAM_SM_AUTH
-
 #include <security/pam_modules.h>
 #include <security/_pam_macros.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
+#include "pam_inline.h"
 
 /* argument parsing */
 
@@ -77,6 +68,7 @@ _pam_parse (const pam_handle_t *pamh, int flags, int argc,
 
     /* step through arguments */
     for (; argc-- > 0; ++argv) {
+	const char *str;
 
 	/* generic options */
 
@@ -86,8 +78,8 @@ _pam_parse (const pam_handle_t *pamh, int flags, int argc,
 	    ctrl |= PAM_QUIET_MAIL;
 	else if (!strcmp(*argv,"standard"))
 	    ctrl |= PAM_STANDARD_MAIL | PAM_EMPTY_TOO;
-	else if (!strncmp(*argv,"dir=",4)) {
-	    *maildir = 4 + *argv;
+	else if ((str = pam_str_skip_prefix(*argv, "dir=")) != NULL) {
+	    *maildir = str;
 	    if (**maildir != '\0') {
 		D(("new mail directory: %s", *maildir));
 		ctrl |= PAM_NEW_MAIL_DIR;
@@ -95,9 +87,9 @@ _pam_parse (const pam_handle_t *pamh, int flags, int argc,
 		pam_syslog(pamh, LOG_ERR,
 			   "dir= specification missing argument - ignored");
 	    }
-	} else if (!strncmp(*argv,"hash=",5)) {
+	} else if ((str = pam_str_skip_prefix(*argv, "hash=")) != NULL) {
 	    char *ep = NULL;
-	    *hashcount = strtoul(*argv+5,&ep,10);
+	    *hashcount = strtoul(str,&ep,10);
 	    if (!ep) {
 		*hashcount = 0;
 	    }
@@ -294,7 +286,7 @@ report_mail(pam_handle_t *pamh, int ctrl, int type, const char *folder)
 	  switch (type)
 	    {
 	    case HAVE_NO_MAIL:
-	      retval = pam_info (pamh, "%s", _("No mail."));
+	      retval = pam_info (pamh, "%s", _("You have no mail."));
 	      break;
 	    case HAVE_NEW_MAIL:
 	      retval = pam_info (pamh, "%s", _("You have new mail."));
@@ -390,14 +382,15 @@ static int _do_mail(pam_handle_t *pamh, int flags, int argc,
     ctrl = _pam_parse(pamh, flags, argc, argv, &path_mail, &hashcount);
 
     retval = pam_get_user(pamh, &user, NULL);
-    if (retval != PAM_SUCCESS || user == NULL) {
-	pam_syslog(pamh, LOG_ERR, "cannot determine username");
+    if (retval != PAM_SUCCESS) {
+	pam_syslog(pamh, LOG_NOTICE, "cannot determine user name: %s",
+		   pam_strerror(pamh, retval));
 	return PAM_USER_UNKNOWN;
     }
 
     pwd = pam_modutil_getpwnam (pamh, user);
     if (pwd == NULL) {
-        pam_syslog(pamh, LOG_ERR, "user unknown");
+        pam_syslog(pamh, LOG_NOTICE, "user unknown");
         return PAM_USER_UNKNOWN;
     }
 

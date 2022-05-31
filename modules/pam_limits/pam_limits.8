@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_limits
 .\"    Author: [see the "AUTHORS" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_LIMITS" "8" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_LIMITS" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -61,7 +61,7 @@ Print debug information\&.
 .PP
 \fBset_all\fR
 .RS 4
-Set the limits for which no value is specified in the configuration file to the one from the process with the PID 1\&.
+Set the limits for which no value is specified in the configuration file to the one from the process with the PID 1\&. Please note that if the init process is systemd these limits will not be the kernel default limits and this option should not be used\&.
 .RE
 .PP
 \fButmp_early\fR

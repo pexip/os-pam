@@ -1,6 +1,6 @@
-/* pam_lastlog module */
-
 /*
+ * pam_lastlog module
+ *
  * Written by Andrew Morgan <morgan@linux.kernel.org> 1996/3/11
  *
  * This module does the necessary work to display the last login
@@ -20,10 +20,13 @@
 #endif
 #include <pwd.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <syslog.h>
 #include <unistd.h>
 
@@ -50,6 +53,10 @@ struct lastlog {
 # define _PATH_BTMP "/var/log/btmp"
 #endif
 
+#ifndef PATH_LOGIN_DEFS
+# define PATH_LOGIN_DEFS "/etc/login.defs"
+#endif
+
 /* XXX - time before ignoring lock. Is 1 sec enough? */
 #define LASTLOG_IGNORE_LOCK_TIME     1
 
@@ -59,33 +66,24 @@ struct lastlog {
 #define DEFAULT_INACTIVE_DAYS 90
 #define MAX_INACTIVE_DAYS 100000
 
-/*
- * here, we make a definition for the externally accessible function
- * in this file (this definition is required for static a module
- * but strongly encouraged generally) it is used to instruct the
- * modules include file to define the function prototypes.
- */
-
-#define PAM_SM_SESSION
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-
 #include <security/pam_modules.h>
 #include <security/_pam_macros.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
+#include "pam_inline.h"
 
 /* argument parsing */
 
-#define LASTLOG_DATE        01  /* display the date of the last login */
-#define LASTLOG_HOST        02  /* display the last host used (if set) */
-#define LASTLOG_LINE        04  /* display the last terminal used */
-#define LASTLOG_NEVER      010  /* display a welcome message for first login */
-#define LASTLOG_DEBUG      020  /* send info to syslog(3) */
-#define LASTLOG_QUIET      040  /* keep quiet about things */
-#define LASTLOG_WTMP      0100  /* log to wtmp as well as lastlog */
-#define LASTLOG_BTMP      0200  /* display failed login info from btmp */
-#define LASTLOG_UPDATE    0400  /* update the lastlog and wtmp files (default) */
+#define LASTLOG_DATE          01  /* display the date of the last login */
+#define LASTLOG_HOST          02  /* display the last host used (if set) */
+#define LASTLOG_LINE          04  /* display the last terminal used */
+#define LASTLOG_NEVER        010  /* display a welcome message for first login */
+#define LASTLOG_DEBUG        020  /* send info to syslog(3) */
+#define LASTLOG_QUIET        040  /* keep quiet about things */
+#define LASTLOG_WTMP        0100  /* log to wtmp as well as lastlog */
+#define LASTLOG_BTMP        0200  /* display failed login info from btmp */
+#define LASTLOG_UPDATE      0400  /* update the lastlog and wtmp files (default) */
+#define LASTLOG_UNLIMITED  01000  /* unlimited file size (ignore 'fsize' limit) */
 
 static int
 _pam_auth_parse(pam_handle_t *pamh, int flags, int argc, const char **argv,
@@ -95,13 +93,14 @@ _pam_auth_parse(pam_handle_t *pamh, int flags, int argc, const char **argv,
 
     *inactive = DEFAULT_INACTIVE_DAYS;
 
-    /* does the appliction require quiet? */
+    /* does the application require quiet? */
     if (flags & PAM_SILENT) {
 	ctrl |= LASTLOG_QUIET;
     }
 
     /* step through arguments */
     for (; argc-- > 0; ++argv) {
+        const char *str;
         char *ep = NULL;
         long l;
 
@@ -109,9 +108,9 @@ _pam_auth_parse(pam_handle_t *pamh, int flags, int argc, const char **argv,
 	    ctrl |= LASTLOG_DEBUG;
 	} else if (!strcmp(*argv,"silent")) {
 	    ctrl |= LASTLOG_QUIET;
-	} else if (!strncmp(*argv,"inactive=", 9)) {
-            l = strtol(*argv+9, &ep, 10);
-            if (ep != *argv+9 && l > 0 && l < MAX_INACTIVE_DAYS)
+	} else if ((str = pam_str_skip_prefix(*argv, "inactive=")) != NULL) {
+            l = strtol(str, &ep, 10);
+            if (ep != str && l > 0 && l < MAX_INACTIVE_DAYS)
                 *inactive = l;
             else {
                 pam_syslog(pamh, LOG_ERR, "bad option value: %s", *argv);
@@ -129,11 +128,6 @@ static int
 _pam_session_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
     int ctrl=(LASTLOG_DATE|LASTLOG_HOST|LASTLOG_LINE|LASTLOG_WTMP|LASTLOG_UPDATE);
-
-    /* does the appliction require quiet? */
-    if (flags & PAM_SILENT) {
-	ctrl |= LASTLOG_QUIET;
-    }
 
     /* step through arguments */
     for (; argc-- > 0; ++argv) {
@@ -158,9 +152,17 @@ _pam_session_parse(pam_handle_t *pamh, int flags, int argc, const char **argv)
 	    ctrl &= ~(LASTLOG_WTMP|LASTLOG_UPDATE);
 	} else if (!strcmp(*argv,"showfailed")) {
 	    ctrl |= LASTLOG_BTMP;
+	} else if (!strcmp(*argv,"unlimited")) {
+	    ctrl |= LASTLOG_UNLIMITED;
 	} else {
 	    pam_syslog(pamh, LOG_ERR, "unknown option: %s", *argv);
 	}
+    }
+
+    /* does the application require quiet? */
+    if (flags & PAM_SILENT) {
+	ctrl |= LASTLOG_QUIET;
+	ctrl &= ~LASTLOG_BTMP;
     }
 
     D(("ctrl = %o", ctrl));
@@ -172,6 +174,7 @@ get_tty(pam_handle_t *pamh)
 {
     const void *void_terminal_line = NULL;
     const char *terminal_line;
+    const char *str;
 
     if (pam_get_item(pamh, PAM_TTY, &void_terminal_line) != PAM_SUCCESS
 	|| void_terminal_line == NULL) {
@@ -179,12 +182,45 @@ get_tty(pam_handle_t *pamh)
     } else {
 	terminal_line = void_terminal_line;
     }
-    if (!strncmp("/dev/", terminal_line, 5)) {
-	/* strip leading "/dev/" from tty. */
-	terminal_line += 5;
-    }
+
+    /* strip leading "/dev/" from tty. */
+    str = pam_str_skip_prefix(terminal_line, "/dev/");
+    if (str != NULL)
+	terminal_line = str;
+
     D(("terminal = %s", terminal_line));
     return terminal_line;
+}
+
+#define MAX_UID_VALUE 0xFFFFFFFFUL
+
+static uid_t
+get_lastlog_uid_max(pam_handle_t *pamh)
+{
+    uid_t uid_max = MAX_UID_VALUE;
+    unsigned long ul;
+    char *s, *ep;
+
+    s = pam_modutil_search_key(pamh, PATH_LOGIN_DEFS, "LASTLOG_UID_MAX");
+    if (s == NULL)
+	return uid_max;
+
+    ep = s + strlen(s);
+    while (ep > s && isspace(*(--ep))) {
+	*ep = '\0';
+    }
+    errno = 0;
+    ul = strtoul(s, &ep, 10);
+    if (!(ul >= MAX_UID_VALUE
+	|| (uid_t)ul >= MAX_UID_VALUE
+	|| (errno != 0 && ul == 0)
+	|| s == ep
+	|| *ep != '\0')) {
+	uid_max = (uid_t)ul;
+    }
+    free(s);
+
+    return uid_max;
 }
 
 static int
@@ -336,6 +372,12 @@ static int
 last_login_write(pam_handle_t *pamh, int announce, int last_fd,
 		 uid_t uid, const char *user)
 {
+    static struct rlimit no_limit = {
+	RLIM_INFINITY,
+	RLIM_INFINITY
+    };
+    struct rlimit old_limit;
+    int setrlimit_res;
     struct flock last_lock;
     struct lastlog last_login;
     time_t ll_time;
@@ -390,11 +432,48 @@ last_login_write(pam_handle_t *pamh, int announce, int last_fd,
         sleep(LASTLOG_IGNORE_LOCK_TIME);
     }
 
+    /*
+     * Failing to set the 'fsize' limit is not a fatal error. We try to write
+     * lastlog anyway, under the risk of dying due to a SIGXFSZ.
+     */
+    D(("setting limit for 'fsize'"));
+
+    if ((announce & LASTLOG_UNLIMITED) == 0) {    /* don't set to unlimited */
+	setrlimit_res = -1;
+    } else if (getrlimit(RLIMIT_FSIZE, &old_limit) == 0) {
+	if (old_limit.rlim_cur == RLIM_INFINITY) {    /* already unlimited */
+	    setrlimit_res = -1;
+	} else {
+	    setrlimit_res = setrlimit(RLIMIT_FSIZE, &no_limit);
+	    if (setrlimit_res != 0)
+		pam_syslog(pamh, LOG_WARNING, "Could not set limit for 'fsize': %m");
+	}
+    } else {
+	setrlimit_res = -1;
+	if (errno == EINVAL) {
+	    pam_syslog(pamh, LOG_INFO, "Limit for 'fsize' not supported: %m");
+	} else {
+	    pam_syslog(pamh, LOG_WARNING, "Could not get limit for 'fsize': %m");
+	}
+    }
+
     D(("writing to the lastlog file"));
     if (pam_modutil_write (last_fd, (char *) &last_login,
 			   sizeof (last_login)) != sizeof(last_login)) {
 	pam_syslog(pamh, LOG_ERR, "failed to write %s: %m", _PATH_LASTLOG);
 	retval = PAM_SERVICE_ERR;
+    }
+
+    /*
+     * Failing to restore the 'fsize' limit is a fatal error.
+     */
+    D(("restoring limit for 'fsize'"));
+    if (setrlimit_res == 0) {
+	setrlimit_res = setrlimit(RLIMIT_FSIZE, &old_limit);
+	if (setrlimit_res != 0) {
+	    pam_syslog(pamh, LOG_ERR, "Could not restore limit for 'fsize': %m");
+	    retval = PAM_SERVICE_ERR;
+	}
     }
 
     last_lock.l_type = F_UNLCK;
@@ -417,6 +496,10 @@ last_login_date(pam_handle_t *pamh, int announce, uid_t uid, const char *user, t
 {
     int retval;
     int last_fd;
+
+    if (uid > get_lastlog_uid_max(pamh)) {
+	return PAM_SUCCESS;
+    }
 
     /* obtain the last login date and all the relevant info */
     last_fd = last_login_open(pamh, announce, uid);
@@ -586,9 +669,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
     /* which user? */
 
-    if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS || user == NULL
-        || *user == '\0') {
-        pam_syslog(pamh, LOG_ERR, "cannot determine the user's name");
+    if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS) {
+        pam_syslog(pamh, LOG_NOTICE, "cannot determine user name");
         return PAM_USER_UNKNOWN;
     }
 
@@ -596,13 +678,13 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 
     pwd = pam_modutil_getpwnam (pamh, user);
     if (pwd == NULL) {
-        pam_syslog(pamh, LOG_ERR, "user unknown");
+        pam_syslog(pamh, LOG_NOTICE, "user unknown");
 	return PAM_USER_UNKNOWN;
     }
     uid = pwd->pw_uid;
     pwd = NULL;                                         /* tidy up */
 
-    if (uid == 0)
+    if (uid == 0 || uid > get_lastlog_uid_max(pamh))
 	return PAM_SUCCESS;
 
     /* obtain the last login date and all the relevant info */

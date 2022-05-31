@@ -94,13 +94,13 @@ field notin item:item:...
 
     Field is not contained in the list of items separated by colons.
 
-user ingroup group
+user ingroup group[:group:....]
 
-    User is in given group.
+    User is in given group(s).
 
-user notingroup group
+user notingroup group[:group:....]
 
-    User is not in given group.
+    User is not in given group(s).
 
 user innetgr netgroup
 
@@ -112,9 +112,10 @@ user notinnetgr group
 
 EXAMPLES
 
-To emulate the behaviour of pam_wheel, except there is no fallback to group 0:
+To emulate the behaviour of pam_wheel, except there is no fallback to group 0
+being only approximated by checking also the root group membership:
 
-auth required pam_succeed_if.so quiet user ingroup wheel
+auth required pam_succeed_if.so quiet user ingroup wheel:root
 
 
 Given that the type matches, only loads the othermodule rule if the UID is over

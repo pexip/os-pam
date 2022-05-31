@@ -3,10 +3,9 @@
 #
 
 AM_CFLAGS = -DDEFAULT_MODULE_PATH=\"$(SECUREDIR)/\" -DLIBPAM_COMPILE \
-	-I$(srcdir)/include $(LIBPRELUDE_CFLAGS) -DPAM_VERSION=\"$(VERSION)\"
-if HAVE_LIBSELINUX
-  AM_CFLAGS += -D"WITH_SELINUX"
-endif
+	-I$(srcdir)/include $(LIBPRELUDE_CFLAGS) $(ECONF_CFLAGS) \
+	-DPAM_VERSION=\"$(VERSION)\" -DSYSCONFDIR=\"$(sysconfdir)\" \
+	$(WARN_CFLAGS)
 
 CLEANFILES = *~
 
@@ -18,10 +17,11 @@ include_HEADERS = include/security/_pam_compat.h \
 	include/security/pam_ext.h include/security/pam_modutil.h
 
 noinst_HEADERS = pam_prelude.h pam_private.h pam_tokens.h \
-		pam_modutil_private.h
+		pam_modutil_private.h include/pam_cc_compat.h \
+		include/pam_inline.h include/test_assert.h
 
-libpam_la_LDFLAGS = -no-undefined -version-info 84:2:84
-libpam_la_LIBADD = @LIBAUDIT@ $(LIBPRELUDE_LIBS) @LIBDL@
+libpam_la_LDFLAGS = -no-undefined -version-info 85:1:85
+libpam_la_LIBADD = @LIBAUDIT@ $(LIBPRELUDE_LIBS) $(ECONF_LIBS) @LIBDL@
 
 if HAVE_VERSIONING
   libpam_la_LDFLAGS += -Wl,--version-script=$(srcdir)/libpam.map
@@ -38,4 +38,4 @@ libpam_la_SOURCES = pam_account.c pam_auth.c pam_data.c pam_delay.c \
 	pam_modutil_cleanup.c pam_modutil_getpwnam.c pam_modutil_ioloop.c \
 	pam_modutil_getgrgid.c pam_modutil_getpwuid.c pam_modutil_getgrnam.c \
 	pam_modutil_getspnam.c pam_modutil_getlogin.c pam_modutil_ingroup.c \
-	pam_modutil_priv.c pam_modutil_sanitize.c
+	pam_modutil_priv.c pam_modutil_sanitize.c pam_modutil_searchkey.c
