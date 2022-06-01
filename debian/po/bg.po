@@ -1,21 +1,21 @@
 # translation of bg.po to Bulgarian
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# Damyan Ivanov <dmn@debian.org>, 2007, 2009, 2012.
+# Damyan Ivanov <dmn@debian.org>, 2007-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: bg\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2012-01-19 22:36+0200\n"
+"POT-Creation-Date: 2021-03-15 18:23-0400\n"
+"PO-Revision-Date: 2021-02-28 21:32+0200\n"
 "Last-Translator: Damyan Ivanov <dmn@debian.org>\n"
-"Language-Team: Български <dict@fsa-bg.org>\n"
+"Language-Team: Bulgarian <dict@ludost.net>\n"
 "Language: bg\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: Gtranslator 3.38.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 #. Type: string
@@ -30,13 +30,12 @@ msgstr "Рестартиране на услуги при обновяване �
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "Повечето услуги, които използват PAM трябва да бъдат рестартирани за да "
 "могат да използват модулите за новата версия на libpam. Прегледайте списъка "
-"от init.d скриптове по-долу и го коригирайте ако е необходимо. Имената на "
-"отделните скриптове трябва да са отделени с интервал."
+"от услуги по-долу и го коригирайте ако е необходимо. Имената на отделните "
+"услуги трябва да са отделени с интервал."
 
 #. Type: error
 #. Description
@@ -224,3 +223,49 @@ msgstr ""
 "невъзможно идентифицирането с тези програми. Трябва да осигурите "
 "рестартирането или спирането на xscreensaver и xlockmore за да избегнете "
 "проблеми с идентификацията при потребителите, които ги използват."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "Изключване на профили на PAM, използващи остарели модули"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"В системата имаше активни профили на PAM, използващи модулите ${modules}. "
+"Тези модули са премахнати от PAM. Използването на тези профилите би "
+"възпрепятствало достъпа на потребителите до системата и затова са изключени."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "настройките на системата използват pam_tally или pam_tally2"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"Модулите pam_tally и pam_tally2 са премахнати от PAM. Необходимо тези модули "
+"да бъдат премахнати от настройките в /etc/pam.d преди обновяването на PAM. В "
+"противен случай, след обновяването на системата потребителите няма да могат "
+"да влизат."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "Модулът pam_faillock може да се използва като заместител на pam_tally."

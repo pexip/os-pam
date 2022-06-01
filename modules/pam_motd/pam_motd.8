@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_motd
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_MOTD" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_MOTD" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,32 +31,85 @@
 pam_motd \- Display the motd file
 .SH "SYNOPSIS"
 .HP \w'\fBpam_motd\&.so\fR\ 'u
-\fBpam_motd\&.so\fR [motd=\fI/path/filename\fR]
+\fBpam_motd\&.so\fR [motd=\fI/path/filename\fR] [motd_dir=\fI/path/dirname\&.d\fR]
 .SH "DESCRIPTION"
 .PP
-pam_motd is a PAM module that can be used to display arbitrary motd (message of the day) files after a successful login\&. By default the
+pam_motd is a PAM module that can be used to display arbitrary motd (message of the day) files after a successful login\&. By default, pam_motd shows files in the following locations:
+.PP
+.RS 4
 /etc/motd
-file is shown\&. The message size is limited to 64KB\&.
+.RE
+.RS 4
+/run/motd
+.RE
+.RS 4
+/usr/lib/motd
+.RE
+.RS 4
+/etc/motd\&.d/
+.RE
+.RS 4
+/run/motd\&.d/
+.RE
+.RS 4
+/usr/lib/motd\&.d/
+.RE
+.PP
+Each message size is limited to 64KB\&.
+.PP
+If
+/etc/motd
+does not exist, then
+/run/motd
+is shown\&. If
+/run/motd
+does not exist, then
+/usr/lib/motd
+is shown\&.
+.PP
+Similar overriding behavior applies to the directories\&. Files in
+/etc/motd\&.d/
+override files with the same name in
+/run/motd\&.d/
+and
+/usr/lib/motd\&.d/\&. Files in
+/run/motd\&.d/
+override files with the same name in
+/usr/lib/motd\&.d/\&.
+.PP
+Files the in the directories listed above are displayed in lexicographic order by name\&.
+.PP
+To silence a message, a symbolic link with target
+/dev/null
+may be placed in
+/etc/motd\&.d
+with the same filename as the message to be silenced\&. Example: Creating a symbolic link as follows silences
+/usr/lib/motd\&.d/my_motd\&.
+.PP
+\fBln \-s /dev/null /etc/motd\&.d/my_motd\fR
+.PP
+The
+\fBMOTD_SHOWN=pam\fR
+environment variable is set after showing the motd files, even when all of them were silenced using symbolic links\&.
 .SH "OPTIONS"
 .PP
 \fBmotd=\fR\fB\fI/path/filename\fR\fR
 .RS 4
 The
 /path/filename
-file is displayed as message of the day\&.
+file is displayed as message of the day\&. Multiple paths to try can be specified as a colon\-separated list\&. By default this option is set to
+/etc/motd:/run/motd:/usr/lib/motd\&.
 .RE
 .PP
 \fBmotd_dir=\fR\fB\fI/path/dirname\&.d\fR\fR
 .RS 4
 The
 /path/dirname\&.d
-directory is scanned and each file contained inside of it is displayed\&.
+directory is scanned and each file contained inside of it is displayed\&. Multiple directories to scan can be specified as a colon\-separated list\&. By default this option is set to
+/etc/motd\&.d:/run/motd\&.d:/usr/lib/motd\&.d\&.
 .RE
 .PP
-When no options are given, the default is to display both
-/etc/motd
-and the contents of
-/etc/motd\&.d\&. Specifying either option (or both) will disable this default behavior\&.
+When no options are given, the default behavior applies for both options\&. Specifying either option (or both) will disable the default behavior for both options\&.
 .SH "MODULE TYPES PROVIDED"
 .PP
 Only the
@@ -64,9 +117,19 @@ Only the
 module type is provided\&.
 .SH "RETURN VALUES"
 .PP
+PAM_ABORT
+.RS 4
+Not all relevant data or options could be obtained\&.
+.RE
+.PP
+PAM_BUF_ERR
+.RS 4
+Memory buffer error\&.
+.RE
+.PP
 PAM_IGNORE
 .RS 4
-This is the only return value of this module\&.
+This is the default return value of this module\&.
 .RE
 .SH "EXAMPLES"
 .PP

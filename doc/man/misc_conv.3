@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: misc_conv
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "MISC_CONV" "3" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "MISC_CONV" "3" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -49,7 +49,7 @@ and not of the standard
 library\&. This function will prompt the user with the appropriate comments and obtain the appropriate inputs as directed by authentication modules\&.
 .PP
 In addition to simply slotting into the appropriate
-\fBpam_conv\fR(3), this function provides some time\-out facilities\&. The function exports five variables that can be used by an application programmer to limit the amount of time this conversation function will spend waiting for the user to type something\&. The five variabls are as follows:
+\fBpam_conv\fR(3), this function provides some time\-out facilities\&. The function exports five variables that can be used by an application programmer to limit the amount of time this conversation function will spend waiting for the user to type something\&. The five variables are as follows:
 .PP
 \fBtime_t\fR \fIpam_misc_conv_warn_time\fR;
 .RS 4
@@ -64,7 +64,7 @@ library\&.
 .PP
 \fBconst char *\fR\fIpam_misc_conv_warn_line\fR;
 .RS 4
-Used in conjuction with
+Used in conjunction with
 \fIpam_misc_conv_warn_time\fR, this variable is a pointer to the string that will be displayed when it becomes time to warn the user that the timeout is approaching\&. Its default value is a translated version of
 \(lq\&.\&.\&.Time is running out\&.\&.\&.\(rq, but this can be changed by the application prior to passing control to
 \fILinux\-PAM\fR\&.
@@ -83,7 +83,7 @@ library\&.
 .PP
 \fBconst char *\fR\fIpam_misc_conv_die_line\fR;
 .RS 4
-Used in conjuction with
+Used in conjunction with
 \fIpam_misc_conv_die_time\fR, this variable is a pointer to the string that will be displayed when the conversation times out\&. Its default value is a translated version of
 \(lq\&.\&.\&.Sorry, your time is up!\(rq, but this can be changed by the application prior to passing control to
 \fILinux\-PAM\fR\&.
@@ -93,7 +93,7 @@ Used in conjuction with
 .RS 4
 Following a return from the
 \fILinux\-PAM\fR
-libraray, the value of this variable indicates whether the conversation has timed out\&. A value of
+library, the value of this variable indicates whether the conversation has timed out\&. A value of
 1
 indicates the time\-out occurred\&.
 .RE

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_tty_audit
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TTY_AUDIT" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TTY_AUDIT" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -105,6 +105,10 @@ will be matched\&. If
 is empty users with the uid greater than or equal to
 \fImin_uid\fR
 will be matched\&.
+.PP
+Please note that passwords in some circumstances may be logged by TTY auditing even if the
+\fBlog_passwd\fR
+is not used\&. For example, all input to an ssh session will be logged \- even if there is a password being typed into some software running at the remote host because only the local TTY state affects the local TTY auditing\&.
 .SH "EXAMPLES"
 .PP
 Audit all administrative actions\&.

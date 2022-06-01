@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_mkhomedir
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_MKHOMEDIR" "8" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_MKHOMEDIR" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pam_mkhomedir \- PAM module to create users home directory
 .SH "SYNOPSIS"
 .HP \w'\fBpam_mkhomedir\&.so\fR\ 'u
-\fBpam_mkhomedir\&.so\fR [silent] [umask=\fImode\fR] [skel=\fIskeldir\fR]
+\fBpam_mkhomedir\&.so\fR [silent] [debug] [umask=\fImode\fR] [skel=\fIskeldir\fR]
 .SH "DESCRIPTION"
 .PP
 The pam_mkhomedir PAM module will create a users home directory if it does not exist when the session begins\&. This allows users to be present in central database (such as NIS, kerberos or LDAP) without using a distributed file system or pre\-creating a large number of directories\&. The skeleton directory (usually
@@ -43,6 +43,12 @@ The new users home directory will not be removed after logout of the user\&.
 \fBsilent\fR
 .RS 4
 Don\*(Aqt print informative messages\&.
+.RE
+.PP
+\fBdebug\fR
+.RS 4
+Turns on debugging via
+\fBsyslog\fR(3)\&.
 .RE
 .PP
 \fBumask=\fR\fB\fImask\fR\fR
@@ -68,11 +74,6 @@ module type is provided\&.
 PAM_BUF_ERR
 .RS 4
 Memory buffer error\&.
-.RE
-.PP
-PAM_CRED_INSUFFICIENT
-.RS 4
-Insufficient credentials to access authentication data\&.
 .RE
 .PP
 PAM_PERM_DENIED

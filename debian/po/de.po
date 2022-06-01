@@ -1,14 +1,14 @@
 # German translation of pam debconf templates
-# Copyright (C) 2007, 2009, 2011 Sven Joachim <svenjoac@gmx.de>.
+# Copyright (C) 2007, 2009, 2011, 2021 Sven Joachim <svenjoac@gmx.de>.
 # Copyright (C) Helge Kreutzmann <debian@helgefjell.de>, 2011.
 # This file is distributed under the same license as the pam package.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: pam 1.1.3-6\n"
+"Project-Id-Version: pam 1.4.0-6\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2011-12-26 19:53+0100\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
+"PO-Revision-Date: 2021-03-01 18:03+0100\n"
 "Last-Translator: Sven Joachim <svenjoac@gmx.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "Language: de\n"
@@ -28,14 +28,12 @@ msgstr "Neu zu startende Dienste für das Upgrade der PAM-Bibliothek:"
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "Die meisten Dienste, die PAM verwenden, müssen neu gestartet werden, um "
 "Module dieser neuen Version von libpam verwenden zu können. Bitte überprüfen "
-"Sie die folgende, Leerzeichen-getrennte Liste von init.d-Skripten für "
-"Dienste, die jetzt neu zu starten sind, und korrigieren Sie diese Liste "
-"falls notwendig."
+"Sie die folgende, Leerzeichen-getrennte Liste von Diensten, die jetzt neu zu "
+"starten sind, und korrigieren Sie diese Liste falls notwendig."
 
 #. Type: error
 #. Description
@@ -185,10 +183,10 @@ msgid ""
 "configuration by hand."
 msgstr ""
 "Eine oder mehrere der Dateien /etc/pam.d/common-{auth,account,password,"
-"session} sind lokal verändert worden. Bitte geben Sie an, ob diese "
-"Änderungen durch die mitgelieferte Konfiguration außer Kraft gesetzt werden "
-"sollen. Falls Sie diese Option ablehnen, müssen Sie die Authentifizierungs-"
-"Konfiguration Ihres Systems von Hand verwalten."
+"session} sind lokal verändert worden. Bitte geben Sie an, ob diese lokalen "
+"Änderungen durch die vom System bereitgestellte Konfiguration außer Kraft "
+"gesetzt werden sollen. Falls Sie diese Option ablehnen, müssen Sie die "
+"Authentifizierungs-Konfiguration Ihres Systems von Hand verwalten."
 
 #. Type: error
 #. Description
@@ -206,14 +204,14 @@ msgid ""
 msgstr ""
 "Es wurden keine PAM-Profile für die Verwendung auf diesem System ausgewählt. "
 "Dies würde allen Benutzern Zugang ohne Authentifizierung gestatten und ist "
-"nicht erlaubt. Bitte wählen Sie mindestens ein PAM-Profil aus der "
-"verfügbaren Liste aus."
+"nicht erlaubt. Bitte wählen Sie mindestens ein PAM-Profil aus der Liste der "
+"verfügbaren aus."
 
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:1001
 msgid "xscreensaver and xlockmore must be restarted before upgrading"
-msgstr "Xscreensaver und xlockmore müssen vor dem Upgrade neu gestartet werden"
+msgstr "Xscreensaver und Xlockmore müssen vor dem Upgrade neu gestartet werden"
 
 #. Type: error
 #. Description
@@ -226,10 +224,59 @@ msgid ""
 "stopped before continuing this upgrade, to avoid locking your users out of "
 "their current sessions."
 msgstr ""
-"Eine oder mehrere laufende Instanzen von xscreensaver oder xlockmore sind "
+"Eine oder mehrere laufende Instanzen von Xscreensaver oder Xlockmore sind "
 "auf diesem System entdeckt worden. Aufgrund inkompatibler Änderungen in "
 "Bibliotheken wird das Upgrade des libpam-modules-Paketes Sie außerstande "
 "setzen, sich gegenüber diesen Programmen zu authentifizieren. Sie sollten "
 "dafür sorgen, dass diese Programme neu gestartet oder beendet werden, bevor "
 "Sie dieses Upgrade fortsetzen, damit Ihre Benutzer nicht aus ihren laufenden "
 "Sitzungen ausgesperrt werden."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "PAM-Profile mit veralteten Modulen deaktiviert"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"Ihr System hatte PAM-Profile mit den PAM-Modulen ${modules} aktiviert. Diese "
+"Module sind aus PAM entfernt worden. Diese PAM-Profile aktivert zu lassen "
+"würde Benutzer daran hindern, auf Ihr System zuzugreifen. Infolgedessen sind "
+"diese Profile deaktiviert worden."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "Sie verwenden pam_tally oder pam_tally2 in Ihrer Konfiguration"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"Die Module pam_tally und pam_tally2 sind aus PAM entfernt worden. Sie "
+"verwenden eines dieser Module in Ihrer PAM-Konfiguration in /etc/pam.d. Sie "
+"müssen die Verwendung dieser Module entfernen, bevor das Upgrade von PAM "
+"durchgeführt werden kann; die Einbindung dieser Module in Ihrer PAM-"
+"Konfiguration nach dem Upgrade wird Benutzer davon abhalten, sich an dem "
+"System anzumelden."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "Betrachten Sie das Modul pam_faillock als Ersatz for pam_tally."

@@ -8,12 +8,12 @@ Index: pam/configure.ac
 ===================================================================
 --- pam.orig/configure.ac
 +++ pam/configure.ac
-@@ -556,7 +556,7 @@
+@@ -619,7 +619,7 @@
  
  AC_PATH_PROG([BROWSER], [w3m])
- if test ! -z "$BROWSER"; then
+ if test -n "$BROWSER"; then
 -     BROWSER="$BROWSER -T text/html -dump"
 +     BROWSER="LC_ALL=C.UTF-8 $BROWSER -T text/html -dump"
  else
-      AC_PATH_PROG([BROWSER], [links])
-      if test ! -z "$BROWSER"; then
+      AC_PATH_PROG([BROWSER], [elinks])
+      if test -n "$BROWSER"; then

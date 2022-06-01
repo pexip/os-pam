@@ -12,7 +12,7 @@ of day, the day of week, the service they are applying for and their terminal
 from which they are making their request.
 
 By default rules for time/port access are taken from config file /etc/security/
-time.conf.
+time.conf. An alternative file can be specified with the conffile option.
 
 If Linux PAM is compiled with audit support the module will report when it
 denies access.

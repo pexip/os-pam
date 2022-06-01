@@ -75,7 +75,7 @@
 
     <para>
       Commands called by pam_exec need to be aware of that the user
-      can have controll over the environment.
+      can have control over the environment.
     </para>
 
   </refsect1>
@@ -196,6 +196,35 @@
           <listitem>
             <para>
               The external command was run successfully.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_BUF_ERR</term>
+          <listitem>
+            <para>
+              Memory buffer error.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_CONV_ERR</term>
+          <listitem>
+            <para>
+              The conversation method supplied by the application
+              failed to obtain the username.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term>PAM_INCOMPLETE</term>
+          <listitem>
+            <para>
+              The conversation method supplied by the application
+              returned PAM_CONV_AGAIN.
             </para>
           </listitem>
         </varlistentry>

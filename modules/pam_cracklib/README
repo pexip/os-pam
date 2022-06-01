@@ -27,7 +27,7 @@ Palindrome
 
 Case Change Only
 
-    Is the new password the the old one with only a change of case?
+    Is the new password the old one with only a change of case?
 
 Similar
 
@@ -181,9 +181,10 @@ reject_username
 
 gecoscheck
 
-    Check whether the words from the GECOS field (usualy full name of the user)
-    longer than 3 characters in straight or reversed form are contained in the
-    new password. If any such word is found the new password is rejected.
+    Check whether the words from the GECOS field (usually full name of the
+    user) longer than 3 characters in straight or reversed form are contained
+    in the new password. If any such word is found the new password is
+    rejected.
 
 enforce_for_root
 

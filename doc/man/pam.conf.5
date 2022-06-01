@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam.conf
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM\&.CONF" "5" "05/18/2017" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM\&.CONF" "5" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -255,7 +255,23 @@ equivalent to ok with the side effect of terminating the module stack and PAM im
 .PP
 N (an unsigned integer)
 .RS 4
-equivalent to ok with the side effect of jumping over the next N modules in the stack\&. Note that N equal to 0 is not allowed (and it would be identical to ok in such case)\&.
+jump over the next N modules in the stack\&. Note that N equal to 0 is not allowed, it would be treated as
+\fIignore\fR
+in such case\&. The side effect depends on the PAM function call: for
+\fIpam_authenticate\fR,
+\fIpam_acct_mgmt\fR,
+\fIpam_chauthtok\fR, and
+\fIpam_open_session\fR
+it is
+\fIignore\fR; for
+\fIpam_setcred\fR
+and
+\fIpam_close_session\fR
+it is one of
+\fIignore\fR,
+\fIok\fR, or
+\fIbad\fR
+depending on the module\*(Aqs return value\&.
 .RE
 .PP
 reset

@@ -12,7 +12,7 @@ environment variables: PAM_RHOST, PAM_RUSER, PAM_SERVICE, PAM_TTY, PAM_USER and
 PAM_TYPE, which contains one of the module types: account, auth, password,
 open_session and close_session.
 
-Commands called by pam_exec need to be aware of that the user can have controll
+Commands called by pam_exec need to be aware of that the user can have control
 over the environment.
 
 OPTIONS

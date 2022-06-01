@@ -8,11 +8,11 @@ Do not override user variables in Makefile.am, see the
  doc/specs/Makefile.am | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/doc/specs/Makefile.am b/doc/specs/Makefile.am
-index 99ecc70..b94e5ef 100644
---- a/doc/specs/Makefile.am
-+++ b/doc/specs/Makefile.am
-@@ -12,9 +12,9 @@ draft-morgan-pam-current.txt: padout draft-morgan-pam.raw
+Index: pam/doc/specs/Makefile.am
+===================================================================
+--- pam.orig/doc/specs/Makefile.am
++++ pam/doc/specs/Makefile.am
+@@ -12,9 +12,9 @@
  AM_YFLAGS = -d
  
  CC = @CC_FOR_BUILD@
@@ -23,5 +23,5 @@ index 99ecc70..b94e5ef 100644
 +AM_CFLAGS = @BUILD_CFLAGS@
 +AM_LDFLAGS = @BUILD_LDFLAGS@
  
- BUILT_SOURCES = parse_y.h
+ padout_CFLAGS = $(WARN_CFLAGS) -Wno-unused-function -Wno-sign-compare
  

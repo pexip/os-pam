@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_securetty
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2017
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_SECURETTY" "8" "05/18/2017" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_SECURETTY" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -34,10 +34,14 @@ pam_securetty \- Limit root login to special devices
 \fBpam_securetty\&.so\fR [debug]
 .SH "DESCRIPTION"
 .PP
-pam_securetty is a PAM module that allows root logins only if the user is logging in on a "secure" tty, as defined by the listing in
-/etc/securetty\&. pam_securetty also checks to make sure that
+pam_securetty is a PAM module that allows root logins only if the user is logging in on a "secure" tty, as defined by the listing in the
+securetty
+file\&. pam_securetty checks at first, if
 /etc/securetty
-is a plain file and not world writable\&. It will also allow root logins on the tty specified with
+exists\&. If not and it was built with vendordir support, it will use
+<vendordir>/securetty\&. pam_securetty also checks that the
+securetty
+files are plain files and not world writable\&. It will also allow root logins on the tty specified with
 \fBconsole=\fR
 switch on the kernel command line and on ttys from the
 /sys/class/tty/console/active\&.
@@ -61,7 +65,7 @@ Print debug information\&.
 \fBnoconsole\fR
 .RS 4
 Do not automatically allow root logins on the kernel console device, as specified on the kernel command line or by the sys file, if it is not also specified in the
-/etc/securetty
+securetty
 file\&.
 .RE
 .SH "MODULE TYPES PROVIDED"
@@ -79,19 +83,30 @@ The user is allowed to continue authentication\&. Either the user is not root, o
 PAM_AUTH_ERR
 .RS 4
 Authentication is rejected\&. Either root is attempting to log in via an unacceptable device, or the
-/etc/securetty
+securetty
 file is world writable or not a normal file\&.
+.RE
+.PP
+PAM_BUF_ERR
+.RS 4
+Memory buffer error\&.
+.RE
+.PP
+PAM_CONV_ERR
+.RS 4
+The conversation method supplied by the application failed to obtain the username\&.
 .RE
 .PP
 PAM_INCOMPLETE
 .RS 4
-An application error occurred\&. pam_securetty was not able to get information it required from the application that called it\&.
+The conversation method supplied by the application returned PAM_CONV_AGAIN\&.
 .RE
 .PP
 PAM_SERVICE_ERR
 .RS 4
-An error occurred while the module was determining the user\*(Aqs name or tty, or the module could not open
-/etc/securetty\&.
+An error occurred while the module was determining the user\*(Aqs name or tty, or the module could not open the
+securetty
+file\&.
 .RE
 .PP
 PAM_USER_UNKNOWN

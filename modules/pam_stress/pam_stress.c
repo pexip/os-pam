@@ -15,18 +15,6 @@
 #include <string.h>
 #include <unistd.h>
 
-/*
- * here, we make definitions for the externally accessible functions
- * in this file (these definitions are required for static modules
- * but strongly encouraged generally) they are used to instruct the
- * modules include file to define their prototypes.
- */
-
-#define PAM_SM_AUTH
-#define PAM_SM_ACCOUNT
-#define PAM_SM_SESSION
-#define PAM_SM_PASSWORD
-
 #include <security/pam_modules.h>
 #include <security/_pam_macros.h>
 #include <security/pam_ext.h>
@@ -229,11 +217,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags,
      /* try to get the username */
 
      retval = pam_get_user(pamh, &username, "username: ");
-     if (retval != PAM_SUCCESS || !username) {
-	  pam_syslog(pamh, LOG_WARNING,
-		     "pam_sm_authenticate: failed to get username");
-	  if (retval == PAM_SUCCESS)
-	      retval = PAM_USER_UNKNOWN; /* username was null */
+     if (retval != PAM_SUCCESS) {
+	  pam_syslog(pamh, LOG_NOTICE,
+		     "pam_sm_authenticate: cannot determine user name: %s",
+		     pam_strerror(pamh, retval));
 	  return retval;
      }
      else if (ctrl & PAM_ST_DEBUG) {
@@ -467,7 +454,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	       }
 	       pmsg[0] = &msg[0];
 	       msg[0].msg_style = PAM_TEXT_INFO;
-	       if (asprintf(&txt, _("Changing STRESS password for %s."),
+	       if (asprintf(&txt, "Changing STRESS password for %s.",
 			    (const char *)username) < 0) {
 		    pam_syslog(pamh, LOG_CRIT, "out of memory");
 		    return PAM_BUF_ERR;
@@ -481,10 +468,10 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 	  pmsg[i] = &msg[i];
 	  msg[i].msg_style = PAM_PROMPT_ECHO_OFF;
-	  msg[i++].msg = _("Enter new STRESS password: ");
+	  msg[i++].msg = "Enter new STRESS password: ";
 	  pmsg[i] = &msg[i];
 	  msg[i].msg_style = PAM_PROMPT_ECHO_OFF;
-	  msg[i++].msg = _("Retype new STRESS password: ");
+	  msg[i++].msg = "Retype new STRESS password: ";
 	  resp = NULL;
 
 	  retval = converse(pamh,i,pmsg,&resp);
@@ -513,8 +500,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		    if (!(flags & PAM_SILENT) && !(ctrl & PAM_ST_NO_WARN)) {
 			 pmsg[0] = &msg[0];
 			 msg[0].msg_style = PAM_ERROR_MSG;
-			 msg[0].msg = _("Verification mis-typed; "
-					"password unchanged");
+			 msg[0].msg = "Verification mis-typed; "
+				      "password unchanged";
 			 resp = NULL;
 			 (void) converse(pamh,1,pmsg,&resp);
 			 if (resp) {

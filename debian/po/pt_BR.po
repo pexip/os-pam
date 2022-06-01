@@ -3,15 +3,15 @@
 # This file is distributed under the same license as the pam package.
 # Eder L. Marques <eder@edermarques.net>, 2007-2009.
 # Fernando Ike de Oliveira <fike@midstorm.org>, 2013.
-# Adriano Rafael Gomes <adrianorg@arg.eti.br>, 2009-2015.
+# Adriano Rafael Gomes <adrianorg@debian.org>, 2009-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pam\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
-"PO-Revision-Date: 2015-09-18 20:27-0300\n"
-"Last-Translator: Adriano Rafael Gomes <adrianorg@arg.eti.br>\n"
+"POT-Creation-Date: 2021-03-15 18:23-0400\n"
+"PO-Revision-Date: 2021-03-06 14:11-0300\n"
+"Last-Translator: Adriano Rafael Gomes <adrianorg@debian.org>\n"
 "Language-Team: Brazilian Portuguese <debian-l10n-portuguese@lists.debian."
 "org>\n"
 "Language: pt_BR\n"
@@ -31,13 +31,12 @@ msgstr "Serviços a serem reiniciados para atualização da biblioteca PAM:"
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "A maioria dos serviços que utilizam PAM precisam ser reiniciados para usar "
 "os módulos construídos para esta nova versão da libpam. Por favor, revise a "
-"seguinte lista separada por espaços de scripts init.d de serviços que serão "
-"reiniciados agora, e a corrija, se necessário."
+"seguinte lista de serviços que serão reiniciados agora, separados por "
+"espaços, e a corrija, se necessário."
 
 #. Type: error
 #. Description
@@ -234,3 +233,51 @@ msgstr ""
 "se autenticar nestes programas. Você deve providenciar que estes programas "
 "sejam reiniciados ou parados antes de continuar com esta atualização, para "
 "evitar bloquear seus usuários fora de suas sessões atuais."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr "Perfis PAM com módulos obsoletos desabilitados"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+"O seu sistema tinha perfis PAM habilitados com os módulos PAM ${modules}. "
+"Esses módulos foram removidos do PAM. Deixar esses perfis PAM habilitados "
+"impediria que os usuários acessassem o seu sistema. Como resultado, esses "
+"perfis foram desabilitados."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr "você está usando pam_tally ou pam_tally2 na sua configuração"
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+"Os módulos pam_tally e pam_tally2 foram removidos do PAM. Você está usando "
+"um desses módulos na sua configuração do PAM em /etc/pam.d. Você deve "
+"remover o uso desses módulos antes que o PAM possa ser atualizado. Incluir "
+"esses módulos na sua configuração do PAM depois da atualização impedirá que "
+"os usuários consigam logar no sistema."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr "Considere o módulo pam_faillock como um substituto para o pam_tally."

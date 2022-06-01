@@ -1,7 +1,9 @@
 /*
+ * pam_unix password management
+ *
  * Main coding by Elliot Lee <sopwith@redhat.com>, Red Hat Software.
  * Copyright (C) 1996.
- * Copyright (c) Jan Rêkorajski, 1999.
+ * Copyright (c) Jan Rękorajski, 1999.
  * Copyright (c) Red Hat, Inc., 2007, 2008.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,20 +58,15 @@
 #include <sys/stat.h>
 
 #include <signal.h>
-#include <errno.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 
 #include <security/_pam_macros.h>
-
-/* indicate the following groups are defined */
-
-#define PAM_SM_PASSWORD
-
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
+#include "pam_cc_compat.h"
 #include "md5.h"
 #include "support.h"
 #include "passverify.h"
@@ -106,11 +103,6 @@ extern int getrpcport(const char *host, unsigned long prognum,
    Sets it.
  */
 
-/* data tokens */
-
-#define _UNIX_OLD_AUTHTOK	"-UN*X-OLD-PASS"
-#define _UNIX_NEW_AUTHTOK	"-UN*X-NEW-PASS"
-
 #define MAX_PASSWD_TRIES	3
 
 #ifdef HAVE_NIS
@@ -143,7 +135,7 @@ __taddr2port (const struct netconfig *nconf, const struct netbuf *nbuf)
 }
 #endif
 
-static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
+static char *getNISserver(pam_handle_t *pamh, unsigned long long ctrl)
 {
 	char *master;
 	char *domainname;
@@ -238,7 +230,7 @@ static char *getNISserver(pam_handle_t *pamh, unsigned int ctrl)
 
 #ifdef WITH_SELINUX
 
-static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const char *user,
+static int _unix_run_update_binary(pam_handle_t *pamh, unsigned long long ctrl, const char *user,
     const char *fromwhat, const char *towhat, int remember)
 {
     int retval, child, fds[2];
@@ -298,7 +290,9 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
         snprintf(buffer, sizeof(buffer), "%d", remember);
         args[4] = buffer;
 
+	DIAG_PUSH_IGNORE_CAST_QUAL;
 	execve(UPDATE_HELPER, (char *const *) args, envp);
+	DIAG_POP_IGNORE_CAST_QUAL;
 
 	/* should not get here: exit with error */
 	D(("helper binary is not available"));
@@ -355,7 +349,7 @@ static int _unix_run_update_binary(pam_handle_t *pamh, unsigned int ctrl, const 
 static int check_old_password(const char *forwho, const char *newpass)
 {
 	static char buf[16384];
-	char *s_luser, *s_uid, *s_npas, *s_pas;
+	char *s_pas;
 	int retval = PAM_SUCCESS;
 	FILE *opwfile;
 	size_t len = strlen(forwho);
@@ -369,9 +363,9 @@ static int check_old_password(const char *forwho, const char *newpass)
 			buf[len] == ',')) {
 			char *sptr;
 			buf[strlen(buf) - 1] = '\0';
-			s_luser = strtok_r(buf, ":,", &sptr);
-			s_uid = strtok_r(NULL, ":,", &sptr);
-			s_npas = strtok_r(NULL, ":,", &sptr);
+			/* s_luser = */ strtok_r(buf, ":,", &sptr);
+			/* s_uid = */ strtok_r(NULL, ":,", &sptr);
+			/* s_npas = */ strtok_r(NULL, ":,", &sptr);
 			s_pas = strtok_r(NULL, ":,", &sptr);
 			while (s_pas != NULL) {
 				char *md5pass = Goodcrypt_md5(newpass, s_pas);
@@ -393,12 +387,11 @@ static int check_old_password(const char *forwho, const char *newpass)
 
 static int _do_setpass(pam_handle_t* pamh, const char *forwho,
 		       const char *fromwhat,
-		       char *towhat, unsigned int ctrl, int remember)
+		       char *towhat, unsigned long long ctrl, int remember)
 {
 	struct passwd *pwd = NULL;
 	int retval = 0;
 	int unlocked = 0;
-	char *master = NULL;
 
 	D(("called"));
 
@@ -411,6 +404,8 @@ static int _do_setpass(pam_handle_t* pamh, const char *forwho,
 
 	if (on(UNIX_NIS, ctrl) && _unix_comesfromsource(pamh, forwho, 0, 1)) {
 #ifdef HAVE_NIS
+	  char *master;
+
 	  if ((master=getNISserver(pamh, ctrl)) != NULL) {
 		struct timeval timeout;
 		struct yppasswd yppwd;
@@ -517,7 +512,7 @@ done:
 	return retval;
 }
 
-static int _unix_verify_shadow(pam_handle_t *pamh, const char *user, unsigned int ctrl)
+static int _unix_verify_shadow(pam_handle_t *pamh, const char *user, unsigned long long ctrl)
 {
 	struct passwd *pwent = NULL;	/* Password and shadow password */
 	struct spwd *spent = NULL;	/* file entries for the user */
@@ -547,7 +542,7 @@ static int _unix_verify_shadow(pam_handle_t *pamh, const char *user, unsigned in
 }
 
 static int _pam_unix_approve_pass(pam_handle_t * pamh
-				  ,unsigned int ctrl
+				  ,unsigned long long ctrl
 				  ,const char *pass_old
 				  ,const char *pass_new,
                                   int pass_min_len)
@@ -565,7 +560,8 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
 			pam_syslog(pamh, LOG_DEBUG, "bad authentication token");
 		}
 		_make_remark(pamh, ctrl, PAM_ERROR_MSG, pass_new == NULL ?
-			_("No password supplied") : _("Password unchanged"));
+			_("No password has been supplied.") :
+			_("The password has not been changed."));
 		return PAM_AUTHTOK_ERR;
 	}
 	/*
@@ -580,9 +576,13 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
 			return PAM_AUTHTOK_ERR;
 		}
 	}
-	if (off(UNIX__IAMROOT, ctrl)) {
-		if (strlen(pass_new) < pass_min_len)
-		  remark = _("You must choose a longer password");
+
+	if (strlen(pass_new) > MAXPASS) {
+		remark = _("You must choose a shorter password.");
+		D(("length exceeded [%s]", remark));
+	} else if (off(UNIX__IAMROOT, ctrl)) {
+		if ((int)strlen(pass_new) < pass_min_len)
+		  remark = _("You must choose a longer password.");
 		D(("length check [%s]", remark));
 		if (on(UNIX_REMEMBER_PASSWD, ctrl)) {
 			if ((retval = check_old_password(user, pass_new)) == PAM_AUTHTOK_ERR)
@@ -604,10 +604,10 @@ static int _pam_unix_approve_pass(pam_handle_t * pamh
 int
 pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 {
-	unsigned int ctrl, lctrl;
+	unsigned long long ctrl, lctrl;
 	int retval;
 	int remember = -1;
-	int rounds = -1;
+	int rounds = 0;
 	int pass_min_len = 0;
 
 	/* <DO NOT free() THESE> */
@@ -631,8 +631,8 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		 * '+' or '-' as the first character of a user name. Don't
 		 * allow them.
 		 */
-		if (user == NULL || user[0] == '-' || user[0] == '+') {
-			pam_syslog(pamh, LOG_ERR, "bad username [%s]", user);
+		if (user[0] == '-' || user[0] == '+') {
+			pam_syslog(pamh, LOG_NOTICE, "bad username [%s]", user);
 			return PAM_USER_UNKNOWN;
 		}
 		if (retval == PAM_SUCCESS && on(UNIX_DEBUG, ctrl))
@@ -719,7 +719,7 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
 		if (retval == PAM_AUTHTOK_ERR) {
 			if (off(UNIX__IAMROOT, ctrl))
 				_make_remark(pamh, ctrl, PAM_ERROR_MSG,
-					     _("You must wait longer to change your password"));
+					     _("You must wait longer to change your password."));
 			else
 				retval = PAM_SUCCESS;
 		}

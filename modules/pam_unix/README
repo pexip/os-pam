@@ -69,6 +69,12 @@ nullok
     service if their official password is blank. The nullok argument overrides
     this default.
 
+nullresetok
+
+    Allow users to authenticate with blank password if password reset is
+    enforced even if nullok is not set. If password reset is not required and
+    nullok is not set the authentication with blank password will be denied.
+
 try_first_pass
 
     Before prompting the user for their password, the module first tries the
@@ -128,25 +134,35 @@ bigcrypt
 sha256
 
     When a user changes their password next, encrypt it with the SHA256
-    algorithm. If the SHA256 algorithm is not known to the crypt(3) function,
-    fall back to MD5.
+    algorithm. The SHA256 algorithm must be supported by the crypt(3) function.
 
 sha512
 
     When a user changes their password next, encrypt it with the SHA512
-    algorithm. If the SHA512 algorithm is not known to the crypt(3) function,
-    fall back to MD5.
+    algorithm. The SHA512 algorithm must be supported by the crypt(3) function.
 
 blowfish
 
     When a user changes their password next, encrypt it with the blowfish
-    algorithm. If the blowfish algorithm is not known to the crypt(3) function,
-    fall back to MD5.
+    algorithm. The blowfish algorithm must be supported by the crypt(3)
+    function.
+
+gost_yescrypt
+
+    When a user changes their password next, encrypt it with the gost-yescrypt
+    algorithm. The gost-yescrypt algorithm must be supported by the crypt(3)
+    function.
+
+yescrypt
+
+    When a user changes their password next, encrypt it with the yescrypt
+    algorithm. The yescrypt algorithm must be supported by the crypt(3)
+    function.
 
 rounds=n
 
-    Set the optional number of rounds of the SHA256, SHA512 and blowfish
-    password hashing algorithms to n.
+    Set the optional number of rounds of the SHA256, SHA512, blowfish,
+    gost-yescrypt, and yescrypt password hashing algorithms to n.
 
 broken_shadow
 
@@ -180,7 +196,7 @@ account    required   pam_unix.so
 # Change the user's password, but at first check the strength
 # with pam_cracklib(8)
 password   required   pam_cracklib.so retry=3 minlen=6 difok=3
-password   required   pam_unix.so use_authtok nullok md5
+password   required   pam_unix.so use_authtok nullok yescrypt
 session    required   pam_unix.so
 
 

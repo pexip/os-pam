@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pam 1.1.1-6.1\n"
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
-"POT-Creation-Date: 2011-10-30 15:05-0400\n"
+"POT-Creation-Date: 2021-02-26 10:32-0500\n"
 "PO-Revision-Date: 2010-10-24 20:46+1030\n"
 "Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
 "Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
@@ -26,11 +26,16 @@ msgstr "Dịch vụ cần khởi chạy lại để nâng cấp thư viện PAM:
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
+#, fuzzy
+#| msgid ""
+#| "Most services that use PAM need to be restarted to use modules built for "
+#| "this new version of libpam.  Please review the following space-separated "
+#| "list of init.d scripts for services to be restarted now, and correct it "
+#| "if needed."
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of init.d scripts for services to be restarted now, and correct it if "
-"needed."
+"list of  services to be restarted now, and correct it if needed."
 msgstr ""
 "Phần lớn dịch vụ sử dụng PAM thì cũng cần phải được khởi chạy lại để sử dụng "
 "những mô-đun được xây dựng cho phiên bản libpam mới này. Hãy xem lại danh "
@@ -226,6 +231,45 @@ msgstr ""
 "trình này. Vì thế bạn nên khởi chạy lại hoặc ngừng chạy những chương trình "
 "này trước khi tiếp tục tiến trình nâng cấp, để tránh chặn người dùng đăng "
 "nhập vào buổi hợp đang chạy."
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid "PAM Profiles with Deprecated Modules Disabled"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:2001
+msgid ""
+"Your system had PAM profiles enabled with the ${modules} PAM modules. These "
+"modules have been removed from PAM. Leaving these PAM profiles enabled would "
+"prevent users from accessing your system. As a result, these profiles have "
+"been disabled."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "you are using pam_tally or pam_tally2 in your configuration"
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid ""
+"The pam_tally and pam_tally2 modules have been removed from PAM. You are "
+"using one of these modules in your PAM configuration in /etc/pam.d. You must "
+"remove the uses of these modules before PAM can be upgraded; including these "
+"modules in your PAM configuration after the upgrade will stop users from "
+"being able to log into the system."
+msgstr ""
+
+#. Type: error
+#. Description
+#: ../libpam-modules.templates:3001
+msgid "Consider the pam_faillock module as a replacement for pam_tally."
+msgstr ""
 
 #~ msgid "Your system allowed access without a password!"
 #~ msgstr "Hệ thống này cho phép truy cập mà không nhập mật khẩu !"

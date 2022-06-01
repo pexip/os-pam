@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: pam_umask
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/18/2018
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 06/08/2020
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_UMASK" "8" "05/18/2018" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_UMASK" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 pam_umask \- PAM module to set the file mode creation mask
 .SH "SYNOPSIS"
 .HP \w'\fBpam_umask\&.so\fR\ 'u
-\fBpam_umask\&.so\fR [debug] [silent] [usergroups] [umask=\fImask\fR]
+\fBpam_umask\&.so\fR [debug] [silent] [usergroups] [nousergroups] [umask=\fImask\fR]
 .SH "DESCRIPTION"
 .PP
 pam_umask is a PAM module to set the file mode creation mask of the current environment\&. The umask affects the default permissions assigned to newly created files\&.
@@ -101,6 +101,11 @@ Don\*(Aqt print informative messages\&.
 If the user is not root and the username is the same as primary group name, the umask group bits are set to be the same as owner bits (examples: 022 \-> 002, 077 \-> 007)\&.
 .RE
 .PP
+\fBnousergroups\fR
+.RS 4
+This is the direct opposite of the usergroups option described above, which can be useful in case pam_umask has been compiled with usergroups enabled by default and you want to disable it at runtime\&.
+.RE
+.PP
 \fBumask=\fR\fB\fImask\fR\fR
 .RS 4
 Sets the calling process\*(Aqs file mode creation mask (umask) to
@@ -118,6 +123,21 @@ type is provided\&.
 PAM_SUCCESS
 .RS 4
 The new umask was set successfully\&.
+.RE
+.PP
+PAM_BUF_ERR
+.RS 4
+Memory buffer error\&.
+.RE
+.PP
+PAM_CONV_ERR
+.RS 4
+The conversation method supplied by the application failed to obtain the username\&.
+.RE
+.PP
+PAM_INCOMPLETE
+.RS 4
+The conversation method supplied by the application returned PAM_CONV_AGAIN\&.
 .RE
 .PP
 PAM_SERVICE_ERR
