@@ -7,10 +7,8 @@ Authors: Steve Langasek <vorlon@debian.org>,
 
 Upstream status: to be submitted
 
-Index: pam/modules/pam_unix/unix_chkpwd.c
-===================================================================
---- pam.orig/modules/pam_unix/unix_chkpwd.c
-+++ pam/modules/pam_unix/unix_chkpwd.c
+--- a/modules/pam_unix/unix_chkpwd.c
++++ b/modules/pam_unix/unix_chkpwd.c
 @@ -137,9 +137,10 @@
  	  /* if the caller specifies the username, verify that user
  	     matches it */

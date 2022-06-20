@@ -39,11 +39,9 @@ Reviewed-by: Adam Conrad <adconrad@ubuntu.com>
 Reviewed-by: Martin Pitt <martin.pitt@ubuntu.com>
 Last-Update: 2015-04-22
 
-Index: pam/modules/pam_limits/pam_limits.c
-===================================================================
---- pam.orig/modules/pam_limits/pam_limits.c
-+++ pam/modules/pam_limits/pam_limits.c
-@@ -451,6 +451,14 @@
+--- a/modules/pam_limits/pam_limits.c
++++ b/modules/pam_limits/pam_limits.c
+@@ -448,6 +448,14 @@
          pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
      }
      fclose(limitsfile);

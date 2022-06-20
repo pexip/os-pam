@@ -8,11 +8,9 @@ Authors: Ben Collins <bcollins@debian.org>
 
 Upstream status: submitted in <20070901175405.GA26092@dario.dodds.net>
 
-Index: pam/modules/pam_wheel/pam_wheel.c
-===================================================================
---- pam.orig/modules/pam_wheel/pam_wheel.c
-+++ pam/modules/pam_wheel/pam_wheel.c
-@@ -60,9 +60,8 @@
+--- a/modules/pam_wheel/pam_wheel.c
++++ b/modules/pam_wheel/pam_wheel.c
+@@ -58,9 +58,8 @@
  /* argument parsing */
  
  #define PAM_DEBUG_ARG       0x0001
@@ -24,7 +22,7 @@ Index: pam/modules/pam_wheel/pam_wheel.c
  #define PAM_ROOT_ONLY_ARG   0x0020
  
  static int
-@@ -80,8 +79,7 @@
+@@ -79,8 +78,7 @@
  
            if (!strcmp(*argv,"debug"))
                 ctrl |= PAM_DEBUG_ARG;
@@ -68,10 +66,8 @@ Index: pam/modules/pam_wheel/pam_wheel.c
  
      /*
       * At this point fromsu = username-of-invoker; tpwd = pwd ptr for fromsu
-Index: pam/modules/pam_wheel/pam_wheel.8.xml
-===================================================================
---- pam.orig/modules/pam_wheel/pam_wheel.8.xml
-+++ pam/modules/pam_wheel/pam_wheel.8.xml
+--- a/modules/pam_wheel/pam_wheel.8.xml
++++ b/modules/pam_wheel/pam_wheel.8.xml
 @@ -33,9 +33,6 @@
        <arg choice="opt">
  	trust
@@ -101,10 +97,8 @@ Index: pam/modules/pam_wheel/pam_wheel.8.xml
      </variablelist>
    </refsect1>
  
-Index: pam/modules/pam_wheel/pam_wheel.8
-===================================================================
---- pam.orig/modules/pam_wheel/pam_wheel.8
-+++ pam/modules/pam_wheel/pam_wheel.8
+--- a/modules/pam_wheel/pam_wheel.8
++++ b/modules/pam_wheel/pam_wheel.8
 @@ -31,7 +31,7 @@
  pam_wheel \- Only permit root access to members of group wheel
  .SH "SYNOPSIS"
@@ -126,10 +120,8 @@ Index: pam/modules/pam_wheel/pam_wheel.8
  .SH "MODULE TYPES PROVIDED"
  .PP
  The
-Index: pam/modules/pam_wheel/README
-===================================================================
---- pam.orig/modules/pam_wheel/README
-+++ pam/modules/pam_wheel/README
+--- a/modules/pam_wheel/README
++++ b/modules/pam_wheel/README
 @@ -39,12 +39,6 @@
      modules the wheel members may be able to su to root without being prompted
      for a passwd).

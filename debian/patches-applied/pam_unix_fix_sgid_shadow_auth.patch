@@ -5,11 +5,9 @@ Authors: Steve Langasek <vorlon@debian.org>
 
 Upstream status: to be submitted (and debated...)
 
-Index: pam/modules/pam_unix/passverify.c
-===================================================================
---- pam.orig/modules/pam_unix/passverify.c
-+++ pam/modules/pam_unix/passverify.c
-@@ -198,11 +198,11 @@
+--- a/modules/pam_unix/passverify.c
++++ b/modules/pam_unix/passverify.c
+@@ -243,11 +243,11 @@
  			 * ...and shadow password file entry for this user,
  			 * if shadowing is enabled
  			 */
