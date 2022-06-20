@@ -1,6 +1,7 @@
 pam (1.4.0-9+deb11u1pexip1) pexip; urgency=medium
 
   * Initial bullseye build
+  * Remove redundant pam_umask_usergroups_from_login.defs.patch
 
  -- Mark Hymers <mark.hymers@pexip.com>  Thu, 02 Jun 2022 14:42:40 +0100
 

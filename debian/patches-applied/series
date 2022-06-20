@@ -26,5 +26,4 @@ pam_unix_initialize_daysleft
 pam_faillock_create_directory
 pam_mkhomedir_stat_before_opendir
 
-pam_umask_usergroups_from_login.defs.patch
 pam_motd-legal-notice
