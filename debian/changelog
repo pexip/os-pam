@@ -2,8 +2,9 @@ pam (1.4.0-9+deb11u1pexip1) pexip; urgency=medium
 
   * Initial bullseye build
   * Remove redundant pam_umask_usergroups_from_login.defs.patch
+  * Disable NIS support.
 
- -- Mark Hymers <mark.hymers@pexip.com>  Thu, 02 Jun 2022 14:42:40 +0100
+ -- Mark Hymers <mark.hymers@pexip.com>  Tue, 21 Jun 2022 14:36:57 +0100
 
 pam (1.4.0-9+deb11u1) bullseye; urgency=medium
 
