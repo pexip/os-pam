@@ -1,3 +1,9 @@
+pam (1.4.0-9+deb11u1pexip2) pexip-bullseye; urgency=medium
+
+  * Main bullseye build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Fri, 24 Jun 2022 14:04:02 +0100
+
 pam (1.4.0-9+deb11u1pexip1) pexip; urgency=medium
 
   * Initial bullseye build
