@@ -11,10 +11,10 @@ Index: pam/modules/pam_unix/unix_chkpwd.c
 ===================================================================
 --- pam.orig/modules/pam_unix/unix_chkpwd.c
 +++ pam/modules/pam_unix/unix_chkpwd.c
-@@ -137,9 +137,10 @@
+@@ -138,9 +138,10 @@
  	  /* if the caller specifies the username, verify that user
  	     matches it */
- 	  if (strcmp(user, argv[1])) {
+ 	  if (user == NULL || strcmp(user, argv[1])) {
 +	    gid_t gid = getgid();
  	    user = argv[1];
  	    /* no match -> permanently change to the real user and proceed */

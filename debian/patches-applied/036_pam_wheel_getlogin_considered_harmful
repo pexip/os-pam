@@ -12,7 +12,7 @@ Index: pam/modules/pam_wheel/pam_wheel.c
 ===================================================================
 --- pam.orig/modules/pam_wheel/pam_wheel.c
 +++ pam/modules/pam_wheel/pam_wheel.c
-@@ -60,9 +60,8 @@
+@@ -47,9 +47,8 @@
  /* argument parsing */
  
  #define PAM_DEBUG_ARG       0x0001
@@ -24,7 +24,7 @@ Index: pam/modules/pam_wheel/pam_wheel.c
  #define PAM_ROOT_ONLY_ARG   0x0020
  
  static int
-@@ -80,8 +79,7 @@
+@@ -68,8 +67,7 @@
  
            if (!strcmp(*argv,"debug"))
                 ctrl |= PAM_DEBUG_ARG;
@@ -34,35 +34,47 @@ Index: pam/modules/pam_wheel/pam_wheel.c
            else if (!strcmp(*argv,"trust"))
                 ctrl |= PAM_TRUST_ARG;
            else if (!strcmp(*argv,"deny"))
-@@ -129,27 +127,14 @@
+@@ -118,39 +116,14 @@
          }
      }
  
 -    if (ctrl & PAM_USE_UID_ARG) {
--	tpwd = pam_modutil_getpwuid (pamh, getuid());
--	if (!tpwd) {
--	    if (ctrl & PAM_DEBUG_ARG) {
+-        tpwd = pam_modutil_getpwuid (pamh, getuid());
+-        if (tpwd == NULL) {
+-            if (ctrl & PAM_DEBUG_ARG) {
 -                pam_syslog(pamh, LOG_NOTICE, "who is running me ?!");
--	    }
--	    return PAM_SERVICE_ERR;
--	}
--	fromsu = tpwd->pw_name;
+-            }
+-            return PAM_SERVICE_ERR;
+-        }
+-        fromsu = tpwd->pw_name;
 -    } else {
--	fromsu = pam_modutil_getlogin(pamh);
--	if (fromsu) {
--	    tpwd = pam_modutil_getpwnam (pamh, fromsu);
--	}
--	if (!fromsu || !tpwd) {
--	    if (ctrl & PAM_DEBUG_ARG) {
--		pam_syslog(pamh, LOG_NOTICE, "who is running me ?!");
--	    }
--	    return PAM_SERVICE_ERR;
+-        fromsu = pam_modutil_getlogin(pamh);
+-
+-        /* if getlogin fails try a fallback to PAM_RUSER */
+-        if (fromsu == NULL) {
+-            const char *rhostname;
+-
+-            retval = pam_get_item(pamh, PAM_RHOST, (const void **)&rhostname);
+-            if (retval != PAM_SUCCESS || rhostname == NULL) {
+-                retval = pam_get_item(pamh, PAM_RUSER, (const void **)&fromsu);
+-            }
+-        }
+-
+-        if (fromsu != NULL) {
+-            tpwd = pam_modutil_getpwnam (pamh, fromsu);
+-        }
+-
+-        if (fromsu == NULL || tpwd == NULL) {
+-            if (ctrl & PAM_DEBUG_ARG) {
+-                pam_syslog(pamh, LOG_NOTICE, "who is running me ?!");
+-            }
+-            return PAM_SERVICE_ERR;
 +    tpwd = pam_modutil_getpwuid (pamh, getuid());
-+    if (!tpwd) {
-+	if (ctrl & PAM_DEBUG_ARG) {
-+	    pam_syslog(pamh, LOG_NOTICE, "who is running me ?!");
- 	}
-+	return PAM_SERVICE_ERR;
++    if (tpwd == NULL) {
++        if (ctrl & PAM_DEBUG_ARG) {
++            pam_syslog(pamh, LOG_NOTICE, "who is running me ?!");
+         }
++        return PAM_SERVICE_ERR;
      }
 +    fromsu = tpwd->pw_name;
  
@@ -92,9 +104,9 @@ Index: pam/modules/pam_wheel/pam_wheel.8.xml
 -        </term>
 -        <listitem>
 -          <para>
--            The check for wheel membership will be done against
--            the current uid instead of the original one (useful when
--            jumping with su from one account to another for example).
+-            The check will be done against the real uid of the calling process,
+-            instead of trying to obtain the user from the login session
+-            associated with the terminal in use.
 -          </para>
 -        </listitem>
 -      </varlistentry>
@@ -121,7 +133,7 @@ Index: pam/modules/pam_wheel/pam_wheel.8
 -.PP
 -\fBuse_uid\fR
 -.RS 4
--The check for wheel membership will be done against the current uid instead of the original one (useful when jumping with su from one account to another for example)\&.
+-The check will be done against the real uid of the calling process, instead of trying to obtain the user from the login session associated with the terminal in use\&.
 -.RE
  .SH "MODULE TYPES PROVIDED"
  .PP
@@ -136,9 +148,9 @@ Index: pam/modules/pam_wheel/README
  
 -use_uid
 -
--    The check for wheel membership will be done against the current uid instead
--    of the original one (useful when jumping with su from one account to
--    another for example).
+-    The check will be done against the real uid of the calling process, instead
+-    of trying to obtain the user from the login session associated with the
+-    terminal in use.
 -
  EXAMPLES
  

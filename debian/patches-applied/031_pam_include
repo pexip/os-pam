@@ -8,7 +8,7 @@ Index: pam/libpam/pam_handlers.c
 ===================================================================
 --- pam.orig/libpam/pam_handlers.c
 +++ pam/libpam/pam_handlers.c
-@@ -122,6 +122,10 @@
+@@ -123,6 +123,10 @@
  		    module_type = PAM_T_ACCT;
  		} else if (!strcasecmp("password", tok)) {
  		    module_type = PAM_T_PASS;
@@ -19,7 +19,7 @@ Index: pam/libpam/pam_handlers.c
  		} else {
  		    /* Illegal module type */
  		    D(("_pam_init_handlers: bad module type: %s", tok));
-@@ -192,8 +196,10 @@
+@@ -193,8 +197,10 @@
  		_pam_set_default_control(actions, _PAM_ACTION_BAD);
  	    }
  
@@ -30,7 +30,7 @@ Index: pam/libpam/pam_handlers.c
  		if (substack) {
  		    res = _pam_add_handler(pamh, PAM_HT_SUBSTACK, other,
  				stack_level, module_type, actions, tok,
-@@ -204,13 +210,35 @@
+@@ -205,13 +211,35 @@
  			return PAM_ABORT;
  		    }
  		}

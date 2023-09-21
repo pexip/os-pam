@@ -35,7 +35,7 @@ msgstr "Службы, которые будут перезапущены пос�
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of  services to be restarted now, and correct it if needed."
+"list of services to be restarted now, and correct it if needed."
 msgstr ""
 "Чтобы задействовать новые версии модулей из libpam, нужно перезапустить "
 "большинство служб, использующих PAM. Внимательно просмотрите и при "

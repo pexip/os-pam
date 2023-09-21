@@ -1,10 +1,132 @@
-pam (1.4.0-9+deb11u1) bullseye; urgency=medium
+pam (1.5.2-6+deb12u1) bookworm; urgency=medium
+
+  * Fix pam-auth-update --disable logic error, Closes: #1039873
+  * Set myself as maintainer; thanks Steve for past and future work.
+  * Updated Turkish Debconf translations, Thanks Atila KOÇ, Closes: #1029002
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 21 Sep 2023 14:55:12 -0600
+
+pam (1.5.2-6) unstable; urgency=medium
+
+  * Update debian/copyright, Thanks Bastian Germann, Closes: #460232
+  * When pam-auth-update is called with --root,  use
+    /usr/share/pam-configs from the root not from the host system, Thanks
+    Johannes Schauer Marin Rodrigues, Closes: #1022952
+  * Build-depend on libcrypt-dev, Closes: #1024645
+  *  Add pam-auth-udpate --disable, Closes: #1004000
+  * Add autopkgtests
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 03 Jan 2023 13:15:23 -0700
+
+pam (1.5.2-5) unstable; urgency=medium
+
+  * pam_namespace_helper manpage *wasn't* missing, it was just being
+    wrongly shipped in libpam-modules instead - so complete the moving
+    of the manpage to the libpam-modules-bin where it belongs with the
+    binary.  Really Closes: #1021336.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 06 Oct 2022 18:56:06 +0000
+
+pam (1.5.2-4) unstable; urgency=medium
+
+  * pam_namespace_helper manpage was missing, but namespace.conf.5 was
+    already shipped in libpam-modules.  Leave it there.  Closes: #1021336.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 06 Oct 2022 17:28:36 +0000
+
+pam (1.5.2-3) unstable; urgency=medium
+
+  * Add missing manpages for pam_namespace which for some reason don't get
+    installed by the upstream rules
+  * Drop obsolete upgrade code from maintainer scripts which is no longer
+    used
+  * Drop manual multiarch file handling in favor of dh-exec.
+  * No special-case needed for pam_modutil_sanitize_helper_fds in symbols
+    file, it's covered by the existing globs.
+  * debian/local/Debian-PAM-MiniPolicy: drop references to ancient
+    package versions.  Thanks, Marc Haber.
+  * Support DPKG_ROOT in the postinst scripts.  Closes: #993161.
+    Thanks, Johannes Schauer Marin Rodrigues.
+  * Further proof libpam-runtime postinst for DPKG_ROOT just in case.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 06 Oct 2022 04:05:02 +0000
+
+pam (1.5.2-2) unstable; urgency=medium
+
+  * Pass --with-systemdunitdir=/usr/lib/systemd/system for consistent
+    builds whether we are or aren't building in an environment with systemd
+    present.
+  * Install the pam_namespace.service unit in the libpam-modules-bin
+    package.
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 16:47:57 +0000
+
+pam (1.5.2-1) unstable; urgency=medium
+
+  * New upstream release.
+    - fixes compatibility with libpam-systemd.  Closes: #1017467.
+    - fixes bashisms in configure.ac.  Closes: #998361.
+  * Refresh patches.
+  * Drop patches included or obsoleted upstream:
+    - debian/patches-applied/pam_unix_fix_sgid_shadow_auth.patch
+    - debian/patches-applied/pam_unix_initialize_daysleft
+    - debian/patches-applied/pam_faillock_create_directory
+    - debian/patches-applied/pam_unix_avoid_checksalt
+    - debian/patches-applied/pam_env-allow-environment-files-without-EOL-at-EOF.patch
+  * Drop libpam-cracklib which has been obsoleted upstream.
+  * Add pkgconfig .pc files to libpam0g-dev.  Closes: #1012688.
+  * Update .symbols file.
+  * Updated Romanian debconf translation, thanks Andrei Popescu, Closes:
+    #986416
+  * Drop versioning of quilt build-dependency to quiet lintian, since the
+    version is satisfied by oldoldoldstable.
+  * Drop unused build-build-dependency on bzip2.
+  * Adjust lintian overrides for latest lintian syntax.
+  * Update Standards-Version.
+  * Bump debhelper compat to 13.
+  * debian/not-installed: document upstream files that aren't used.
+  * Override incorrect lintian warning about use of dpkg database.
+  * Override lintian warning for PAM module manpages being in section 8
+  * Override lintian warning for unused debconf templates
+  * Install additional upstream manpages: faillock(8), environment(5),
+    pwhistory_helper(8)
+  * Install additional helpers in libpam-modules-bin: pam_namespace_helper,
+    pwhistory_helper
+  * Fix wrong syntax in symbols file
+
+ -- Steve Langasek <vorlon@debian.org>  Thu, 18 Aug 2022 07:27:16 +0000
+
+pam (1.4.0-13) unstable; urgency=medium
+
+  * Don't build with NIS support.  This is only used for password changes on
+    NIS systems, and is pulling a large dependency chain into the Essential
+    package set which is not justifiable.
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 25 Apr 2022 16:12:04 -0700
+
+pam (1.4.0-11) unstable; urgency=medium
+
+  * Whitespace fixes in debconf templates.
+
+  [ Sergio Durigan Junior ]
+  * d/p/pam_env-allow-environment-files-without-EOL-at-EOF.patch:
+    Allow /etc/environment files without EOL at EOF.  In other words,
+    allow files without a newline at the end. (LP: #1953201)
+
+ -- Steve Langasek <vorlon@debian.org>  Mon, 06 Dec 2021 11:11:31 -0800
+
+pam (1.4.0-10) unstable; urgency=medium
 
   * Fix syntax error in libpam0g.postinst when a systemd unit fails,
     Closes: #992538
+  * Include upstream patch not to use crypt_checksalt; without this
+    passwords set prior to bullseye were considered expired, Closes:
+    #992848
+  * Support DPKG_ROOT for pam-auth-update, thanks Johannes 'josch' Schauer
+    Closes: #983427
 
 
- -- Sam Hartman <hartmans@debian.org>  Thu, 26 Aug 2021 13:11:23 -0600
+ -- Sam Hartman <hartmans@debian.org>  Thu, 26 Aug 2021 13:43:23 -0600
 
 pam (1.4.0-9) unstable; urgency=medium
 

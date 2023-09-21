@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Linux-PAM\n"
 "Report-Msgid-Bugs-To: https://github.com/linux-pam/linux-pam/issues\n"
-"POT-Creation-Date: 2020-06-08 10:18+0000\n"
+"POT-Creation-Date: 2021-07-20 20:00+0000\n"
 "PO-Revision-Date: 2013-04-15 01:55-0400\n"
 "Last-Translator: Ani Peter <apeter@redhat.com>\n"
 "Language-Team: Malayalam <discuss@lists.smc.org.in>\n"
@@ -20,21 +20,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Zanata 3.8.3\n"
 
-#: libpam_misc/misc_conv.c:33
-msgid "...Time is running out...\n"
-msgstr "...സമയപരിധി അവസാനിക്കുന്നു...\n"
-
-#: libpam_misc/misc_conv.c:34
-msgid "...Sorry, your time is up!\n"
-msgstr "...ക്ഷമിക്കണം, നിങ്ങളുടെ സമയം കഴിഞ്ഞിരിക്കുന്നു!\n"
-
-#: libpam_misc/misc_conv.c:346
-#, c-format
-msgid "erroneous conversation (%d)\n"
-msgstr "തെറ്റായ സംവാദം (%d)\n"
-
-#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:178
-#: modules/pam_userdb/pam_userdb.c:55
+#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:181
+#: modules/pam_userdb/pam_userdb.c:53
 msgid "Password: "
 msgstr "അടയാളവാക്ക്: "
 
@@ -216,99 +203,56 @@ msgstr "പ്രയോഗങ്ങള്‍ക്ക് വീണ്ടും l
 msgid "Unknown PAM error"
 msgstr "അപരിചിതമായ PAM പിശക്"
 
-#: modules/pam_cracklib/pam_cracklib.c:601
-msgid "is the same as the old one"
-msgstr "പഴയത് പോലെ തന്നെയാകുന്നതു്"
+#: libpam_misc/misc_conv.c:33
+msgid "...Time is running out...\n"
+msgstr "...സമയപരിധി അവസാനിക്കുന്നു...\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:607
-#: modules/pam_cracklib/pam_cracklib.c:611
-#: modules/pam_cracklib/pam_cracklib.c:621
-msgid "memory allocation error"
-msgstr "മെമ്മറി അനുവദിയ്ക്കുന്നതില്‍ പിശക്"
+#: libpam_misc/misc_conv.c:34
+msgid "...Sorry, your time is up!\n"
+msgstr "...ക്ഷമിക്കണം, നിങ്ങളുടെ സമയം കഴിഞ്ഞിരിക്കുന്നു!\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:626
-msgid "is a palindrome"
-msgstr "ഒരു പാലിന്‍ഡ്രോം ആണു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:629
-msgid "case changes only"
-msgstr "അക്ഷരങ്ങളുടെ വലിപ്പം മാത്രം മാറുന്നതു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:632
-msgid "is too similar to the old one"
-msgstr "പഴയതിന് സാമ്യമുള്ളതു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:635
-msgid "is too simple"
-msgstr "സാധാരണയുള്ളതു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:638
-msgid "is rotated"
-msgstr "is rotated"
-
-#: modules/pam_cracklib/pam_cracklib.c:641
-msgid "not enough character classes"
-msgstr "മതിയായ ക്യാരക്ടര്‍ ക്ലാസ്സുകള്‍ ലഭ്യമല്ല"
-
-#: modules/pam_cracklib/pam_cracklib.c:644
-msgid "contains too many same characters consecutively"
-msgstr "അടുത്തടുത്ത് ഒരേപോലുള്ള അനവധി അക്ഷരങ്ങളുണ്ടു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:647
-msgid "contains too long of a monotonic character sequence"
-msgstr "വളരെയധികം ഒരേ തരത്തിലുള്ള അക്ഷരങ്ങളടങ്ങുന്നു"
-
-#: modules/pam_cracklib/pam_cracklib.c:650
-msgid "contains the user name in some form"
-msgstr "ഉപയോക്താവിന്റെ നാമം ഏതെങ്കിലും ഒരു തരത്തിലുണ്ടു്"
-
-#: modules/pam_cracklib/pam_cracklib.c:684
-#: modules/pam_unix/pam_unix_passwd.c:563
-#, fuzzy
-msgid "No password has been supplied."
-msgstr "അടയാളവാക്ക് നല്‍കിയിട്ടില്ല"
-
-#: modules/pam_cracklib/pam_cracklib.c:685
-#: modules/pam_unix/pam_unix_passwd.c:564
-#, fuzzy
-msgid "The password has not been changed."
-msgstr "NIS അടയാളവാക്ക് മാറ്റുവാന്‍ സാധ്യമാകുന്നില്ല."
-
-#: modules/pam_cracklib/pam_cracklib.c:706
-#: modules/pam_cracklib/pam_cracklib.c:788
+#: libpam_misc/misc_conv.c:348
 #, c-format
-msgid "BAD PASSWORD: %s"
-msgstr "തെറ്റായ അടയാളവാക്ക്: %s"
+msgid "erroneous conversation (%d)\n"
+msgstr "തെറ്റായ സംവാദം (%d)\n"
 
-#: modules/pam_exec/pam_exec.c:275
+#: modules/pam_exec/pam_exec.c:279
 #, c-format
 msgid "%s failed: exit code %d"
 msgstr "%s പരാ‍ജയപ്പെട്ടു: %d എന്ന കോഡില്‍ നിന്നും പുറത്ത് കടക്കുക"
 
-#: modules/pam_exec/pam_exec.c:284
+#: modules/pam_exec/pam_exec.c:289
 #, c-format
 msgid "%s failed: caught signal %d%s"
 msgstr "%s പരാ‍ജയപ്പെട്ടു: %d%s സിഗ്നല്‍ ലഭ്യമായിരിക്കുന്നു"
 
-#: modules/pam_exec/pam_exec.c:293
+#: modules/pam_exec/pam_exec.c:299
 #, c-format
 msgid "%s failed: unknown status 0x%x"
 msgstr "%s പരാ‍ജയപ്പെട്ടു: അപരിചിതമായ 0x%x നിലവാരം"
 
-#: modules/pam_faillock/main.c:104
+#: modules/pam_faillock/main.c:103
 #, fuzzy, c-format
 msgid ""
 "Usage: %s [--dir /path/to/tally-directory] [--user username] [--reset]\n"
 msgstr ""
 "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
 
-#: modules/pam_faillock/pam_faillock.c:645 modules/pam_tally/pam_tally.c:553
-#: modules/pam_tally2/pam_tally2.c:562
+#: modules/pam_faillock/pam_faillock.c:618
 #, fuzzy, c-format
 msgid "The account is locked due to %u failed logins."
 msgstr "%u പരാജയപ്പെട്ട ലോഗിനുകള്‍ കാരണം അക്കൌണ്ട് താല്‍ക്കാലികമായി പൂട്ടിയിരിക്കുന്നു"
 
-#: modules/pam_faillock/pam_faillock.c:650
+#: modules/pam_faillock/pam_faillock.c:627
+#: modules/pam_faillock/pam_faillock.c:633
+#, c-format
+msgid "(%d minute left to unlock)"
+msgid_plural "(%d minutes left to unlock)"
+msgstr[0] ""
+msgstr[1] ""
+
+#. TRANSLATORS: only used if dngettext is not supported.
+#: modules/pam_faillock/pam_faillock.c:636
 #, c-format
 msgid "(%d minutes left to unlock)"
 msgstr ""
@@ -360,7 +304,7 @@ msgstr[1] "ശരിയായി അവസാനം ലോഗിന്‍ ചെ
 msgid "There were %d failed login attempts since the last successful login."
 msgstr "ശരിയായി അവസാനം ലോഗിന്‍ ചെയ്ത ശേഷം %d തവണ ലോഗിന്‍ പരാജയപ്പെട്ടു."
 
-#: modules/pam_limits/pam_limits.c:1088
+#: modules/pam_limits/pam_limits.c:1164
 #, fuzzy, c-format
 msgid "There were too many logins for '%s'."
 msgstr "'%s'-ന് അനവധി ലോഗിനുകള്‍."
@@ -402,22 +346,22 @@ msgstr "%s ഫോള്‍ഡറില്‍ നിങ്ങള്‍ക്ക�
 msgid "You have mail in folder %s."
 msgstr "%s ഫോള്‍ഡറില്‍ നിങ്ങള്‍ക്ക് മെയില്‍ ഉണ്ട്."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:107
+#: modules/pam_mkhomedir/pam_mkhomedir.c:123
 #, c-format
 msgid "Creating directory '%s'."
 msgstr "'%s' ഡയറക്ടറി ഉണ്ടാക്കുന്നു."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:174
+#: modules/pam_mkhomedir/pam_mkhomedir.c:206
 #, c-format
 msgid "Unable to create and initialize directory '%s'."
 msgstr "%s ഡയറക്ടറി ഉണ്ടാക്കുവാനും ആരംഭിക്കുവാനും സാധ്യമായില്ല."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:211
+#: modules/pam_pwhistory/pam_pwhistory.c:371
 #: modules/pam_unix/pam_unix_passwd.c:589
 msgid "Password has been already used. Choose another."
 msgstr "അടയാളവാക്ക് നിലവില്‍ ഉപയോഗിത്തിലുള്ളതാണ്. മറ്റൊന്ന് നല്‍കുക."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:218
+#: modules/pam_pwhistory/pam_pwhistory.c:378
 msgid "Password has been already used."
 msgstr "രഹസ്യവാക്ക് നിലവില്‍ ഉപയോഗിച്ചിരിയ്ക്കുന്നു."
 
@@ -453,12 +397,12 @@ msgstr "ശരിയായ സെക്യൂരിറ്റി കോണ്‍�
 msgid "A valid context for %s could not be obtained."
 msgstr ""
 
-#: modules/pam_selinux/pam_selinux.c:629
+#: modules/pam_selinux/pam_selinux.c:640
 #, fuzzy, c-format
 msgid "Security context %s has been assigned."
 msgstr "%s എന്ന സെക്യൂരിറ്റി കോണ്‍ടെക്സ്റ്റ് നല്‍കിയിരിക്കുന്നു"
 
-#: modules/pam_selinux/pam_selinux.c:645
+#: modules/pam_selinux/pam_selinux.c:656
 #, fuzzy, c-format
 msgid "Key creation context %s has been assigned."
 msgstr "കീ ഉണ്ടാക്കുന്നതിനുള്ള കോണ്‍ടെക്സ്റ്റ് ആയ %s നല്‍കിയിരിക്കുന്നു"
@@ -478,66 +422,7 @@ msgstr "pam_set_item() ചെയ്യുന്നതില്‍ പരാജ�
 msgid "login: failure forking: %m"
 msgstr "login: ഫോര്‍ക്ക് ചെയ്യുന്നതില്‍ പരാജയം: %m"
 
-#: modules/pam_tally/pam_tally.c:528 modules/pam_tally2/pam_tally2.c:580
-#, fuzzy, c-format
-msgid "The account is temporarily locked (%ld seconds left)."
-msgstr "അക്കൌണ്ട് താല്‍ക്കാലികമായി പൂട്ടിയിരിക്കുന്നു (%ld നിമിഷങ്ങള്‍ ബാക്കി)"
-
-#: modules/pam_tally/pam_tally.c:729 modules/pam_tally2/pam_tally2.c:846
-msgid "Authentication error"
-msgstr "ആധികാരികത ഉറപ്പാക്കുന്നതില്‍ പിശക്"
-
-#: modules/pam_tally/pam_tally.c:730 modules/pam_tally2/pam_tally2.c:847
-msgid "Service error"
-msgstr "സര്‍വീസ് പിശക്"
-
-#: modules/pam_tally/pam_tally.c:731 modules/pam_tally2/pam_tally2.c:848
-msgid "Unknown user"
-msgstr "അപരിചിതമായ ഉപയോക്താവു്"
-
-#: modules/pam_tally/pam_tally.c:732 modules/pam_tally2/pam_tally2.c:849
-msgid "Unknown error"
-msgstr "അപരിചിതമായ പിശക്"
-
-#: modules/pam_tally/pam_tally.c:751 modules/pam_tally2/pam_tally2.c:871
-#, c-format
-msgid "%s: Bad number given to --reset=\n"
-msgstr "%s:നല്‍കിയിരിക്കുന്ന നംബര്‍ തെറ്റാണ്, --reset=\n"
-
-#: modules/pam_tally/pam_tally.c:755 modules/pam_tally2/pam_tally2.c:875
-#, c-format
-msgid "%s: Unrecognised option %s\n"
-msgstr "%s: Unrecognised ഉപാധി %s\n"
-
-#: modules/pam_tally/pam_tally.c:767
-#, c-format
-msgid ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_tally/pam_tally.c:841 modules/pam_tally2/pam_tally2.c:1014
-#, c-format
-msgid "%s: Can't reset all users to non-zero\n"
-msgstr "%s: എല്ലാ ഉപയോക്താക്കള്‍ക്കും പൂജ്യം അല്ലാതെ ക്രമികരിക്കുവാന്‍ സാധ്യമല്ല\n"
-
-#: modules/pam_tally2/pam_tally2.c:903
-#, c-format
-msgid "Login           Failures Latest failure     From\n"
-msgstr "Login           Failures Latest failure     From\n"
-
-#: modules/pam_tally2/pam_tally2.c:919
-#, c-format
-msgid ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"   [-u username] [--user username]\n"
-"   [-r] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"   [-u username] [--user username]\n"
-"   [-r] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_timestamp/pam_timestamp.c:354
+#: modules/pam_timestamp/pam_timestamp.c:361
 #, fuzzy, c-format
 msgid "Access has been granted (last access was %ld seconds ago)."
 msgstr "അനുവാദം നല്‍കിയിരിക്കുന്നു (ഒടുവില്‍ പ്രവേശിച്ചതു് %ld സെക്കന്‍ഡുകള്‍ക്കു് മുമ്പാണു്)."
@@ -562,7 +447,7 @@ msgid ""
 "You are required to change your password immediately (password expired)."
 msgstr "നിങ്ങളുടെ അടയാളവാക്ക് ഉടനെ മാറ്റേണ്ടതുണ്ട് (അടയാളവാക്ക് മാറ്റുന്നതിന് സമയമായി)"
 
-#: modules/pam_unix/pam_unix_acct.c:265 modules/pam_unix/pam_unix_acct.c:272
+#: modules/pam_unix/pam_unix_acct.c:269 modules/pam_unix/pam_unix_acct.c:276
 #, fuzzy, c-format
 msgid "Warning: your password will expire in %d day."
 msgid_plural "Warning: your password will expire in %d days."
@@ -570,13 +455,23 @@ msgstr[0] "മുന്നറിയിപ്പ്: നിങ്ങളുടെ 
 msgstr[1] "മുന്നറിയിപ്പ്: നിങ്ങളുടെ അടയാളവാക്കിന്റെ കാലാവധി %d ദിവസത്തിനുള്ളില്‍ അവസാനിക്കുന്നു"
 
 #. TRANSLATORS: only used if dngettext is not supported
-#: modules/pam_unix/pam_unix_acct.c:277
+#: modules/pam_unix/pam_unix_acct.c:281
 #, fuzzy, c-format
 msgid "Warning: your password will expire in %d days."
 msgstr "മുന്നറിയിപ്പ്: നിങ്ങളുടെ അടയാളവാക്കിന്റെ കാലാവധി %d ദിവസത്തിനുള്ളില്‍ അവസാനിക്കുന്നു"
 
 #: modules/pam_unix/pam_unix_passwd.c:465
 msgid "NIS password could not be changed."
+msgstr "NIS അടയാളവാക്ക് മാറ്റുവാന്‍ സാധ്യമാകുന്നില്ല."
+
+#: modules/pam_unix/pam_unix_passwd.c:563
+#, fuzzy
+msgid "No password has been supplied."
+msgstr "അടയാളവാക്ക് നല്‍കിയിട്ടില്ല"
+
+#: modules/pam_unix/pam_unix_passwd.c:564
+#, fuzzy
+msgid "The password has not been changed."
 msgstr "NIS അടയാളവാക്ക് മാറ്റുവാന്‍ സാധ്യമാകുന്നില്ല."
 
 #: modules/pam_unix/pam_unix_passwd.c:581
@@ -597,3 +492,81 @@ msgstr "%s-നുളള അടയാളവാക്ക് മാറ്റുന�
 #, fuzzy
 msgid "You must wait longer to change your password."
 msgstr "നിങ്ങളുടെ അടയാളവാക്ക് മാറ്റുന്നതിനായി ഇനിയും കാത്തിരിക്കേണ്ടതാണ്."
+
+#~ msgid "is the same as the old one"
+#~ msgstr "പഴയത് പോലെ തന്നെയാകുന്നതു്"
+
+#~ msgid "memory allocation error"
+#~ msgstr "മെമ്മറി അനുവദിയ്ക്കുന്നതില്‍ പിശക്"
+
+#~ msgid "is a palindrome"
+#~ msgstr "ഒരു പാലിന്‍ഡ്രോം ആണു്"
+
+#~ msgid "case changes only"
+#~ msgstr "അക്ഷരങ്ങളുടെ വലിപ്പം മാത്രം മാറുന്നതു്"
+
+#~ msgid "is too similar to the old one"
+#~ msgstr "പഴയതിന് സാമ്യമുള്ളതു്"
+
+#~ msgid "is too simple"
+#~ msgstr "സാധാരണയുള്ളതു്"
+
+#~ msgid "is rotated"
+#~ msgstr "is rotated"
+
+#~ msgid "not enough character classes"
+#~ msgstr "മതിയായ ക്യാരക്ടര്‍ ക്ലാസ്സുകള്‍ ലഭ്യമല്ല"
+
+#~ msgid "contains too many same characters consecutively"
+#~ msgstr "അടുത്തടുത്ത് ഒരേപോലുള്ള അനവധി അക്ഷരങ്ങളുണ്ടു്"
+
+#~ msgid "contains too long of a monotonic character sequence"
+#~ msgstr "വളരെയധികം ഒരേ തരത്തിലുള്ള അക്ഷരങ്ങളടങ്ങുന്നു"
+
+#~ msgid "contains the user name in some form"
+#~ msgstr "ഉപയോക്താവിന്റെ നാമം ഏതെങ്കിലും ഒരു തരത്തിലുണ്ടു്"
+
+#~ msgid "BAD PASSWORD: %s"
+#~ msgstr "തെറ്റായ അടയാളവാക്ക്: %s"
+
+#, fuzzy
+#~ msgid "The account is temporarily locked (%ld seconds left)."
+#~ msgstr "അക്കൌണ്ട് താല്‍ക്കാലികമായി പൂട്ടിയിരിക്കുന്നു (%ld നിമിഷങ്ങള്‍ ബാക്കി)"
+
+#~ msgid "Authentication error"
+#~ msgstr "ആധികാരികത ഉറപ്പാക്കുന്നതില്‍ പിശക്"
+
+#~ msgid "Service error"
+#~ msgstr "സര്‍വീസ് പിശക്"
+
+#~ msgid "Unknown user"
+#~ msgstr "അപരിചിതമായ ഉപയോക്താവു്"
+
+#~ msgid "Unknown error"
+#~ msgstr "അപരിചിതമായ പിശക്"
+
+#~ msgid "%s: Bad number given to --reset=\n"
+#~ msgstr "%s:നല്‍കിയിരിക്കുന്ന നംബര്‍ തെറ്റാണ്, --reset=\n"
+
+#~ msgid "%s: Unrecognised option %s\n"
+#~ msgstr "%s: Unrecognised ഉപാധി %s\n"
+
+#~ msgid ""
+#~ "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+
+#~ msgid "%s: Can't reset all users to non-zero\n"
+#~ msgstr "%s: എല്ലാ ഉപയോക്താക്കള്‍ക്കും പൂജ്യം അല്ലാതെ ക്രമികരിക്കുവാന്‍ സാധ്യമല്ല\n"
+
+#~ msgid "Login           Failures Latest failure     From\n"
+#~ msgstr "Login           Failures Latest failure     From\n"
+
+#~ msgid ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "   [-u username] [--user username]\n"
+#~ "   [-r] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "   [-u username] [--user username]\n"
+#~ "   [-r] [--reset[=n]] [--quiet]\n"

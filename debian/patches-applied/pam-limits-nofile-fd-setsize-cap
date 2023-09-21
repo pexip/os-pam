@@ -43,7 +43,7 @@ Index: pam/modules/pam_limits/pam_limits.c
 ===================================================================
 --- pam.orig/modules/pam_limits/pam_limits.c
 +++ pam/modules/pam_limits/pam_limits.c
-@@ -451,6 +451,14 @@
+@@ -450,6 +450,14 @@
          pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
      }
      fclose(limitsfile);

@@ -2,12 +2,12 @@
 .\"     Title: pam_end
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_END" "3" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_END" "3" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -59,7 +59,7 @@ is used as an argument to the module specific callback function,
 and
 \fBpam_get_data\fR(3))\&. In this way the module can be given notification of the pass/fail nature of the tear\-down process, and perform any last minute tasks that are appropriate to the module before it is unlinked\&. This argument can be logically OR\*(Aqd with
 \fIPAM_DATA_SILENT\fR
-to indicate to indicate that the module should not treat the call too seriously\&. It is generally used to indicate that the current closing of the library is in a
+to indicate that the module should not treat the call too seriously\&. It is generally used to indicate that the current closing of the library is in a
 \fBfork\fR(2)ed process, and that the parent will take care of cleaning up things that exist outside of the current process space (files etc\&.)\&.
 .PP
 This function

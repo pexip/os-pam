@@ -1,6 +1,9 @@
 sbin/unix_chkpwd	sbin
 sbin/unix_update	sbin
 sbin/mkhomedir_helper	sbin
+sbin/pam_namespace_helper
+sbin/pwhistory_helper
 sbin/pam_timestamp_check	usr/sbin
 sbin/faillock usr/sbin
 modules/pam_faillock/faillock.8 usr/share/man/man8
+usr/lib/systemd/system/pam_namespace.service

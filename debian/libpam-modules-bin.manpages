@@ -1,3 +1,7 @@
 debian/tmp/usr/share/man/man8/mkhomedir_helper.8
 debian/tmp/usr/share/man/man8/unix_*.8
 debian/tmp/usr/share/man/man8/pam_timestamp_check.8
+debian/tmp/usr/share/man/man8/faillock.8
+debian/tmp/usr/share/man/man5/environment.5
+debian/tmp/usr/share/man/man8/pwhistory_helper.8
+modules/pam_namespace/pam_namespace_helper.8

@@ -23,7 +23,7 @@ use_authtok
 
     When password changing enforce the module to use the new password provided
     by a previously stacked password module (this is used in the example of the
-    stacking of the pam_cracklib module documented below).
+    stacking of the pam_passwdqc module documented below).
 
 enforce_for_root
 
@@ -52,10 +52,10 @@ password     required       pam_pwhistory.so
 password     required       pam_unix.so        use_authtok
 
 
-In combination with pam_cracklib:
+In combination with pam_passwdqc:
 
 #%PAM-1.0
-password     required       pam_cracklib.so    retry=3
+password     required       pam_passwdqc.so    config=/etc/passwdqc.conf
 password     required       pam_pwhistory.so   use_authtok
 password     required       pam_unix.so        use_authtok
 

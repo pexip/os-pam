@@ -2,12 +2,12 @@
 .\"     Title: pam_env
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_ENV" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_ENV" "8" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -101,7 +101,9 @@ file to override the default\&.The syntax is the same as for
 .PP
 \fBuser_readenv=\fR\fB\fI0|1\fR\fR
 .RS 4
-Turns on or off the reading of the user specific environment file\&. 0 is off, 1 is on\&. By default this option is off\&.
+Turns on or off the reading of the user specific environment file\&. 0 is off, 1 is on\&. By default this option is off as user supplied environment variables in the PAM environment could affect behavior of subsequent modules in the stack without the consent of the system administrator\&.
+.sp
+Due to problematic security this functionality is deprecated since the 1\&.5\&.0 version and will be removed completely at some point in the future\&.
 .RE
 .SH "MODULE TYPES PROVIDED"
 .PP

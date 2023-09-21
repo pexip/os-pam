@@ -30,17 +30,14 @@ override_dh_auto_configure:
 	dh_auto_configure -- --enable-static --enable-shared \
 		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
 		--enable-isadir=/lib/security \
-		--enable-cracklib \
+		--with-systemdunitdir=/usr/lib/systemd/system \
+		--disable-nis \
 		$(CONFIGURE_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude
 # our module that doesn't match right here
 override_dh_install:
-	sed -e"s/@DEB_HOST_MULTIARCH@/$(DEB_HOST_MULTIARCH)/g" $(d)/libpam0g-dev.install.in > $(d)/libpam0g-dev.install
-ifneq (,$(findstring libpam-modules, $(shell dh_listpackages)))
-	dh_install -plibpam-modules -Xpam_cracklib
-endif
-	dh_install -Nlibpam-modules
+	dh_install
 	# Make sure the md5sums for the templates we ship are
 	# recognized by pam-auth-update.
 	for f in common-auth common-session common-session-noninteractive common-account common-password; do \
@@ -61,14 +58,8 @@ override_dh_installman:
 	pod2man --section 8 --release="Debian GNU/Linux" $(dl)/pam_getenv >$(dl)/pam_getenv.8
 	dh_installman
 	rm -f $(d)/libpam-modules/usr/share/man/man5/pam.conf.5
-	rm -f $(d)/libpam-modules/usr/share/man/man8/pam_cracklib.8
 	rm -f $(d)/libpam-modules/usr/share/man/man8/pam_timestamp_check.8
-
-# dh_link doesn't do wildcards, so we can't auto-link to the right per-arch
-# directory
-override_dh_link:
-	sed -e"s/@DEB_HOST_MULTIARCH@/$(DEB_HOST_MULTIARCH)/g" $(d)/libpam0g-dev.links.in > $(d)/libpam0g-dev.links
-	dh_link
+	rm -f $(d)/libpam-modules/usr/share/man/man8/pam_namespace_helper.8
 
 # using perms that differ from upstream (sgid instead of suid) /and/ that
 # dh_fixperms doesn't want

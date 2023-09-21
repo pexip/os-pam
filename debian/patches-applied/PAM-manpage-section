@@ -35,8 +35,8 @@ Index: pam/doc/man/PAM.8
  .\"    Source: Linux-PAM Manual
  .\"  Language: English
  .\"
--.TH "PAM" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
-+.TH "PAM" "7" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+-.TH "PAM" "8" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
++.TH "PAM" "7" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
  .\" -----------------------------------------------------------------
  .\" * Define some portability stuff
  .\" -----------------------------------------------------------------
@@ -128,7 +128,7 @@ Index: pam/modules/pam_limits/limits.conf.5.xml
 ===================================================================
 --- pam.orig/modules/pam_limits/limits.conf.5.xml
 +++ pam/modules/pam_limits/limits.conf.5.xml
-@@ -346,7 +346,7 @@
+@@ -357,7 +357,7 @@
      <para>
        <citerefentry><refentrytitle>pam_limits</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
        <citerefentry><refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
@@ -141,7 +141,7 @@ Index: pam/modules/pam_limits/limits.conf.5
 ===================================================================
 --- pam.orig/modules/pam_limits/limits.conf.5
 +++ pam/modules/pam_limits/limits.conf.5
-@@ -343,7 +343,7 @@
+@@ -351,7 +351,7 @@
  .PP
  \fBpam_limits\fR(8),
  \fBpam.d\fR(5),
@@ -228,32 +228,6 @@ Index: pam/modules/pam_access/pam_access.8
  .SH "AUTHORS"
  .PP
  The logdaemon style login access control scheme was designed and implemented by Wietse Venema\&. The pam_access PAM module was developed by Alexei Nogin <alexei@nogin\&.dnttm\&.ru>\&. The IPv6 support and the network(address) / netmask feature was developed and provided by Mike Becher <mike\&.becher@lrz\-muenchen\&.de>\&.
-Index: pam/modules/pam_cracklib/pam_cracklib.8.xml
-===================================================================
---- pam.orig/modules/pam_cracklib/pam_cracklib.8.xml
-+++ pam/modules/pam_cracklib/pam_cracklib.8.xml
-@@ -577,7 +577,7 @@
- 	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
-       </citerefentry>,
-       <citerefentry>
--	<refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
-+	<refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
-       </citerefentry>
-     </para>
-   </refsect1>
-Index: pam/modules/pam_cracklib/pam_cracklib.8
-===================================================================
---- pam.orig/modules/pam_cracklib/pam_cracklib.8
-+++ pam/modules/pam_cracklib/pam_cracklib.8
-@@ -357,7 +357,7 @@
- .PP
- \fBpam.conf\fR(5),
- \fBpam.d\fR(5),
--\fBpam\fR(8)
-+\fBpam\fR(7)
- .SH "AUTHOR"
- .PP
- pam_cracklib was written by Cristian Gafton <gafton@redhat\&.com>
 Index: pam/modules/pam_debug/pam_debug.8.xml
 ===================================================================
 --- pam.orig/modules/pam_debug/pam_debug.8.xml
@@ -336,7 +310,7 @@ Index: pam/modules/pam_env/pam_env.8.xml
 ===================================================================
 --- pam.orig/modules/pam_env/pam_env.8.xml
 +++ pam/modules/pam_env/pam_env.8.xml
-@@ -246,7 +246,7 @@
+@@ -254,7 +254,7 @@
          <refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -349,7 +323,7 @@ Index: pam/modules/pam_exec/pam_exec.8.xml
 ===================================================================
 --- pam.orig/modules/pam_exec/pam_exec.8.xml
 +++ pam/modules/pam_exec/pam_exec.8.xml
-@@ -287,7 +287,7 @@
+@@ -303,7 +303,7 @@
  	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -362,7 +336,7 @@ Index: pam/modules/pam_exec/pam_exec.8
 ===================================================================
 --- pam.orig/modules/pam_exec/pam_exec.8
 +++ pam/modules/pam_exec/pam_exec.8
-@@ -177,7 +177,7 @@
+@@ -182,7 +182,7 @@
  .PP
  \fBpam.conf\fR(5),
  \fBpam.d\fR(5),
@@ -687,7 +661,7 @@ Index: pam/modules/pam_mkhomedir/pam_mkhomedir.8.xml
 ===================================================================
 --- pam.orig/modules/pam_mkhomedir/pam_mkhomedir.8.xml
 +++ pam/modules/pam_mkhomedir/pam_mkhomedir.8.xml
-@@ -198,7 +198,7 @@
+@@ -205,7 +205,7 @@
          <refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -700,7 +674,7 @@ Index: pam/modules/pam_mkhomedir/pam_mkhomedir.8
 ===================================================================
 --- pam.orig/modules/pam_mkhomedir/pam_mkhomedir.8
 +++ pam/modules/pam_mkhomedir/pam_mkhomedir.8
-@@ -124,7 +124,7 @@
+@@ -129,7 +129,7 @@
  .SH "SEE ALSO"
  .PP
  \fBpam.d\fR(5),
@@ -713,7 +687,7 @@ Index: pam/modules/pam_motd/pam_motd.8.xml
 ===================================================================
 --- pam.orig/modules/pam_motd/pam_motd.8.xml
 +++ pam/modules/pam_motd/pam_motd.8.xml
-@@ -195,7 +195,7 @@
+@@ -196,7 +196,7 @@
  	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -739,7 +713,7 @@ Index: pam/modules/pam_namespace/pam_namespace.8.xml
 ===================================================================
 --- pam.orig/modules/pam_namespace/pam_namespace.8.xml
 +++ pam/modules/pam_namespace/pam_namespace.8.xml
-@@ -399,7 +399,7 @@
+@@ -362,7 +362,7 @@
          <refentrytitle>mount</refentrytitle><manvolnum>8</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -752,7 +726,7 @@ Index: pam/modules/pam_namespace/pam_namespace.8
 ===================================================================
 --- pam.orig/modules/pam_namespace/pam_namespace.8
 +++ pam/modules/pam_namespace/pam_namespace.8
-@@ -178,7 +178,7 @@
+@@ -148,7 +148,7 @@
  \fBnamespace.conf\fR(5),
  \fBpam.d\fR(5),
  \fBmount\fR(8),
@@ -912,8 +886,8 @@ Index: pam/modules/pam_selinux/pam_selinux.8
  .\"    Source: Linux-PAM Manual
  .\"  Language: English
  .\"
--.TH "PAM_SELINUX" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
-+.TH "PAM_SELINUX" "7" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
+-.TH "PAM_SELINUX" "8" "09/03/2021" "Linux-PAM Manual" "Linux\-PAM Manual"
++.TH "PAM_SELINUX" "7" "09/03/2021" "Linux-PAM Manual" "Linux\-PAM Manual"
  .\" -----------------------------------------------------------------
  .\" * Define some portability stuff
  .\" -----------------------------------------------------------------
@@ -1004,32 +978,6 @@ Index: pam/modules/pam_succeed_if/pam_succeed_if.8
  .SH "AUTHOR"
  .PP
  Nalin Dahyabhai <nalin@redhat\&.com>
-Index: pam/modules/pam_tally/pam_tally.8.xml
-===================================================================
---- pam.orig/modules/pam_tally/pam_tally.8.xml
-+++ pam/modules/pam_tally/pam_tally.8.xml
-@@ -444,7 +444,7 @@
- 	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
-       </citerefentry>,
-       <citerefentry>
--	<refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
-+	<refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
-       </citerefentry>
-     </para>
-   </refsect1>
-Index: pam/modules/pam_tally/pam_tally.8
-===================================================================
---- pam.orig/modules/pam_tally/pam_tally.8
-+++ pam/modules/pam_tally/pam_tally.8
-@@ -250,7 +250,7 @@
- \fBfaillog\fR(8),
- \fBpam.conf\fR(5),
- \fBpam.d\fR(5),
--\fBpam\fR(8)
-+\fBpam\fR(7)
- .SH "AUTHOR"
- .PP
- pam_tally was written by Tim Baverstock and Tomas Mraz\&.
 Index: pam/modules/pam_time/pam_time.8.xml
 ===================================================================
 --- pam.orig/modules/pam_time/pam_time.8.xml
@@ -1504,7 +1452,7 @@ Index: pam/modules/pam_userdb/pam_userdb.8.xml
 ===================================================================
 --- pam.orig/modules/pam_userdb/pam_userdb.8.xml
 +++ pam/modules/pam_userdb/pam_userdb.8.xml
-@@ -278,7 +278,7 @@
+@@ -279,7 +279,7 @@
  	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -1612,8 +1560,8 @@ Index: pam/modules/pam_env/pam_env.8
  .\"    Source: Linux-PAM Manual
  .\"  Language: English
  .\"
--.TH "PAM_ENV" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
-+.TH "PAM_ENV" "7" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+-.TH "PAM_ENV" "8" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
++.TH "PAM_ENV" "7" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
  .\" -----------------------------------------------------------------
  .\" * Define some portability stuff
  .\" -----------------------------------------------------------------
@@ -1669,37 +1617,11 @@ Index: pam/modules/pam_sepermit/sepermit.conf.5
  \fBselinux\fR(8),
  .SH "AUTHOR"
  .PP
-Index: pam/modules/pam_tally2/pam_tally2.8.xml
-===================================================================
---- pam.orig/modules/pam_tally2/pam_tally2.8.xml
-+++ pam/modules/pam_tally2/pam_tally2.8.xml
-@@ -435,7 +435,7 @@
- 	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
-       </citerefentry>,
-       <citerefentry>
--	<refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum>
-+	<refentrytitle>pam</refentrytitle><manvolnum>7</manvolnum>
-       </citerefentry>
-     </para>
-   </refsect1>
-Index: pam/modules/pam_tally2/pam_tally2.8
-===================================================================
---- pam.orig/modules/pam_tally2/pam_tally2.8
-+++ pam/modules/pam_tally2/pam_tally2.8
-@@ -238,7 +238,7 @@
- .PP
- \fBpam.conf\fR(5),
- \fBpam.d\fR(5),
--\fBpam\fR(8)
-+\fBpam\fR(7)
- .SH "AUTHOR"
- .PP
- pam_tally2 was written by Tim Baverstock and Tomas Mraz\&.
 Index: pam/modules/pam_timestamp/pam_timestamp.8.xml
 ===================================================================
 --- pam.orig/modules/pam_timestamp/pam_timestamp.8.xml
 +++ pam/modules/pam_timestamp/pam_timestamp.8.xml
-@@ -188,7 +188,7 @@
+@@ -193,7 +193,7 @@
  	<refentrytitle>pam.d</refentrytitle><manvolnum>5</manvolnum>
        </citerefentry>,
        <citerefentry>
@@ -1712,7 +1634,7 @@ Index: pam/modules/pam_timestamp/pam_timestamp.8
 ===================================================================
 --- pam.orig/modules/pam_timestamp/pam_timestamp.8
 +++ pam/modules/pam_timestamp/pam_timestamp.8
-@@ -124,7 +124,7 @@
+@@ -129,7 +129,7 @@
  \fBpam_timestamp_check\fR(8),
  \fBpam.conf\fR(5),
  \fBpam.d\fR(5),
@@ -1746,7 +1668,7 @@ Index: pam/modules/pam_timestamp/pam_timestamp_check.8
 +\fBpam\fR(7)
  .SH "AUTHOR"
  .PP
- pam_tally was written by Nalin Dahyabhai\&.
+ pam_timestamp was written by Nalin Dahyabhai\&.
 Index: pam/modules/pam_tty_audit/pam_tty_audit.8.xml
 ===================================================================
 --- pam.orig/modules/pam_tty_audit/pam_tty_audit.8.xml

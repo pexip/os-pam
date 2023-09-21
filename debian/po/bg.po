@@ -30,7 +30,7 @@ msgstr "Рестартиране на услуги при обновяване �
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of  services to be restarted now, and correct it if needed."
+"list of services to be restarted now, and correct it if needed."
 msgstr ""
 "Повечето услуги, които използват PAM трябва да бъдат рестартирани за да "
 "могат да използват модулите за новата версия на libpam. Прегледайте списъка "

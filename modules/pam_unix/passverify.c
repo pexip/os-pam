@@ -19,9 +19,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifdef HAVE_LIBXCRYPT
-#include <xcrypt.h>
-#elif defined(HAVE_CRYPT_H)
+#ifdef HAVE_CRYPT_H
 #include <crypt.h>
 #endif
 
@@ -243,12 +241,15 @@ PAMH_ARG_DECL(int get_account_info,
 			 * ...and shadow password file entry for this user,
 			 * if shadowing is enabled
 			 */
+			*spwdent = pam_modutil_getspnam(pamh, name);
+			if (*spwdent == NULL) {
 #ifndef HELPER_COMPILE
-			if (geteuid() || SELINUX_ENABLED)
+				/* still a chance the user can authenticate */
 				return PAM_UNIX_RUN_HELPER;
 #endif
-			*spwdent = pam_modutil_getspnam(pamh, name);
-			if (*spwdent == NULL || (*spwdent)->sp_pwdp == NULL)
+				return PAM_AUTHINFO_UNAVAIL;
+			}
+			if ((*spwdent)->sp_pwdp == NULL)
 				return PAM_AUTHINFO_UNAVAIL;
 		}
 	} else {
@@ -289,13 +290,7 @@ PAMH_ARG_DECL(int check_shadow_expiry,
 		D(("account expired"));
 		return PAM_ACCT_EXPIRED;
 	}
-#if defined(CRYPT_CHECKSALT_AVAILABLE) && CRYPT_CHECKSALT_AVAILABLE
-	if (spent->sp_lstchg == 0 ||
-	    crypt_checksalt(spent->sp_pwdp) == CRYPT_SALT_METHOD_LEGACY ||
-	    crypt_checksalt(spent->sp_pwdp) == CRYPT_SALT_TOO_CHEAP) {
-#else
 	if (spent->sp_lstchg == 0) {
-#endif
 		D(("need a new password"));
 		*daysleft = 0;
 		return PAM_NEW_AUTHTOK_REQD;
@@ -452,7 +447,7 @@ PAMH_ARG_DECL(char * create_password_hash,
 		algoid = "$6$";
 	} else { /* must be crypt/bigcrypt */
 		char tmppass[9];
-		char *crypted;
+		char *hashed;
 
 		crypt_make_salt(salt, 2);
 		if (off(UNIX_BIGCRYPT, ctrl) && strlen(password) > 8) {
@@ -460,10 +455,10 @@ PAMH_ARG_DECL(char * create_password_hash,
 			tmppass[sizeof(tmppass)-1] = '\0';
 			password = tmppass;
 		}
-		crypted = bigcrypt(password, salt);
+		hashed = bigcrypt(password, salt);
 		memset(tmppass, '\0', sizeof(tmppass));
 		password = NULL;
-		return crypted;
+		return hashed;
 	}
 
 #if defined(CRYPT_GENSALT_IMPLEMENTS_AUTO_ENTROPY) && CRYPT_GENSALT_IMPLEMENTS_AUTO_ENTROPY
@@ -473,23 +468,11 @@ PAMH_ARG_DECL(char * create_password_hash,
 	 */
 	sp = crypt_gensalt_rn(algoid, rounds, NULL, 0, salt, sizeof(salt));
 #else
-#ifdef HAVE_CRYPT_GENSALT_R
-	if (on(UNIX_BLOWFISH_PASS, ctrl)) {
-		char entropy[17];
-		crypt_make_salt(entropy, sizeof(entropy) - 1);
-		sp = crypt_gensalt_r (algoid, rounds,
-				      entropy, sizeof(entropy),
-				      salt, sizeof(salt));
-	} else {
-#endif
-		sp = stpcpy(salt, algoid);
-		if (on(UNIX_ALGO_ROUNDS, ctrl)) {
-			sp += snprintf(sp, sizeof(salt) - (16 + 1 + (sp - salt)), "rounds=%u$", rounds);
-		}
-		crypt_make_salt(sp, 16);
-#ifdef HAVE_CRYPT_GENSALT_R
+	sp = stpcpy(salt, algoid);
+	if (on(UNIX_ALGO_ROUNDS, ctrl)) {
+		sp += snprintf(sp, sizeof(salt) - (16 + 1 + (sp - salt)), "rounds=%u$", rounds);
 	}
-#endif
+	crypt_make_salt(sp, 16);
 #endif /* CRYPT_GENSALT_IMPLEMENTS_AUTO_ENTROPY */
 #ifdef HAVE_CRYPT_R
 	sp = NULL;
@@ -650,7 +633,7 @@ save_old_password(pam_handle_t *pamh, const char *forwho, const char *oldpass,
     struct stat st;
     size_t len = strlen(forwho);
 #ifdef WITH_SELINUX
-    security_context_t prev_context=NULL;
+    char *prev_context_raw = NULL;
 #endif
 
     if (howmany < 0) {
@@ -665,20 +648,20 @@ save_old_password(pam_handle_t *pamh, const char *forwho, const char *oldpass,
 
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      security_context_t passwd_context=NULL;
-      if (getfilecon("/etc/passwd",&passwd_context)<0) {
+      char *passwd_context_raw = NULL;
+      if (getfilecon_raw("/etc/passwd",&passwd_context_raw)<0) {
         return PAM_AUTHTOK_ERR;
       };
-      if (getfscreatecon(&prev_context)<0) {
-        freecon(passwd_context);
+      if (getfscreatecon_raw(&prev_context_raw)<0) {
+        freecon(passwd_context_raw);
         return PAM_AUTHTOK_ERR;
       }
-      if (setfscreatecon(passwd_context)) {
-        freecon(passwd_context);
-        freecon(prev_context);
+      if (setfscreatecon_raw(passwd_context_raw)) {
+        freecon(passwd_context_raw);
+        freecon(prev_context_raw);
         return PAM_AUTHTOK_ERR;
       }
-      freecon(passwd_context);
+      freecon(passwd_context_raw);
     }
 #endif
     pwfile = fopen(OPW_TMPFILE, "w");
@@ -796,12 +779,12 @@ done:
     }
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      if (setfscreatecon(prev_context)) {
+      if (setfscreatecon_raw(prev_context_raw)) {
         err = 1;
       }
-      if (prev_context)
-        freecon(prev_context);
-      prev_context=NULL;
+      if (prev_context_raw)
+        freecon(prev_context_raw);
+      prev_context_raw = NULL;
     }
 #endif
     if (!err) {
@@ -821,26 +804,26 @@ PAMH_ARG_DECL(int unix_update_passwd,
     int err = 1;
     int oldmask;
 #ifdef WITH_SELINUX
-    security_context_t prev_context=NULL;
+    char *prev_context_raw = NULL;
 #endif
 
     oldmask = umask(077);
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      security_context_t passwd_context=NULL;
-      if (getfilecon("/etc/passwd",&passwd_context)<0) {
+      char *passwd_context_raw = NULL;
+      if (getfilecon_raw("/etc/passwd",&passwd_context_raw)<0) {
 	return PAM_AUTHTOK_ERR;
       };
-      if (getfscreatecon(&prev_context)<0) {
-	freecon(passwd_context);
+      if (getfscreatecon_raw(&prev_context_raw)<0) {
+	freecon(passwd_context_raw);
 	return PAM_AUTHTOK_ERR;
       }
-      if (setfscreatecon(passwd_context)) {
-	freecon(passwd_context);
-	freecon(prev_context);
+      if (setfscreatecon_raw(passwd_context_raw)) {
+	freecon(passwd_context_raw);
+	freecon(prev_context_raw);
 	return PAM_AUTHTOK_ERR;
       }
-      freecon(passwd_context);
+      freecon(passwd_context_raw);
     }
 #endif
     pwfile = fopen(PW_TMPFILE, "w");
@@ -919,12 +902,12 @@ done:
     }
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      if (setfscreatecon(prev_context)) {
+      if (setfscreatecon_raw(prev_context_raw)) {
 	err = 1;
       }
-      if (prev_context)
-	freecon(prev_context);
-      prev_context=NULL;
+      if (prev_context_raw)
+	freecon(prev_context_raw);
+      prev_context_raw = NULL;
     }
 #endif
     if (!err) {
@@ -945,27 +928,27 @@ PAMH_ARG_DECL(int unix_update_shadow,
     int oldmask;
     int wroteentry = 0;
 #ifdef WITH_SELINUX
-    security_context_t prev_context=NULL;
+    char *prev_context_raw = NULL;
 #endif
 
     oldmask = umask(077);
 
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      security_context_t shadow_context=NULL;
-      if (getfilecon("/etc/shadow",&shadow_context)<0) {
+      char *shadow_context_raw = NULL;
+      if (getfilecon_raw("/etc/shadow",&shadow_context_raw)<0) {
 	return PAM_AUTHTOK_ERR;
       };
-      if (getfscreatecon(&prev_context)<0) {
-	freecon(shadow_context);
+      if (getfscreatecon_raw(&prev_context_raw)<0) {
+	freecon(shadow_context_raw);
 	return PAM_AUTHTOK_ERR;
       }
-      if (setfscreatecon(shadow_context)) {
-	freecon(shadow_context);
-	freecon(prev_context);
+      if (setfscreatecon_raw(shadow_context_raw)) {
+	freecon(shadow_context_raw);
+	freecon(prev_context_raw);
 	return PAM_AUTHTOK_ERR;
       }
-      freecon(shadow_context);
+      freecon(shadow_context_raw);
     }
 #endif
     pwfile = fopen(SH_TMPFILE, "w");
@@ -1065,12 +1048,12 @@ PAMH_ARG_DECL(int unix_update_shadow,
 
 #ifdef WITH_SELINUX
     if (SELINUX_ENABLED) {
-      if (setfscreatecon(prev_context)) {
+      if (setfscreatecon_raw(prev_context_raw)) {
 	err = 1;
       }
-      if (prev_context)
-	freecon(prev_context);
-      prev_context=NULL;
+      if (prev_context_raw)
+	freecon(prev_context_raw);
+      prev_context_raw = NULL;
     }
 #endif
 
@@ -1096,6 +1079,12 @@ helper_verify_password(const char *name, const char *p, int nullok)
 	if (pwd == NULL || hash == NULL) {
 		helper_log_err(LOG_NOTICE, "check pass; user unknown");
 		retval = PAM_USER_UNKNOWN;
+	} else if (p[0] == '\0' && nullok) {
+		if (hash[0] == '\0') {
+			retval = PAM_SUCCESS;
+		} else {
+			retval = PAM_AUTH_ERR;
+		}
 	} else {
 		retval = verify_pwd_hash(p, hash, nullok);
 	}
@@ -1111,6 +1100,7 @@ helper_verify_password(const char *name, const char *p, int nullok)
 }
 
 void
+PAM_FORMAT((printf, 2, 3))
 helper_log_err(int err, const char *format, ...)
 {
 	va_list args;
@@ -1178,49 +1168,6 @@ getuidname(uid_t uid)
         username[sizeof(username) - 1] = '\0';
 
         return username;
-}
-
-int
-read_passwords(int fd, int npass, char **passwords)
-{
-        /* The passwords array must contain npass preallocated
-         * buffers of length MAXPASS + 1
-         */
-        int rbytes = 0;
-        int offset = 0;
-        int i = 0;
-        char *pptr;
-        while (npass > 0) {
-                rbytes = read(fd, passwords[i]+offset, MAXPASS+1-offset);
-
-                if (rbytes < 0) {
-                        if (errno == EINTR) continue;
-                        break;
-                }
-                if (rbytes == 0)
-                        break;
-
-                while (npass > 0 && (pptr=memchr(passwords[i]+offset, '\0', rbytes))
-                        != NULL) {
-                        rbytes -= pptr - (passwords[i]+offset) + 1;
-                        i++;
-                        offset = 0;
-                        npass--;
-                        if (rbytes > 0) {
-                                if (npass > 0)
-                                        memcpy(passwords[i], pptr+1, rbytes);
-                                memset(pptr+1, '\0', rbytes);
-                        }
-                }
-                offset += rbytes;
-        }
-
-        /* clear up */
-        if (offset > 0 && npass > 0) {
-                memset(passwords[i], '\0', offset);
-        }
-
-        return i;
 }
 
 #endif

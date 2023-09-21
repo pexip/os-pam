@@ -1,0 +1,7 @@
+Tests: pam-auth-update
+Depends: libpam-modules, libpam-runtime, libpam0g
+Restrictions:  needs-root, allow-stderr
+
+Tests: pam-test
+Depends: libpam-modules, libpam-runtime, libpam0g, python3-pam
+Restrictions:  needs-root

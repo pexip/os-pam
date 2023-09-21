@@ -11,7 +11,7 @@ Index: pam/modules/pam_limits/pam_limits.c
 ===================================================================
 --- pam.orig/modules/pam_limits/pam_limits.c
 +++ pam/modules/pam_limits/pam_limits.c
-@@ -1046,6 +1046,8 @@
+@@ -1111,6 +1111,8 @@
  	if (res != 0)
  	  pam_syslog(pamh, LOG_ERR, "Could not set limit for '%s': %m",
  		     rlimit2str(i));

@@ -11,7 +11,7 @@ Index: pam/modules/pam_limits/pam_limits.c
 ===================================================================
 --- pam.orig/modules/pam_limits/pam_limits.c
 +++ pam/modules/pam_limits/pam_limits.c
-@@ -1043,9 +1043,19 @@
+@@ -1108,9 +1108,19 @@
          if (pl->limits[i].limit.rlim_cur > pl->limits[i].limit.rlim_max)
              pl->limits[i].limit.rlim_cur = pl->limits[i].limit.rlim_max;
  	res = setrlimit(i, &pl->limits[i].limit);

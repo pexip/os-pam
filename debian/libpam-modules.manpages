@@ -1,2 +1,3 @@
 debian/tmp/usr/share/man/man8/pam_*.8
 debian/tmp/usr/share/man/man5/*conf.5
+modules/pam_namespace/pam_namespace.8

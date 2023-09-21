@@ -17,7 +17,7 @@ Index: pam/modules/pam_limits/pam_limits.c
 ===================================================================
 --- pam.orig/modules/pam_limits/pam_limits.c
 +++ pam/modules/pam_limits/pam_limits.c
-@@ -46,6 +46,14 @@
+@@ -47,6 +47,14 @@
  #include <libaudit.h>
  #endif
  
@@ -32,7 +32,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  /* Module defines */
  #define LINE_LENGTH 1024
  
-@@ -83,6 +91,7 @@
+@@ -84,6 +92,7 @@
  
  /* internal data */
  struct pam_limit_s {
@@ -40,7 +40,7 @@ Index: pam/modules/pam_limits/pam_limits.c
      int login_limit;     /* the max logins limit */
      int login_limit_def; /* which entry set the login limit */
      int flag_numsyslogins; /* whether to limit logins only for a
-@@ -448,9 +457,18 @@
+@@ -447,9 +456,18 @@
  {
      int i;
      int retval = PAM_SUCCESS;
@@ -59,7 +59,7 @@ Index: pam/modules/pam_limits/pam_limits.c
      for(i = 0; i < RLIM_NLIMITS; i++) {
  	int r = getrlimit(i, &pl->limits[i].limit);
  	if (r == -1) {
-@@ -466,18 +484,68 @@
+@@ -465,18 +483,68 @@
      }
  
  #ifdef __linux__
@@ -134,7 +134,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  
      errno = 0;
      pl->priority = getpriority (PRIO_PROCESS, 0);
-@@ -816,7 +884,7 @@
+@@ -881,7 +949,7 @@
  
              if (strcmp(uname, domain) == 0) /* this user have a limit */
                  process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
@@ -143,7 +143,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -842,7 +910,7 @@
+@@ -907,7 +975,7 @@
  			    process_limit(pamh, LIMITS_DEF_GROUP, ltype, item, value, ctrl,
  					  pl);
  		}
@@ -152,7 +152,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  		if (ctrl & PAM_DEBUG_ARG) {
  			pam_syslog(pamh, LOG_DEBUG,
  				   "checking if %s is in group %s",
-@@ -876,7 +944,7 @@
+@@ -941,7 +1009,7 @@
              } else {
  		switch(rngtype) {
  		    case LIMIT_RANGE_NONE:
@@ -161,7 +161,7 @@ Index: pam/modules/pam_limits/pam_limits.c
  			    process_limit(pamh, LIMITS_DEF_DEFAULT, ltype, item, value, ctrl,
  					  pl);
  			break;
-@@ -1062,6 +1130,8 @@
+@@ -1134,6 +1202,8 @@
          return PAM_ABORT;
      }
  
@@ -174,7 +174,7 @@ Index: pam/modules/pam_limits/limits.conf
 ===================================================================
 --- pam.orig/modules/pam_limits/limits.conf
 +++ pam/modules/pam_limits/limits.conf
-@@ -11,6 +11,9 @@
+@@ -22,6 +22,9 @@
  #        - the wildcard *, for default entry
  #        - the wildcard %, can be also used with %group syntax,
  #                 for maxlogin limit
@@ -184,7 +184,7 @@ Index: pam/modules/pam_limits/limits.conf
  #
  #<type> can have the two values:
  #        - "soft" for enforcing the soft limits
-@@ -41,6 +44,7 @@
+@@ -52,6 +55,7 @@
  #
  
  #*               soft    core            0
@@ -208,7 +208,7 @@ Index: pam/modules/pam_limits/limits.conf.5.xml
          </listitem>
        </varlistentry>
  
-@@ -323,6 +328,7 @@
+@@ -333,6 +338,7 @@
      </para>
      <programlisting>
  *               soft    core            0
@@ -220,7 +220,7 @@ Index: pam/modules/pam_limits/limits.conf.5
 ===================================================================
 --- pam.orig/modules/pam_limits/limits.conf.5
 +++ pam/modules/pam_limits/limits.conf.5
-@@ -142,6 +142,10 @@
+@@ -145,6 +145,10 @@
  \fB%:\fR\fI<gid>\fR
  applicable to maxlogins limit only\&. It limits the total number of logins of all users that are member of the group with the specified gid\&.
  .RE
@@ -231,7 +231,7 @@ Index: pam/modules/pam_limits/limits.conf.5
  .RE
  .PP
  \fB<type>\fR
-@@ -317,6 +321,7 @@
+@@ -327,6 +331,7 @@
  .\}
  .nf
  *               soft    core            0
@@ -243,7 +243,7 @@ Index: pam/modules/pam_limits/README
 ===================================================================
 --- pam.orig/modules/pam_limits/README
 +++ pam/modules/pam_limits/README
-@@ -54,6 +54,7 @@
+@@ -56,6 +56,7 @@
  limits.conf.
  
  *               soft    core            0

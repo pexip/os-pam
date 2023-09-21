@@ -5,13 +5,13 @@
 # Translators:
 # Roman Spirgi <bigant@fedoraproject.org>, 2012
 # Tomáš Mráz <tmraz@fedoraproject.org>, 2016. #zanata
-# Dmitry V. Levin <ldv@altlinux.org>, 2020.
+# Dmitry V. Levin <ldv@altlinux.org>, 2020, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: Linux-PAM\n"
 "Report-Msgid-Bugs-To: https://github.com/linux-pam/linux-pam/issues\n"
-"POT-Creation-Date: 2020-06-08 10:18+0000\n"
-"PO-Revision-Date: 2020-03-15 23:38+0000\n"
+"POT-Creation-Date: 2021-07-20 20:00+0000\n"
+"PO-Revision-Date: 2021-07-21 13:28+0000\n"
 "Last-Translator: Dmitry V. Levin <ldv@altlinux.org>\n"
 "Language-Team: German <https://translate.fedoraproject.org/projects/linux-"
 "pam/master/de/>\n"
@@ -20,23 +20,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 3.11.3\n"
+"X-Generator: Weblate 4.7.2\n"
 
-#: libpam_misc/misc_conv.c:33
-msgid "...Time is running out...\n"
-msgstr "...Time läuft ab...\n"
-
-#: libpam_misc/misc_conv.c:34
-msgid "...Sorry, your time is up!\n"
-msgstr "...Ihre Zeit ist abgelaufen.\n"
-
-#: libpam_misc/misc_conv.c:346
-#, c-format
-msgid "erroneous conversation (%d)\n"
-msgstr "fehlerhafte Kommunikation (%d)\n"
-
-#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:178
-#: modules/pam_userdb/pam_userdb.c:55
+#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:181
+#: modules/pam_userdb/pam_userdb.c:53
 msgid "Password: "
 msgstr "Passwort: "
 
@@ -220,100 +207,60 @@ msgstr "Anwendung muss libpam wieder aufrufen"
 msgid "Unknown PAM error"
 msgstr "Unbekannter PAM-Fehler"
 
-#: modules/pam_cracklib/pam_cracklib.c:601
-msgid "is the same as the old one"
-msgstr "ist das gleiche wie das Alte"
+#: libpam_misc/misc_conv.c:33
+msgid "...Time is running out...\n"
+msgstr "...Zeit läuft ab...\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:607
-#: modules/pam_cracklib/pam_cracklib.c:611
-#: modules/pam_cracklib/pam_cracklib.c:621
-msgid "memory allocation error"
-msgstr "Fehler beim Allozieren von Speicher"
+#: libpam_misc/misc_conv.c:34
+msgid "...Sorry, your time is up!\n"
+msgstr "...Ihre Zeit ist abgelaufen!\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:626
-msgid "is a palindrome"
-msgstr "ist ein Palindrome"
-
-#: modules/pam_cracklib/pam_cracklib.c:629
-msgid "case changes only"
-msgstr "nur Änderungen bei der Gross-/Kleinschreibung"
-
-#: modules/pam_cracklib/pam_cracklib.c:632
-msgid "is too similar to the old one"
-msgstr "ist dem alten zu ähnlich"
-
-#: modules/pam_cracklib/pam_cracklib.c:635
-msgid "is too simple"
-msgstr "ist zu einfach"
-
-#: modules/pam_cracklib/pam_cracklib.c:638
-msgid "is rotated"
-msgstr "wurde gedreht"
-
-#: modules/pam_cracklib/pam_cracklib.c:641
-msgid "not enough character classes"
-msgstr "nicht genug unterschiedliche Arten von Zeichen"
-
-#: modules/pam_cracklib/pam_cracklib.c:644
-msgid "contains too many same characters consecutively"
-msgstr "das gleiche Zeichen wurde so oft hintereinander verwendet"
-
-#: modules/pam_cracklib/pam_cracklib.c:647
-msgid "contains too long of a monotonic character sequence"
-msgstr "Der gesetzte Wert beinhaltet zu lange monotone Zeichenfolgen"
-
-#: modules/pam_cracklib/pam_cracklib.c:650
-msgid "contains the user name in some form"
-msgstr "enthält den Benutzernamen in irgendeiner Form"
-
-#: modules/pam_cracklib/pam_cracklib.c:684
-#: modules/pam_unix/pam_unix_passwd.c:563
-msgid "No password has been supplied."
-msgstr "Kein Passwort angegeben."
-
-#: modules/pam_cracklib/pam_cracklib.c:685
-#: modules/pam_unix/pam_unix_passwd.c:564
-msgid "The password has not been changed."
-msgstr "Passwort nicht geändert."
-
-#: modules/pam_cracklib/pam_cracklib.c:706
-#: modules/pam_cracklib/pam_cracklib.c:788
+#: libpam_misc/misc_conv.c:348
 #, c-format
-msgid "BAD PASSWORD: %s"
-msgstr "Schlechtes Passwort: %s"
+msgid "erroneous conversation (%d)\n"
+msgstr "fehlerhafte Kommunikation (%d)\n"
 
-#: modules/pam_exec/pam_exec.c:275
+#: modules/pam_exec/pam_exec.c:279
 #, c-format
 msgid "%s failed: exit code %d"
 msgstr "%s schlug fehl: Fehlercode %d"
 
-#: modules/pam_exec/pam_exec.c:284
+#: modules/pam_exec/pam_exec.c:289
 #, c-format
 msgid "%s failed: caught signal %d%s"
 msgstr "%s schlug fehl: Signal %d%s erhalten"
 
-#: modules/pam_exec/pam_exec.c:293
+#: modules/pam_exec/pam_exec.c:299
 #, c-format
 msgid "%s failed: unknown status 0x%x"
 msgstr "%s schlug fehl: Unbekannter Status 0x%x"
 
-#: modules/pam_faillock/main.c:104
-#, fuzzy, c-format
+#: modules/pam_faillock/main.c:103
+#, c-format
 msgid ""
 "Usage: %s [--dir /path/to/tally-directory] [--user username] [--reset]\n"
 msgstr ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+"Aufruf: %s [--dir /path/to/tally-Verzeichnis] [--user Benutzername] [--"
+"reset]\n"
 
-#: modules/pam_faillock/pam_faillock.c:645 modules/pam_tally/pam_tally.c:553
-#: modules/pam_tally2/pam_tally2.c:562
+#: modules/pam_faillock/pam_faillock.c:618
 #, c-format
 msgid "The account is locked due to %u failed logins."
 msgstr "Das Konto ist wegen %u fehlgeschlagener Anmelde-Versuche gesperrt."
 
-#: modules/pam_faillock/pam_faillock.c:650
+#: modules/pam_faillock/pam_faillock.c:627
+#: modules/pam_faillock/pam_faillock.c:633
+#, c-format
+msgid "(%d minute left to unlock)"
+msgid_plural "(%d minutes left to unlock)"
+msgstr[0] "(noch %d Minute zum Entsperren)"
+msgstr[1] "(noch %d Minuten zum Entsperren)"
+
+#. TRANSLATORS: only used if dngettext is not supported.
+#: modules/pam_faillock/pam_faillock.c:636
 #, c-format
 msgid "(%d minutes left to unlock)"
-msgstr ""
+msgstr "(noch %d Minuten zum Entsperren)"
 
 #. TRANSLATORS: "strftime options for date of last login"
 #: modules/pam_lastlog/pam_lastlog.c:318 modules/pam_lastlog/pam_lastlog.c:579
@@ -365,7 +312,7 @@ msgid "There were %d failed login attempts since the last successful login."
 msgstr ""
 "Es gab %d fehlgeschlagene Versuche seit der letzten erfolgreichen Anmeldung."
 
-#: modules/pam_limits/pam_limits.c:1088
+#: modules/pam_limits/pam_limits.c:1164
 #, c-format
 msgid "There were too many logins for '%s'."
 msgstr "Zu viele Anmeldungen für '%s'."
@@ -406,22 +353,22 @@ msgstr "Sie haben alte Nachrichten in %s."
 msgid "You have mail in folder %s."
 msgstr "Sie haben Nachrichten in %s."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:107
+#: modules/pam_mkhomedir/pam_mkhomedir.c:123
 #, c-format
 msgid "Creating directory '%s'."
 msgstr "Erstelle Verzeichnis '%s'."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:174
+#: modules/pam_mkhomedir/pam_mkhomedir.c:206
 #, c-format
 msgid "Unable to create and initialize directory '%s'."
 msgstr "Verzeichnis '%s' kann nicht erstellt und initialisiert werden."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:211
+#: modules/pam_pwhistory/pam_pwhistory.c:371
 #: modules/pam_unix/pam_unix_passwd.c:589
 msgid "Password has been already used. Choose another."
 msgstr "Passwort wurde bereits verwendet. Wählen Sie ein anderes aus."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:218
+#: modules/pam_pwhistory/pam_pwhistory.c:378
 msgid "Password has been already used."
 msgstr "Das gleiche Passwort wurde bereits einmal verwendet."
 
@@ -456,12 +403,12 @@ msgstr "Kein gültiger Sicherheitskontext."
 msgid "A valid context for %s could not be obtained."
 msgstr "Unfähig einen gültigen Kontext zu erhalten für %s."
 
-#: modules/pam_selinux/pam_selinux.c:629
+#: modules/pam_selinux/pam_selinux.c:640
 #, c-format
 msgid "Security context %s has been assigned."
 msgstr "Sicherheitskontext %s zugewiesen."
 
-#: modules/pam_selinux/pam_selinux.c:645
+#: modules/pam_selinux/pam_selinux.c:656
 #, c-format
 msgid "Key creation context %s has been assigned."
 msgstr "Schlüssel-Erzeugungskontext %s zugeordnet."
@@ -481,67 +428,7 @@ msgstr "Fehler bei pam_set_item()\n"
 msgid "login: failure forking: %m"
 msgstr "Anmeldung: Fehler bei Abspaltung: %m"
 
-#: modules/pam_tally/pam_tally.c:528 modules/pam_tally2/pam_tally2.c:580
-#, c-format
-msgid "The account is temporarily locked (%ld seconds left)."
-msgstr "Konto temporär gesperrt (noch %ld Sekunden)."
-
-#: modules/pam_tally/pam_tally.c:729 modules/pam_tally2/pam_tally2.c:846
-msgid "Authentication error"
-msgstr "Authentifizierungsfehler"
-
-#: modules/pam_tally/pam_tally.c:730 modules/pam_tally2/pam_tally2.c:847
-msgid "Service error"
-msgstr "Dienstfehler"
-
-#: modules/pam_tally/pam_tally.c:731 modules/pam_tally2/pam_tally2.c:848
-msgid "Unknown user"
-msgstr "Unbekannter Benutzer"
-
-#: modules/pam_tally/pam_tally.c:732 modules/pam_tally2/pam_tally2.c:849
-msgid "Unknown error"
-msgstr "Unbekannter Fehler"
-
-#: modules/pam_tally/pam_tally.c:751 modules/pam_tally2/pam_tally2.c:871
-#, c-format
-msgid "%s: Bad number given to --reset=\n"
-msgstr "%s: Ungültige Nummer für --reset=\n"
-
-#: modules/pam_tally/pam_tally.c:755 modules/pam_tally2/pam_tally2.c:875
-#, c-format
-msgid "%s: Unrecognised option %s\n"
-msgstr "%s: Nicht erkannte Option: %s\n"
-
-#: modules/pam_tally/pam_tally.c:767
-#, c-format
-msgid ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_tally/pam_tally.c:841 modules/pam_tally2/pam_tally2.c:1014
-#, c-format
-msgid "%s: Can't reset all users to non-zero\n"
-msgstr ""
-"%s: Es können nicht alle Benutzer auf Nicht-null zurückgesetzt werden\n"
-
-#: modules/pam_tally2/pam_tally2.c:903
-#, c-format
-msgid "Login           Failures Latest failure     From\n"
-msgstr "Account         Fehler   Letzter Versuch    Von\n"
-
-#: modules/pam_tally2/pam_tally2.c:919
-#, c-format
-msgid ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"   [-u username] [--user username]\n"
-"   [-r] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"    [-u username] [--user username]\n"
-"    [-r] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_timestamp/pam_timestamp.c:354
+#: modules/pam_timestamp/pam_timestamp.c:361
 #, c-format
 msgid "Access has been granted (last access was %ld seconds ago)."
 msgstr "Zugriff erlaubt (letzter Zugriff war vor %ld Sekunden)."
@@ -561,7 +448,7 @@ msgid ""
 "You are required to change your password immediately (password expired)."
 msgstr "Sie müssen Ihr Passwort sofort ändern (Passwortablauf)."
 
-#: modules/pam_unix/pam_unix_acct.c:265 modules/pam_unix/pam_unix_acct.c:272
+#: modules/pam_unix/pam_unix_acct.c:269 modules/pam_unix/pam_unix_acct.c:276
 #, c-format
 msgid "Warning: your password will expire in %d day."
 msgid_plural "Warning: your password will expire in %d days."
@@ -569,7 +456,7 @@ msgstr[0] "Warnung: Ihr Passwort läuft in %d Tag ab."
 msgstr[1] "Warnung: Ihr Passwort läuft in %d Tagen ab."
 
 #. TRANSLATORS: only used if dngettext is not supported
-#: modules/pam_unix/pam_unix_acct.c:277
+#: modules/pam_unix/pam_unix_acct.c:281
 #, c-format
 msgid "Warning: your password will expire in %d days."
 msgstr "Warnung: Ihr Passwort läuft in %d Tagen ab."
@@ -577,6 +464,14 @@ msgstr "Warnung: Ihr Passwort läuft in %d Tagen ab."
 #: modules/pam_unix/pam_unix_passwd.c:465
 msgid "NIS password could not be changed."
 msgstr "Änderung des NIS-Passworts nicht möglich."
+
+#: modules/pam_unix/pam_unix_passwd.c:563
+msgid "No password has been supplied."
+msgstr "Kein Passwort angegeben."
+
+#: modules/pam_unix/pam_unix_passwd.c:564
+msgid "The password has not been changed."
+msgstr "Passwort nicht geändert."
 
 #: modules/pam_unix/pam_unix_passwd.c:581
 msgid "You must choose a shorter password."
@@ -594,3 +489,82 @@ msgstr "Ändern des Passworts für %s."
 #: modules/pam_unix/pam_unix_passwd.c:722
 msgid "You must wait longer to change your password."
 msgstr "Sie können Ihr Passwort noch nicht ändern."
+
+#~ msgid "is the same as the old one"
+#~ msgstr "ist das gleiche wie das Alte"
+
+#~ msgid "memory allocation error"
+#~ msgstr "Fehler beim Allozieren von Speicher"
+
+#~ msgid "is a palindrome"
+#~ msgstr "ist ein Palindrome"
+
+#~ msgid "case changes only"
+#~ msgstr "nur Änderungen bei der Gross-/Kleinschreibung"
+
+#~ msgid "is too similar to the old one"
+#~ msgstr "ist dem alten zu ähnlich"
+
+#~ msgid "is too simple"
+#~ msgstr "ist zu einfach"
+
+#~ msgid "is rotated"
+#~ msgstr "wurde gedreht"
+
+#~ msgid "not enough character classes"
+#~ msgstr "nicht genug unterschiedliche Arten von Zeichen"
+
+#~ msgid "contains too many same characters consecutively"
+#~ msgstr "das gleiche Zeichen wurde so oft hintereinander verwendet"
+
+#~ msgid "contains too long of a monotonic character sequence"
+#~ msgstr "Der gesetzte Wert beinhaltet zu lange monotone Zeichenfolgen"
+
+#~ msgid "contains the user name in some form"
+#~ msgstr "enthält den Benutzernamen in irgendeiner Form"
+
+#~ msgid "BAD PASSWORD: %s"
+#~ msgstr "Schlechtes Passwort: %s"
+
+#~ msgid "The account is temporarily locked (%ld seconds left)."
+#~ msgstr "Konto temporär gesperrt (noch %ld Sekunden)."
+
+#~ msgid "Authentication error"
+#~ msgstr "Authentifizierungsfehler"
+
+#~ msgid "Service error"
+#~ msgstr "Dienstfehler"
+
+#~ msgid "Unknown user"
+#~ msgstr "Unbekannter Benutzer"
+
+#~ msgid "Unknown error"
+#~ msgstr "Unbekannter Fehler"
+
+#~ msgid "%s: Bad number given to --reset=\n"
+#~ msgstr "%s: Ungültige Nummer für --reset=\n"
+
+#~ msgid "%s: Unrecognised option %s\n"
+#~ msgstr "%s: Nicht erkannte Option: %s\n"
+
+#~ msgid ""
+#~ "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [--file verwurzelter-Dateiname] [--user Benutzername] [--reset[=n]] "
+#~ "[--quiet]\n"
+
+#~ msgid "%s: Can't reset all users to non-zero\n"
+#~ msgstr ""
+#~ "%s: Es können nicht alle Benutzer auf Nicht-null zurückgesetzt werden\n"
+
+#~ msgid "Login           Failures Latest failure     From\n"
+#~ msgstr "Account         Fehler   Letzter Versuch    Von\n"
+
+#~ msgid ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "   [-u username] [--user username]\n"
+#~ "   [-r] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "    [-u username] [--user username]\n"
+#~ "    [-r] [--reset[=n]] [--quiet]\n"
