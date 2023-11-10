@@ -1,3 +1,1550 @@
+2021-09-03  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Fix a typo found using codespell tool.
+	* modules/pam_pwhistory/pam_pwhistory.c: Replace "crypted password" with
+	"hashed password" in comment.
+	* modules/pam_unix/passverify.c (create_password_hash): Rename "crypted"
+	local variable to "hashed".
+
+2021-08-30  Fabrice Fontaine  <fontaine.fabrice@gmail.com>
+
+	configure.ac: also search libcrypt through pkg-config.
+	libxcrypt provides a libcrypt.pc file so use it if available as this
+	will allow to retrieve the library path (e.g.
+	-L/home/buildroot/output/host//riscv64-buildroot-linux-musl/sysroot/usr/lib)
+	which is useful when cross-compiling and will avoid the following build
+	failure on buildroot:
+
+	/home/buildroot/autobuild/run/instance-3/output-1/host/opt/ext-toolchain/bin/../lib/gcc/riscv64-buildroot-linux-musl/10.2.0/../../../../riscv64-buildroot-linux-musl/bin/ld: .libs/passverify.o: in function `.L30':
+	passverify.c:(.text+0x368): undefined reference to `crypt_checksalt'
+
+	Fixes:
+	 - http://autobuild.buildroot.org/results/20b14e222b35c2d1269960075832b784ba81aa1a
+
+2021-08-19  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_unix: workaround the problem caused by libnss_systemd.
+	The getspnam(3) manual page says that errno shall be set to EACCES when
+	the caller does not have permission to access the shadow password file.
+	Unfortunately, this contract is broken when libnss_systemd is used in
+	the nss stack.
+
+	Workaround this problem by falling back to the helper invocation when
+	pam_modutil_getspnam returns NULL regardless of errno.  As pam_unix
+	already behaves this way when selinux is enabled, it should be OK
+	for the case when selinux is not enabled, too.
+
+	* modules/pam_unix/passverify.c (get_account_info): When
+	pam_modutil_getspnam returns NULL, unconditionally fall back
+	to the helper invocation.
+
+	Complements: f220cace2053 ("Permit unix_chkpwd & pam_unix.so to run without being setuid-root")
+	Resolves: https://github.com/linux-pam/linux-pam/issues/379
+
+2021-08-18  Jérôme Fenal  <jfenal@free.fr>
+
+	po: update translations using Weblate (French)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/fr/
+
+2021-08-02  panchenbo  <panchenbo@uniontech.com>
+
+	po/zh_CN.po: fix pam_lastlog translation errors.
+	Closes: https://github.com/linux-pam/linux-pam/issues/383
+
+2021-07-24  simmon  <simmon@nplob.com>
+
+	po: update translations using Weblate (Korean)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ko/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Swedish)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/sv/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Portuguese (Brazil))
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/pt_BR/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Portuguese (Brazil))
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/pt/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Dutch)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/nl/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Italian)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/it/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Hebrew)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/he/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Finnish)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/fi/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Danish)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/da/
+
+2021-07-22  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Catalan)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ca/
+
+2021-07-22  Yuri Chornoivan  <yurchor@ukr.net>
+
+	po: update translations using Weblate (Ukrainian)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/uk/
+
+2021-07-22  Oğuz Ersen  <oguzersen@protonmail.com>
+
+	po: update translations using Weblate (Turkish)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/tr/
+
+2021-07-21  Piotr Drąg  <piotrdrag@gmail.com>
+
+	po: update translations using Weblate (Polish)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/pl/
+
+2021-07-21  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (German)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/de/
+
+2021-07-21  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Russian)
+	Currently translated at 100.0% (100 of 100 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ru/
+
+2021-07-21  Seong-ho Cho  <darkcircle.0426@gmail.com>
+
+	po: update translations using Weblate (Korean)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ko/
+
+2021-07-20  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update .pot and .po files.
+	Regenerate po/Linux-PAM.pot and po/*.po using "make -C po update-po"
+	command.
+
+	Prepare for 1.5.2 release.
+	* configure.ac (AC_INIT): Raise version to 1.5.2.
+	* NEWS: Update.
+
+	pam_faillock: remove confusing comment.
+	* modules/pam_faillock/pam_faillock.c (faillock_message): Remove the
+	comment that meant to help translators but actually confused xgettext.
+
+2021-07-09  Iker Pedrosa  <ipedrosa@redhat.com>
+
+	pam_filter: Close file after controlling tty.
+	Failing to check the descriptor value meant that there was a bug in the
+	attempt to close the controlling tty. Moreover, this would lead to a
+	file descriptor leak as pointed out by the static analyzer tool:
+
+	Error: RESOURCE_LEAK (CWE-772): [#def26]
+	Linux-PAM-1.5.1/modules/pam_filter/pam_filter.c:356: open_fn: Returning handle opened by "open". [Note: The source code implementation of the function has been overridden by a user model.]
+	Linux-PAM-1.5.1/modules/pam_filter/pam_filter.c:356: var_assign: Assigning: "t" = handle returned from "open("/dev/tty", 2)".
+	Linux-PAM-1.5.1/modules/pam_filter/pam_filter.c:357: off_by_one: Testing whether handle "t" is strictly greater than zero is suspicious.  "t" leaks when it is zero.
+	Linux-PAM-1.5.1/modules/pam_filter/pam_filter.c:357: remediation: Did you intend to include equality with zero?
+	Linux-PAM-1.5.1/modules/pam_filter/pam_filter.c:367: leaked_handle: Handle variable "t" going out of scope leaks the handle.
+	  365|   		pam_syslog(pamh, LOG_ERR,
+	  366|   			   "child cannot become new session: %m");
+	  367|-> 		return PAM_ABORT;
+	  368|   	    }
+	  369|
+
+2021-06-29  Andrew G. Morgan  <morgan@kernel.org>
+
+	Permit unix_chkpwd & pam_unix.so to run without being setuid-root.
+	Remove the hard-coding of the idea that the only way pam_unix.so can
+	read the shadow file is if it can, in some way, run setuid-root.
+	Linux capabilities only require cap_dac_override to read the /etc/shadow
+	file.
+
+	This change achieves two things: it opens a path for a linux-pam
+	application to run without being setuid-root; further, it allows
+	unix_chkpwd to run non-setuid-root if it is installed:
+
+	   sudo setcap cap_dac_override=ep unix_chkpwd
+
+	If we wanted to link against libcap, we could install this binary with
+	cap_dac_override=p, and use cap_set_proc() to raise the effective bit
+	at runtime. However, some distributions already link unix_chkpwd
+	against libcap-ng for some, likely spurious, reason so "ep" is fine
+	for now.
+
+2021-06-15  Fabrice Fontaine  <fontaine.fabrice@gmail.com>
+
+	configure.ac: fix build with libxcrypt and uclibc-ng.
+	Fix the following build failure with libxcrypt and uclibc-ng:
+
+	ld: unix_chkpwd-passverify.o: in function `verify_pwd_hash':
+	passverify.c:(.text+0xab4): undefined reference to `crypt_checksalt'
+
+	Fixes:
+	 - http://autobuild.buildroot.org/results/65d68b7c9c7de1c7cb0f941ff9982f93a49a56f8
+
+2021-06-14  Mathieu Trossevin  <mathieu.trossevin@gmail.com>
+
+	Add pkgconfig files for provided libraries.
+	* .gitignore: Add .pc files as they are generated by autoconf.
+	* configure.ac: Generate .pc files for libpam, libpam_misc and libpamc.
+	* libpam/Makefile.am: Install pam.pc.
+	* libpam/pam.pc.in: New file.
+	* libpam_misc/Makefile.am: Install pam_misc.pc
+	* libpam_misc/pam_misc.pc.in: New file.
+	* libpamc/Makefile.am: Install pamc.pc
+
+	This allow applications and PAM modules to automatically find libpam,
+	libpam_misc and libpamc if they are installed instead of having to
+	manually search for them.
+
+2021-06-14  Björn Esser  <besser82@fedoraproject.org>
+
+	Remove support for legacy xcrypt.
+	Since many distributions are shipping a version of libxcrypt >= 4.0.0
+	as a replacement for glibc's libcrypt now, older versions of xcrypt,
+	which could be installed in parallel, are not relevant anymore.
+
+	* configure.ac (AC_CHECK_HEADERS): Remove xcrypt.h.
+	(AC_SEARCH_LIBS): Remove xcrypt.
+	(AC_CHECK_FUNCS): Remove crypt_gensalt_r.
+	(AC_DEFINE): Remove HAVE_LIBXCRYPT.
+	* modules/pam_pwhistory/opasswd.c [HAVE_LIBXCRYPT]: Remove.
+	* modules/pam_unix/bigcrypt.c [HAVE_LIBXCRYPT]: Likewise.
+	* modules/pam_userdb/pam_userdb.c [HAVE_LIBXCRYPT]: Likewise.
+	* modules/pam_unix/passverify.c [HAVE_LIBXCRYPT]: Likewise.
+	(create_password_hash) [HAVE_LIBXCRYPT]: Likewise.
+
+2021-06-14  Jeff Squyres  <jsquyres@cisco.com>
+
+	pam_misc: set default length of misc_conv() buffer to 4096.
+
+	pam_misc: make length of misc_conv() configurable.
+	Add --with-misc-conv-bufsize=<number> option to configure to allow
+	a longer buffer size for libpam_misc's misc_conv() function (it still
+	defaults to 512 bytes).
+
+2021-06-14  Iker Pedrosa  <ipedrosa@redhat.com>
+
+	pam_timestamp: replace hmac implementation.
+	sha1 is no longer recommended as a cryptographic algorithm for
+	authentication. Thus, the idea of this change is to replace the
+	implementation provided by hmacsha1 included in pam_timestamp module by
+	the one in the openssl library. This way, there's no need to maintain
+	the cryptographic algorithm implementation and it can be easily changed
+	with a single configuration change.
+
+	modules/pam_timestamp/hmac_openssl_wrapper.c: implement wrapper
+	functions around openssl's hmac implementation. Moreover, manage the key
+	generation and its read and write in a file. Include an option to
+	configure the cryptographic algorithm in login.defs file.
+	modules/pam_timestamp/hmac_openssl_wrapper.h: likewise.
+	modules/pam_timestamp/pam_timestamp.c: replace calls to functions
+	provided by hmacsha1 by functions provided by openssl's wrapper.
+	configure.ac: include openssl dependecy if it is enabled.
+	modules/pam_timestamp/Makefile.am: include new files and openssl library
+	to compilation.
+	ci/install-dependencies.sh: include openssl library to dependencies.
+	NEWS: add new item to next release.
+	Make.xml.rules.in: add stringparam profiling for hmac
+	doc/custom-man.xsl: change import docbook to one with profiling
+	modules/pam_timestamp/pam_timestamp.8.xml: add conditional paragraph to
+	indicate the value in /etc/login.defs that holds the value for the
+	encryption algorithm
+
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1947294
+
+2021-06-13  Dmitry V. Levin  <ldv@altlinux.org>
+
+	.github: add gcc-11, clang-12, and clang-11 jobs.
+	* .github/workflows/ci.yml (gcc11-x86_64, gcc11-x86, gcc11-x32,
+	clang12-x86_64, clang11-x86_64): New jobs.
+
+2021-06-13  Dmitry V. Levin  <ldv@altlinux.org>
+
+	tests: fix -Wmaybe-uninitialized warnings.
+	Fix the following class of compilation warnings reported by gcc 11:
+
+	tst-pam_end.c: In function ‘main’:
+	tst-pam_end.c:55:12: error: ‘conv’ may be used uninitialized [-Werror=maybe-uninitialized]
+	   55 |   retval = pam_start (service, user, &conv, &pamh);
+	      |            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	In file included from tst-pam_end.c:41:
+	../libpam/include/security/pam_appl.h:23:1: note: by argument 3 of type ‘const struct pam_conv *’ to ‘pam_start’ declared here
+	   23 | pam_start(const char *service_name, const char *user,
+	      | ^~~~~~~~~
+	tst-pam_end.c:49:19: note: ‘conv’ declared here
+	   49 |   struct pam_conv conv;
+	      |                   ^~~~
+
+	* tests/tst-pam_end.c (main): Initialize conv variable.
+	* tests/tst-pam_fail_delay.c: Likewise.
+	* tests/tst-pam_get_item.c: Likewise.
+	* tests/tst-pam_getenvlist.c: Likewise.
+	* tests/tst-pam_set_data.c: Likewise.
+	* tests/tst-pam_set_item.c: Likewise.
+	* tests/tst-pam_start.c: Likewise.
+	* tests/tst-pam_start_confdir.c: Likewise.
+
+2021-06-10  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_unix: do not use crypt_checksalt when checking for password expiration
+	According to Zack Weinberg, the intended meaning of
+	CRYPT_SALT_METHOD_LEGACY is "passwd(1) should not use this hashing
+	method", it is not supposed to mean "force a password change on next
+	login for any user with an existing stored hash using this method".
+
+	This reverts commit 4da9febc39b955892a30686e8396785b96bb8ba5.
+
+	* modules/pam_unix/passverify.c (check_shadow_expiry)
+	[CRYPT_CHECKSALT_AVAILABLE]: Remove.
+
+	Closes: https://github.com/linux-pam/linux-pam/issues/367
+
+2021-06-10  Patrick Schleizer  <adrelanos@whonix.org>
+
+	pam_exec: implement quiet_log option.
+	* modules/pam_exec/pam_exec.c (call_exec): Implement quiet_log option.
+	* modules/pam_exec/pam_exec.8.xml: Document it.
+
+	Resolves: https://github.com/linux-pam/linux-pam/issues/334
+
+2021-05-24  Jeff Squyres  <jsquyres@cisco.com>
+
+	pam.conf: clarify default action for unspecified return codes.
+	Add short blurbs explaining that if a return code is not specified in
+	the "[value1=action1 value2=action2 ...]" form and "default=action" is
+	not specified, that return code's action defaults to "bad".
+
+2021-05-01  Hasan  <aliyevH@hotmail.com>
+
+	man: fix spelling bug in pam_end.3.xml.
+	* doc/man/pam_end.3.xml: Fix repeated words.
+
+2021-04-25  simmon  <simmon@nplob.com>
+
+	po: update translations using Weblate (Korean)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ko/
+
+2021-04-25  Emilio Herrera  <ehespinosa57@gmail.com>
+
+	po: update translations using Weblate (Spanish)
+	Currently translated at 81.8% (81 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/es/
+
+2021-04-22  Josef Moellers  <jmoellers@suse.de>
+
+	pam_limits: "Unlimited" is not a valid value for RLIMIT_NOFILE.
+	Replace it with a value obtained from /proc/sys/fs/nr_open
+
+	* modules/pam_limits/limits.conf.5.xml: Document the replacement.
+	* modules/pam_limits/pam_limits.c: Replace unlimited RLIMIT_NOFILE
+	  value with a value obtained from /proc/sys/fs/nr_open
+
+2021-04-21  Stanislav Zidek  <szidek@redhat.com>
+
+	pam_userdb: Prevent garbage characters from db.
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1791965
+
+2021-04-12  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	misc_conv: Flush the terminal input after the password is read.
+	Fixes #347
+
+	* libpam_misc/misc_conv.c (read_string): Use TCSAFLUSH instead
+	  of TCSADRAIN when resetting the terminal echo state
+
+2021-04-12  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_access: clean up the remote host matching code.
+	* modules/pam_access/pam_access.c (from_match): Split out remote_match()
+	  function and avoid calling it when matching against LOCAL keyword.
+	  There is also no point in doing domain match against TTY or SERVICE.
+
+2021-03-25  chuanqin  <chuanqing.qin@nokia-sbell.com>
+
+	pam_faillock: convert spaces to tab to keep code style.
+	convert spaces to tab which mixture use in modules/pam_faillock/main.c
+
+2021-03-08  theslimshaney  <33791263+theslimshaney@users.noreply.github.com>
+
+	pam_env: fix example in pam_env.conf.5 for setting variable.
+
+2021-03-05  dshein-alt  <76520100+dshein-alt@users.noreply.github.com>
+
+	pam_mkhomedir: use HOME_MODE or UMASK from /etc/login.defs.
+	Follow the example of useradd(8) and set the user home directory mode
+	to the value of HOME_MODE or UMASK configuration item from
+	/etc/login.defs when umask option is not specified.
+
+2021-02-13  Ricky Tigg  <ricky.tigg@gmail.com>
+	    Ricky Tigg  <ricky.tigg@gmail.com>
+
+	po: update translations using Weblate (Finnish)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/fi/
+
+2021-02-13  Balázs Meskó  <meskobalazs@mailbox.org>
+	    Balázs Meskó  <meskobalazs@mailbox.org>
+
+	po: update translations using Weblate (Hungarian)
+	Currently translated at 77.7% (77 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/hu/
+
+2021-02-13  Carmen Bianca Bakker  <carmen@carmenbianca.eu>
+	    Carmen Bianca Bakker  <carmen@carmenbianca.eu>
+
+	po: update translations using Weblate (Esperanto)
+	Currently translated at 43.4% (43 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/eo/
+
+2021-02-13  Weblate  <noreply@weblate.org>
+	    Weblate  <noreply@weblate.org>
+
+	Update translation files.
+	Updated by "Update PO files to match POT (msgmerge)" hook in Weblate.
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/
+	Translation: linux-pam/master
+
+2021-01-27  Changqing Li  <changqing.li@windriver.com>
+
+	configure.ac: add --with-systemdunitdir option.
+	* Add this option to support the following scenario:
+	prefix = '/usr'
+	servicedir = '/lib/systemd/system'
+
+	* The default behavior is changed:
+	If this option is not given, servicedir will be set to the value that is
+	obtained from systemd pkg-config file. If the value cannot be obtained,
+	servicedir will be set to the default value '$(prefix)/lib/systemd/system'.
+
+2021-01-27  Changqing Li  <changqing.li@windriver.com>
+
+	faillock: create tallydir before creating tallyfile.
+	The default tallydir is "/var/run/faillock", and this default
+	tallydir may not exist.
+
+	Function open may fail as tallydir does not exist when creating
+	the tallyfile. Therefore, faillock will not work well.
+
+	Fix this problem by creating tallydir before creating tallyfile
+	when the tallydir does not exist.
+
+2021-01-27  Ludwig Nussel  <ludwig.nussel@suse.de>
+
+	pam_securetty: don't complain about missing config.
+	Not shipping a config file should be perfectly valid for distros while
+	still having eg login pre-configured to honor securetty when present.
+	PAM itself doesn't ship any template either. So avoid spamming the log
+	file if /etc/securetty wasn't found.
+
+2021-01-25  Kolja  <razzeee@gmail.com>
+
+	faillock: Use pluralization via dngettext or fallback.
+
+2021-01-18  Andreas-Johann Ø Ulvestad  <aj@aju.no>
+	    Andreas-Johann Ø Ulvestad  <aj@aju.no>
+
+	po: update translations using Weblate (Norwegian Nynorsk)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/nn/
+
+2021-01-18  Jan Kuparinen  <copper_fin@hotmail.com>
+	    Jan Kuparinen  <copper_fin@hotmail.com>
+
+	po: update translations using Weblate (Finnish)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/fi/
+
+2020-12-28  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_umask: fix handling of umask parameter.
+	Potential failures of strdup(3) were ignored, fix this by not using
+	strdup(3) at all.
+
+	* modules/pam_umask/pam_umask.c (struct options_t): Add const to umask
+	field, add login_umask field.
+	(parse_option): Do not use strdup.
+	(get_options): Assign pam_modutil_search_key return values
+	to options->login_umask.
+	(pam_sm_open_session): Free options.login_umask instead of
+	options.umask.
+
+2020-12-28  Sven Hartge  <sven@svenhartge.de>
+
+	pam_setquota: Minor whitespace, spelling and mail address fixes.
+
+2020-12-26  Vlad  <milovlad@outlook.com>
+	    Vlad  <milovlad@outlook.com>
+
+	po: update translations using Weblate (Romanian)
+	Currently translated at 100.0% (99 of 99 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ro/
+
+2020-12-23  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_mkhomedir: fix umask wording in documentation.
+	* modules/pam_mkhomedir/pam_mkhomedir.8.xml (umask): Fix wording.
+
+2020-12-20  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Bulgarian)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/bg/
+
+2020-12-17  Issam E. Maghni  <issam.e.maghni@mailbox.org>
+
+	configure: test -a|o is not POSIX.
+	Fixes `test: too many arguments` when building Linux-PAM using sbase.
+	This is due to a non-POSIX syntax test ... -a ... and test ... -o ....
+
+	> The XSI extensions specifying the -a and -o binary primaries and the
+	> '(' and ')' operators have been marked obsolescent.
+
+	See https://pubs.opengroup.org/onlinepubs/9699919799/utilities/test.html
+
+2020-12-08  Christian Göttsche  <cgzones@googlemail.com>
+
+	pam_namespace: check for string_to_security_class failure.
+	Check for the unlikely case string_to_security_class() does not find the
+	associated SELinux security class.
+	This will only happen if the loaded SELinux policy does not define the
+	class "dir" (which no sane policy does) or querying the selinuxfs
+	fails.
+
+	Suggested by #309
+
+2020-12-08  Christian Göttsche  <cgzones@googlemail.com>
+
+	pam_selinux: check for string_to_security_class failure.
+	Check for the unlikely case string_to_security_class() does not find the
+	associated SELinux security class.
+	This will only happen if the loaded SELinux policy does not define the
+	class "chr_file" (which no sane policy does) or querying the selinuxfs
+	fails.
+
+	Suggested by #309
+
+2020-12-07  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	Clarify the effect of 'done' in documentation.
+	The done action does not terminate the stack processing in case
+	there is a failing module with bad action up in the stack.
+
+	Fixes #307
+
+	* doc/man/pam.conf-syntax.xml: Clarify the effect of 'done'.
+
+2020-11-28  Dmitry V. Levin  <ldv@altlinux.org>
+
+	.github: partially migrate from ubuntu-18.04 to ubuntu-20.04.
+	* .github/workflows/ci.yml (runs-on): Switch from ubuntu-latest to
+	ubuntu-20.04 for whitespace-errors and *-x86_64 jobs.  Stick with
+	ubuntu-18.04 for *-x86 and *-x32 jobs until we figure out how to
+	obtain -lcrypt on ubuntu-20.04 for these architectures.
+
+2020-11-28  Dmitry V. Levin  <ldv@altlinux.org>
+
+	ci: do not install libxcrypt-dev.
+	Apparently, both -lcrypt and -lxcrypt from ubuntu-18.04 already provide
+	crypt_r.
+
+	* ci/install-dependencies.sh (packages): Remove libxcrypt-dev.
+
+2020-11-24  Thomas M. DuBuisson  <tommd@muse.dev>
+
+	pam_unix: fix memory leak on error path.
+	* modules/pam_unix/bigcrypt.c (bigcrypt) [HAVE_CRYPT_R]: Do not leak
+	cdata if crypt_r() fails.
+
+2020-11-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	maint: update release procedure.
+	* maint/README-release: Update.
+
+2020-11-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update .po and .pot files.
+	Regenerate po/Linux-PAM.pot and po/*.po using "make -C po update-po"
+	command.  This removes translations of pam_cracklib, pam_tally, and
+	pam_tally2 modules that were removed in v1.5.0.
+
+	Complements: v1.5.0~10 "Remove deprecated pam_cracklib module"
+	Complements: v1.5.0~9 "Remove deprecated pam_tally and pam_tally2 modules"
+
+2020-11-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: cleanup POTFILES.in.
+	* po/POTFILES.in: Strip "./" prefix, sort the list.
+
+2020-11-24  Jan Kuparinen  <copper_fin@hotmail.com>
+	    Jan Kuparinen  <copper_fin@hotmail.com>
+
+	po: update translations using Weblate (Finnish)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/fi/
+
+2020-11-24  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Prepare for 1.5.1 release.
+	* configure.ac (AC_INIT): Raise version to 1.5.1.
+
+	Fix various typos found using codespell tool.
+	* modules/pam_limits/limits.conf: Replace "overriden" with "overridden".
+	* modules/pam_mkhomedir/mkhomedir_helper.c (create_homedir): Replace
+	"preseves" with "preserves".
+	* modules/pam_setquota/pam_setquota.8.xml: Replace "specifed" with
+	"specified".
+	* modules/pam_setquota/pam_setquota.c (pam_sm_open_session): Replace
+	"fileystem" with "filesystem", "conditons" with "conditions".
+
+	Fix grammar: replace "an user" with "a user" everywhere.
+	* NEWS: Replace "an user" with "a user".
+	* modules/pam_faillock/pam_faillock.8.xml: Likewise.
+	* modules/pam_lastlog/pam_lastlog.8.xml: Likewise.
+	* modules/pam_limits/pam_limits.c: Likewise.
+	* modules/pam_sepermit/sepermit.conf: Likewise.
+	* modules/pam_tty_audit/pam_tty_audit.8.xml: Likewise.
+	* modules/pam_userdb/pam_userdb.c: Likewise.
+
+2020-11-24  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_wheel: Use pam_modutil_user_in_group_uid_gid instead of reimplementation
+	The pam_modutil_user_in_group... functions use getgrouplist to check
+	the membership so they work also in setups with remote services which do
+	not provide group members in struct group.
+
+	Fixes #297
+
+	* modules/pam_wheel/pam_wheel.c (perform_check): Call pam_modutil_user_in_group_uid_gid
+	  to do the group check.
+
+2020-11-24  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	Add NEWS entries for the 1.5.1 security fix release.
+
+2020-11-20  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	Second blank check with root for non-existent users must never return 1.
+	The commit af0faf66 ("pam_unix: avoid determining if user exists") introduced
+	a regression where the blank check could return 1 if root had an empty
+	password hash because in the second case the password hash of root was
+	used. We now always return 0 in this case.
+
+	The issue was found by Johannes Löthberg.
+
+	Fixes #284
+
+	* modules/pam_unix/support.c (_unix_blankpasswd): Make the loop
+	to cover the complete blank check so both existing and non existing
+	cases are identical except for the possible return value.
+
+2020-11-12  Tavian Barnes  <tavianator@tavianator.com>
+
+	faillock: Add a nodelay option.
+	Fixes #295
+
+2020-11-10  Allison Karlitskaya  <allison.karlitskaya@redhat.com>
+
+	libpam: add supplementary groups on priv drop.
+	Replace the setgroups(0, NULL) call in pam_modutil_drop_priv() with a
+	call to initgroups().  This makes sure that the user's supplementary
+	groups are also configured.  Fall back to setgroups(0, NULL) in case the
+	initgroups() call fails.
+
+	This fixes the permission check in pam_motd: this feature was intended
+	to allow setting permissions on a motd file to prevent it from being
+	shown to users who are not a member of a particular group (for example,
+	wheel).
+
+	Closes #292
+
+2020-11-05  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_env: deprecation notice of reading the user environment.
+	* modules/pam_env/pam_env.8.xml: Add the notice to the manual.
+	* modules/pam_env/pam_env.c (_pam_parse): Log deprecation warning
+	  if user_readenv is set.
+
+2020-11-04  Andreas Schneider  <asn@cryptomilk.org>
+
+	libpam: Fix memory leak on error path in _pam_start_internal()
+
+2020-11-04  Andreas Schneider  <asn@cryptomilk.org>
+
+	libpam: Fix memory leak with pam_start_confdir()
+	Found with AddressSanitzer in pam_wrapper tests.
+
+	==985738== 44 bytes in 4 blocks are definitely lost in loss record 18 of 18
+	==985738==    at 0x4839809: malloc (vg_replace_malloc.c:307)
+	==985738==    by 0x48957E1: _pam_strdup (pam_misc.c:129)
+	==985738==    by 0x489851B: _pam_start_internal (pam_start.c:85)
+	==985738==    by 0x4849C8C: libpam_pam_start_confdir (pam_wrapper.c:418)
+	==985738==    by 0x484AF94: pwrap_pam_start (pam_wrapper.c:1461)
+	==985738==    by 0x484AFEE: pam_start (pam_wrapper.c:1483)
+	==985738==    by 0x401723: setup_noconv (test_pam_wrapper.c:189)
+	==985738==    by 0x4889E82: ??? (in /usr/lib64/libcmocka.so.0.7.0)
+	==985738==    by 0x488A444: _cmocka_run_group_tests (in /usr/lib64/libcmocka.so.0.7.0)
+	==985738==    by 0x403EE5: main (test_pam_wrapper.c:1059)
+
+2020-11-04  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_env: allow environment files without EOL at EOF.
+	Fixes #263
+
+	* modules/pam_env/pam_env.c (_assemble_line): Do not error out if at feof()
+
+2020-11-03  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Prepare for 1.5.0 release.
+	* configure.ac (AC_INIT): Raise version to 1.5.0.
+	* NEWS: Update.
+
+2020-11-03  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_ftp: fix potential memory leak.
+	modules/pam_ftp/pam_ftp.c: free anon_user before returning as it may be
+	still in use.
+
+	pam_faillock: fix unread store statement.
+	modules/pam_faillock/main.c: remove store statement since the value is
+	only read in the enclosing expression.
+
+	pam_dispatch: fix unread store statement.
+	libpam/pam_dispatch: remove store statement since the value is never
+	read.
+
+2020-10-29  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Remove deprecated pam_tally and pam_tally2 modules.
+	* ci/run-build-and-tests.sh (DISTCHECK_CONFIGURE_FLAGS): Remove
+	--enable-tally --enable-tally2.
+	* configure.ac: Remove --enable-tally and --enable-tally2 options.
+	(AM_CONDITIONAL): Remove COND_BUILD_PAM_TALLY and COND_BUILD_PAM_TALLY2.
+	(AC_CONFIG_FILES): Remove modules/pam_tally/Makefile and
+	modules/pam_tally2/Makefile.
+	* doc/sag/pam_tally.xml: Remove.
+	* doc/sag/pam_tally2.xml: Likewise.
+	* doc/sag/Linux-PAM_SAG.xml: Do not include pam_tally.xml and
+	pam_tally2.xml.
+	* modules/Makefile.am (MAYBE_PAM_TALLY, MAYBE_PAM_TALLY2): Remove.
+	(SUBDIRS): Remove MAYBE_PAM_TALLY and MAYBE_PAM_TALLY2.
+	* modules/pam_tally/.gitignore: Remove.
+	* modules/pam_tally/Makefile.am: Likewise.
+	* modules/pam_tally/README.xml: Likewise.
+	* modules/pam_tally/faillog.h: Likewise.
+	* modules/pam_tally/pam_tally.8.xml: Likewise.
+	* modules/pam_tally/pam_tally.c: Likewise.
+	* modules/pam_tally/pam_tally_app.c: Likewise.
+	* modules/pam_tally/tst-pam_tally: Likewise.
+	* modules/pam_tally2/.gitignore: Likewise.
+	* modules/pam_tally2/Makefile.am: Likewise.
+	* modules/pam_tally2/README.xml: Likewise.
+	* modules/pam_tally2/pam_tally2.8.xml: Likewise.
+	* modules/pam_tally2/pam_tally2.c: Likewise.
+	* modules/pam_tally2/pam_tally2_app.c: Likewise.
+	* modules/pam_tally2/tallylog.h: Likewise.
+	* modules/pam_tally2/tst-pam_tally2: Likewise.
+	* modules/pam_timestamp/pam_timestamp_check.8.xml: Fix typo by replacing
+	pam_tally with pam_timestamp.
+	* po/POTFILES.in: Remove ./modules/pam_tally/pam_tally_app.c,
+	./modules/pam_tally/pam_tally.c, ./modules/pam_tally2/pam_tally2_app.c,
+	and ./modules/pam_tally2/pam_tally2.c.
+	* NEWS: Document this change.
+
+	Remove deprecated pam_cracklib module.
+	* ci/install-dependencies.sh: Remove libcrack2-dev.
+	* ci/run-build-and-tests.sh (DISTCHECK_CONFIGURE_FLAGS): Remove
+	--enable-cracklib=check.
+	* conf/pam.conf: Remove references to pam_cracklib.so.
+	* configure.ac: Remove --enable-cracklib option.
+	(AC_SUBST): Remove LIBCRACK.
+	(AM_CONDITIONAL): Remove COND_BUILD_PAM_CRACKLIB.
+	(AC_CONFIG_FILES): Remove modules/pam_cracklib/Makefile.
+	* doc/sag/pam_cracklib.xml: Remove.
+	* doc/sag/Linux-PAM_SAG.xml: Do not include pam_cracklib.xml.
+	* modules/Makefile.am (MAYBE_PAM_CRACKLIB): Remove.
+	(SUBDIRS): Remove MAYBE_PAM_CRACKLIB.
+	* modules/pam_cracklib/Makefile.am: Remove.
+	* modules/pam_cracklib/README.xml: Likewise.
+	* modules/pam_cracklib/pam_cracklib.8.xml: Likewise.
+	* modules/pam_cracklib/pam_cracklib.c: Likewise.
+	* modules/pam_cracklib/tst-pam_cracklib: Likewise.
+	* xtests/tst-pam_cracklib1.c: Likewise.
+	* xtests/tst-pam_cracklib1.pamd: Likewise.
+	* xtests/tst-pam_cracklib2.c: Likewise.
+	* xtests/tst-pam_cracklib2.pamd: Likewise.
+	* modules/pam_pwhistory/pam_pwhistory.8.xml: Replace pam_cracklib
+	in examples with pam_passwdqc.
+	* modules/pam_unix/pam_unix.8.xml: Likewise.
+	* po/POTFILES.in: Remove ./modules/pam_cracklib/pam_cracklib.c.
+	* xtests/.gitignore: Remove tst-pam_cracklib1 and tst-pam_cracklib2.
+	* xtests/Makefile.am (EXTRA_DIST): Remove tst-pam_cracklib1.pamd
+	and tst-pam_cracklib2.pamd.
+	(XTESTS): Remove tst-pam_cracklib1 and tst-pam_cracklib2.
+	* NEWS: Document this change.
+
+2020-10-27  DDoSolitary  <DDoSolitary@gmail.com>
+
+	pam_env: fix a typo in doc of pam_env.conf.
+
+2020-10-25  Christian Göttsche  <cgzones@googlemail.com>
+
+	Add missing format function attributes and enable -Wmissing-format-attribute
+	Exported functions already have these attributes, add them to other functions.
+	This enables compilers to find format specifier mismatches, like:
+
+	   foo_print("Hello %d", "world")
+
+	* m4/warn_lang_flags.m4 (gl_WARN_ADD): Add -Wmissing-format-attribute.
+	* conf/pam_conv1/Makefile.am (AM_CFLAGS): Add -I$(top_srcdir)/libpam/include.
+	* conf/pam_conv1/pam_conv_y.y: Include <security/_pam_types.h>.
+	(yyerror): Add printf format attribute.
+	* modules/pam_pwhistory/opasswd.c (helper_log_err): Likewise.
+	* modules/pam_rootok/pam_rootok.c (log_callback): Likewise.
+	* modules/pam_tally/pam_tally.c (tally_log): Likewise.
+	* modules/pam_tally2/pam_tally2.c (tally_log): Likewise.
+	* modules/pam_unix/passverify.c (helper_log_err): Likewise.
+
+2020-10-21  Milo Casagrande  <milo@milo.name>
+	    Milo Casagrande  <milo@milo.name>
+
+	po: update translations using Weblate (Italian)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/it/
+
+2020-10-21  Yaron Shahrabani  <sh.yaron@gmail.com>
+	    Yaron Shahrabani  <sh.yaron@gmail.com>
+
+	po: update translations using Weblate (Hebrew)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/he/
+
+2020-10-21  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_motd: unset prompt value to drop privileges.
+	modules/pam_motd/pam_motd.c: set NULL value instead of "key user" for the
+	prompt when dropping privileges.
+
+2020-10-20  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_modutil_sanitize_fds: Add explicit casts to avoid warnings.
+
+	Revert "libpam/pam_modutil_sanitize.c: optimize the way to close fds"
+	This reverts commit 1b087edc7f05237bf5eccc405704cd82b848e761.
+
+2020-10-14  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_motd: document file filtering.
+	modules/pam_motd/pam_motd.8.xml: document file filtering of motd
+	messages.
+	NEWS: annotate change.
+
+2020-10-14  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_motd: filter motd by user and group.
+	modules/pam_motd/pam_motd.c: filter motd by user and group owning the
+	proper files. This is achieved by changing the ids of the process
+	reading the files from root to the target user.
+
+	Resolves:
+	https://bugzilla.redhat.com/show_bug.cgi?id=1861640
+
+2020-10-13  Mikhail Labiuk  <m.labyuk@omprussia.ru>
+
+	pam_faillock: fix invalid error message.
+	args_parse function pass "conf=" argument to set_conf_opt() after handling by self.
+	set_conf_opt is not able to handle "conf" argument and write error:
+	sddm-helper[415]: pam_faillock(sddm:auth): Unknown option: conf
+
+2020-10-05  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_namespace: polyinstantiation refer to gdm doc.
+	modules/pam_namespace/pam_namespace.8.xml: delete obsolete information
+	about polyinstantiation and refer to gdm's documentation.
+
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1861841
+
+2020-09-30  Anton D. Kachalov  <rnouse@google.com>
+
+	Prevent SEGFAULT for unknown UID.
+	When running systemd service with DynamicUser being set, the dynamic UID
+	might be not mapped to user name (/etc/nsswitch.conf is not configured
+	with systemd nss module).
+
+	The getuidname() routine might return NULL and this is not checked by callee.
+
+2020-09-10  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_wheel: clarify use_uid option in man page.
+	modules/pam_wheel/pam_wheel.8.xml: indicate that use_uid option uses the
+	real uid of the calling process.
+
+2020-09-10  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_wheel: if getlogin fails fallback to PAM_RUSER.
+	modules/pam_wheel/pam_wheel.c: if getlogin fails to obtain the real user
+	ID, then try with PAM_RUSER.
+
+	Resolves:
+	https://bugzilla.redhat.com/show_bug.cgi?id=1866866
+
+2020-09-10  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_wheel: improve coding style.
+	modules/pam_wheel/pam_wheel.c: improve indentation and explicitly state
+	condition statements
+
+2020-08-08  Dmitry V. Levin  <ldv@altlinux.org>
+
+	configure: add --disable-unix option.
+	Some distributions do not build pam_unix, e.g. ALT uses pam_tcb instead.
+	Add a configure option to disable build of pam_unix so that those who
+	choose not to build pam_unix no longer have to edit modules/Makefile.am
+	file.  The default is unchanged, i.e. build of pam_unix is enabled.
+
+	* configure.ac (AC_ARG_ENABLE): Add unix.
+	(AM_CONDITIONAL): Add COND_BUILD_PAM_UNIX.
+	* modules/Makefile.am [COND_BUILD_PAM_UNIX] (MAYBE_PAM_UNIX): Define.
+	(SUBDIRS): Replace pam_unix with $(COND_BUILD_PAM_UNIX).
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Build all installed executables with -Wl,-z,now if available.
+	This makes them built with full RELRO if -Wl,-z,relro is specified.
+
+	* m4/ld-z-now.m4: New file.
+	* m4/.gitignore: Add it to exclude list.
+	* configure.ac: Call PAM_LD_Z_NOW.
+	(EXE_LDFLAGS): Append $ZNOW_LDFLAGS.
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	modules: build all helpers with proper CFLAGS and LDFLAGS.
+	This makes all installed executables built with @EXE_CFLAGS@ and
+	@EXE_LDFLAGS@.
+
+	* modules/pam_mkhomedir/Makefile.am (mkhomedir_helper_CFLAGS,
+	mkhomedir_helper_LDFLAGS): New variables.
+	* modules/pam_tally/Makefile.am (pam_tally_CFLAGS, pam_tally_LDFLAGS):
+	Likewise.
+	* modules/pam_tally2/Makefile.am (pam_tally2_CFLAGS,
+	pam_tally2_LDFLAGS): Likewise.
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	build: rename PIE_* AC_SUBST variables to EXE_*
+	There are going to be other options added to CFLAGS and LDFLAGS
+	of executables made along with modules.
+
+	* configure.ac (EXE_CFLAGS, EXE_LDFLAGS): New variables initialized from
+	PIE_CFLAGS and PIE_LDFLAGS, respectively.  AC_SUBST them instead of
+	PIE_CFLAGS and PIE_LDFLAGS.  All users updated.
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	m4: make libprelude-config diagnostics less noisy.
+	Before this change, every normal build of Linux-PAM used to contain
+	the following diagnostics:
+
+	  checking for libprelude-config... no
+	  checking for libprelude - version >= 0.9.0... no
+	  *** The libprelude-config script installed by LIBPRELUDE could not be found
+	  *** If LIBPRELUDE was installed in PREFIX, make sure PREFIX/bin is in
+	  *** your path, or set the LIBPRELUDE_CONFIG environment variable to the
+	  *** full path to libprelude-config.
+
+	Given that libprelude-config is rarely used nowadays,
+	the first two lines of diagnostics should be enough.
+
+	* m4/libprelude.m4 (AM_PATH_LIBPRELUDE): When libprelude-config
+	is not found, do not print the lengthy diagnostics unless
+	--with-libprelude-prefix was specified.
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	configure.ac: rewrite --disable-pie and -fpie/pie check.
+	* configure.ac: Rewrite -fpie/pie check using AC_LINK_IFELSE to make
+	the code more readable.  Add --enable-pie=check support and make it
+	the default, terminate if --enable-pie is specified but -fpie/pie
+	support is not available.
+
+	m4: rewrite ld --no-undefined check.
+	* m4/ld-no-undefined.m4: Rewrite using AC_LINK_IFELSE to create a more readable
+	autoconf macro.
+
+	m4: rewrite ld --as-needed check.
+	* m4/ld-as-needed.m4: Rewrite using AC_LINK_IFELSE to create a more readable
+	autoconf macro.
+
+	m4: rewrite ld -O1 check.
+	* m4/ld-O1.m4: Rewrite using AC_LINK_IFELSE to create a more readable
+	autoconf macro.
+
+2020-08-07  Dmitry V. Levin  <ldv@altlinux.org>
+
+	m4: rewrite __attribute__((unused)) check.
+	Rewrite using AC_CACHE_CHECK to create a more readable autoconf macro.
+
+	* m4/attribute.m4: New file.
+	* m4/japhar_grep_cflags.m4: Remove.
+	* m4/.gitignore: Replace japhar_grep_cflags.m4 with attribute.m4.
+	* configure.ac: Replace AC_C___ATTRIBUTE__ with PAM_ATTRIBUTE_UNUSED.
+
+2020-08-06  Dmitry V. Levin  <ldv@altlinux.org>
+
+	build: add -Wcast-align=strict to WARN_CFLAGS.
+	This way -Wcast-align will be tested regardless of the target machine.
+
+	* m4/warn_lang_flags.m4: Add gl_WARN_ADD([-Wcast-align=strict]).
+
+2020-08-06  Dmitry V. Levin  <ldv@altlinux.org>
+
+	configure.ac: rewrite WARN_CFLAGS initialization.
+	As the old machinery was not prepared for adding compiler options
+	conditionally when the compiler supports them, replace it with
+	a new machinery that implements this.
+
+	* m4/warnings.m4: New file.
+	* m4/warn_lang_flags.m4: Likewise.
+	* m4/.gitignore: Add exclusions for them.
+	* m4/japhar_grep_cflags.m4 (JAPHAR_GREP_CFLAGS): Remove.
+	* configure.ac: Call pam_WARN_LANG_FLAGS.  Remove all uses
+	of JAPHAR_GREP_CFLAGS.
+
+2020-08-06  Dmitry V. Levin  <ldv@altlinux.org>
+
+	Fix -Wcast-align compilation warnings on arm.
+	Apparently, gcc is also not smart enough to infer the alignment
+	of structure fields, for details see
+	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=89133
+
+	Use unions to avoid these casts altogether, this fixes compilation
+	warnings reported by gcc on arm, e.g.:
+
+	md5.c: In function 'MD5Update':
+	md5.c:92:35: error: cast increases required alignment of target type [-Werror=cast-align]
+	   92 |   MD5Name(MD5Transform)(ctx->buf, (uint32 *) ctx->in);
+	      |                                   ^
+	md5.c:101:35: error: cast increases required alignment of target type [-Werror=cast-align]
+	  101 |   MD5Name(MD5Transform)(ctx->buf, (uint32 *) ctx->in);
+	      |                                   ^
+	md5.c: In function 'MD5Final':
+	md5.c:136:35: error: cast increases required alignment of target type [-Werror=cast-align]
+	  136 |   MD5Name(MD5Transform)(ctx->buf, (uint32 *) ctx->in);
+	      |                                   ^
+	md5.c:147:9: error: cast increases required alignment of target type [-Werror=cast-align]
+	  147 |  memcpy((uint32 *)ctx->in + 14, ctx->bits, 2*sizeof(uint32));
+	      |         ^
+	md5.c:149:34: error: cast increases required alignment of target type [-Werror=cast-align]
+	  149 |  MD5Name(MD5Transform)(ctx->buf, (uint32 *) ctx->in);
+	      |                                  ^
+
+	* modules/pam_namespace/md5.h (struct MD5Context): Replace "buf" and
+	"in" fields with unions.  All users updated.
+	* modules/pam_unix/md5.h (struct MD5Context): Likewise.
+	* modules/pam_timestamp/sha1.h (struct sha1_context.pending): Replace
+	with a union.  All users updated.
+
+	Complements: v1.4.0~195 ("Fix most of clang -Wcast-align compilation warnings")
+
+2020-08-05  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_namespace: fix big-endian check in md5 implementation.
+	* modules/pam_namespace/md5.c: Do not check against the list of
+	architectures that are known to be little-endian, instead check
+	for WORDS_BIGENDIAN macro defined by AC_C_BIGENDIAN autoconf macro
+	on big-endian platforms.
+
+2020-08-05  Christian Göttsche  <cgzones@googlemail.com>
+
+	pam_namespace: skip context translation.
+	These retrieved contexts are just passed to libselinux functions and not
+	printed or otherwise made available to the outside, so a context
+	translation to human readable MCS/MLS labels is not needed.
+	(see man:setrans.conf(5))
+
+	pam_xauth: skip context translation.
+	The retrieved context is just passed to libselinux functions and not
+	printed or otherwise made available to the outside, so a context
+	translation to human readable MCS/MLS labels is not needed.
+	(see man:setrans.conf(5))
+
+	pam_xauth: replace deprecated security_context_t.
+	libselinux 3.1 deprecated the typedef security_context_t.
+	Use the underlaying type.
+
+	pam_unix: skip context translation.
+	These retrieved contexts are just passed to libselinux functions and not
+	printed or otherwise made available to the outside, so a context
+	translation to human readable MCS/MLS labels is not needed.
+	(see man:setrans.conf(5))
+
+	pam_unix: replace deprecated security_context_t.
+	libselinux 3.1 deprecated the typedef security_context_t.
+	Use the underlaying type.
+
+	pam_rootok: skip context translation.
+	The retrieved context is just passed to the libselinux function
+	'selinux_check_access()', so a context translation to human readable
+	MCS/MLS labels is not needed. (see man:setrans.conf(5))
+
+	pam_rootok: replace deprecated security_context_t.
+	libselinux 3.1 deprecated the typedef security_context_t.
+	Use the underlaying type.
+
+	pam_namespace: replace deprecated matchpathcon.
+	The matchpathcon family is deprecated.
+	Use the selabel family.
+
+	pam_namespace: replace deprecated security_context_t.
+	libselinux 3.1 deprecated the typedef security_context_t.
+	Use the underlaying type.
+
+2020-08-03  Christian Göttsche  <cgzones@googlemail.com>
+
+	autotools: enable warnings.
+
+2020-08-03  Christian Göttsche  <cgzones@googlemail.com>
+
+	autotools: update deprecated macros.
+	see https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/Obsolete-Macros.html
+
+	- update AC_HELP_STRING to AS_HELP_STRING
+	- update AC_TRY_COMPILE to AC_COMPILE_IFELSE
+	- update AC_TRY_RUN to AC_RUN_IFELSE
+	- update AC_TRY_LINK to AC_LINK_IFELSE
+
+2020-08-03  Issam Maghni  <concatime@users.noreply.github.com>
+
+	configure.ac: fix typo in --with-kernel-overflow-uid= option to match its documentation
+
+2020-07-22  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	pam_unix: Add comment for the ignored PAM_AUTHTOK_ERR case.
+	* modules/pam_unix/pam_unix_acct.c (pam_sm_acct_mgmt): Add comment
+	about the reason for ignoring PAM_AUTHTOK_ERR.
+
+2020-07-22  Tomas Mraz  <tmraz@fedoraproject.org>
+
+	Fix missing initialization of daysleft.
+	The daysleft otherwise stays uninitialized if there is no shadow entry.
+
+	Regression from commit f5adefa.
+
+	Fixes #255
+
+	* modules/pam_unix/pam_unix_acct.c (pam_sm_acct_mgmt): Initialize daysleft.
+
+2020-07-20  Charles Lee  <lchopn@gmail.com>
+
+	po: update translations using Weblate (Chinese (Simplified))
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/zh_CN/
+
+2020-07-20  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_pwhistory: add helper to handle SELinux.
+	The purpose of the helper is to enable tighter confinement of login and
+	password changing services. The helper is thus called only when SELinux
+	is enabled on the system.
+
+	Resolves: https://github.com/linux-pam/linux-pam/pull/247
+
+2020-07-19  A S Alam  <amanpreet.alam@gmail.com>
+
+	po: update translations using Weblate (Punjabi)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/pa/
+
+2020-07-15  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_inline.h: cleanup pam_read_passwords a bit.
+	* libpam/include/pam_inline.h (pam_read_passwords): Increment pptr once
+	instead of using pptr+1 several times.  This change is not expected
+	to affect the code generated by the compiler as the latter is likely
+	to perform the optimization itself.
+
+2020-07-15  ikerexxe  <ipedrosa@redhat.com>
+
+	Move read_passwords function from pam_unix to pam_inline.h.
+	[ldv: rewrote commit message]
+
+	* modules/pam_unix/passverify.h (read_passwords): Remove prototype.
+	* modules/pam_unix/passverify.c (read_passwords): Move ...
+	* libpam/include/pam_inline.h: ... here, rename to pam_read_passwords,
+	add static inline qualifiers.
+	Include <unistd.h> and <errno.h>.
+	* modules/pam_unix/unix_chkpwd.c: Include "pam_inline.h".
+	(main): Replace read_passwords with pam_read_passwords.
+	* modules/pam_unix/unix_update.c: Include "pam_inline.h".
+	(set_password): Replace read_passwords with pam_read_passwords.
+
+2020-07-15  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_unix: use PAM_MAX_RESP_SIZE instead of its alias MAXPASS.
+	* modules/pam_unix/passverify.h (MAXPASS): Remove.
+	* modules/pam_unix/passverify.c (read_passwords): Replace MAXPASS
+	with PAM_MAX_RESP_SIZE.
+	* modules/pam_unix/pam_unix_passwd.c (_pam_unix_approve_pass): Likewise.
+	* modules/pam_unix/support.c (_unix_verify_password): Likewise.
+	* modules/pam_unix/unix_chkpwd.c (main): Likewise.
+	* modules/pam_unix/unix_update.c (set_password): Likewise.
+
+2020-07-09  Lucas Ramage  <ramage.lucas@protonmail.com>
+
+	pam_stress: create man page.
+	Resolves: https://github.com/linux-pam/linux-pam/issues/148
+
+	* modules/pam_stress/README: Remove.
+	* modules/pam_stress/README.xml: New file.
+	* modules/pam_stress/pam_stress.8.xml: Likewise.
+	* modules/pam_stress/Makefile.am (MAINTAINERCLEANFILES): Add
+	$(MANS) and README.
+	(EXTRA_DIST): Add $(XMLS).
+	(XMLS): Add README.xml and pam_stress.8.xml.
+	[HAVE_DOC] (dist_man_MANS): Add pam_stress.8.
+	[ENABLE_REGENERATE_MAN] (dist_noinst_DATA): Add README.
+	[ENABLE_REGENERATE_MAN]: Include $(top_srcdir)/Make.xml.rules.
+	* modules/pam_stress/.gitignore: Remove.
+
+	Resolves: https://github.com/linux-pam/linux-pam/pull/184
+
+2020-07-05  Dmitry V. Levin  <ldv@altlinux.org>
+
+	po: update translations using Weblate (Slovak)
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/sk/
+
+	po: update translations using Weblate (Portuguese (Brazil))
+
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/pt_BR/
+
+	po: update translations using Weblate (Dutch)
+
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/nl/
+
+	po: update translations using Weblate (Italian)
+
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/it/
+
+	po: update translations using Weblate (German)
+
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/de/
+
+	po: update translations using Weblate (Catalan)
+
+	Currently translated at 100.0% (122 of 122 strings).
+
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ca/
+
+2020-07-05  Yaron Shahrabani  <sh.yaron@gmail.com>
+
+	Translated using Weblate (Hebrew)
+	Currently translated at 75.4% (92 of 122 strings)
+
+	Translation: linux-pam/master
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/he/
+
+	Translated using Weblate (Arabic)
+
+	Currently translated at 61.4% (75 of 122 strings)
+
+	Translation: linux-pam/master
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/ar/
+
+2020-07-02  Dmitry V. Levin  <ldv@altlinux.org>
+
+	misc_conv: fix potential information leak on error path.
+	* libpam_misc/misc_conv.c (read_string): Clear the stack buffer from
+	data read earlier from stdin in case of a read error.
+
+2020-07-01  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_loginuid: fix unlikely negative 3rd argument of strncmp on error path
+	[ldv: rewrote commit message]
+
+	* modules/pam_loginuid/pam_loginuid.c (set_loginuid): Do not pass to
+	strncmp the return value of pam_modutil_read in an unlikely case when
+	the latter fails to read from /proc/self/uid_map.
+
+2020-07-01  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_namespace, pam_mkhomedir: fix unlikely descriptor leaks on error path
+	[ldv: rewrote commit message]
+
+	* modules/pam_mkhomedir/mkhomedir_helper.c (create_homedir): Close just
+	opened file descriptor "srcfd" in an unlikely case when it cannot be
+	fstat'ed.
+	* modules/pam_namespace/pam_namespace.c (create_instance): Close just
+	opened file descriptor "fd" in an unlikely case when it cannot be
+	fstat'ed.
+
+2020-07-01  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_rootok: fix use of va_list.
+	CPPCHECK_WARNING (CWE-843):
+	error[va_end_missing]: va_list 'ap' was opened but not closed by
+	va_end().
+
+	[ldv: According to POSIX documentation, each invocation of va_start()
+	must be matched by a corresponding invocation of va_end().
+
+	According to the GNU libc documentation, "with most C compilers,
+	calling 'va_end' does nothing.  This is always true in the GNU C
+	compiler.  But you might as well call 'va_end' just in case your
+	program is someday compiled with a peculiar compiler."
+
+	The main reason for applying this change is to pacify static analysis
+	tools like cppcheck that insist on strict POSIX conformance in this
+	respect.]
+
+2020-07-01  ikerexxe  <ipedrosa@redhat.com>
+
+	misc_conv: fix potential stack buffer overflow.
+	[ldv: rewrote commit message]
+
+	* libpam_misc/misc_conv.c (read_string): Use _pam_overwrite_n instead
+	of _pam_overwrite to clear stack buffer "line" because the latter does
+	not have to be null-terminated.
+
+2020-07-01  Yaron Shahrabani  <sh.yaron@gmail.com>
+
+	Translated using Weblate (Hebrew)
+	Currently translated at 60.6% (74 of 122 strings)
+
+	Translation: linux-pam/master
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/he/
+
+2020-06-30  Dmitry V. Levin  <ldv@altlinux.org>
+
+	misc_conv: remove redundant check.
+	* libpam_misc/misc_conv.c (read_string): Remove redundant nc > 0
+	check as it has already been tested in the previous condition.
+
+2020-06-29  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_limits: clarify configuration file.
+	Resolves: https://github.com/linux-pam/linux-pam/pull/249
+
+2020-06-26  Dmitry V. Levin  <ldv@altlinux.org>
+
+	.gitignore: move doc-specific entries to doc/.gitignore.
+
+	.gitignore: move module-specific entries to modules/.gitignore.
+
+2020-06-26  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_namespace: add systemd service file to gitignore.
+	* modules/pam_namespace/.gitignore: Add pam_namespace.service.
+
+	Complements: v1.4.0~247 ("pam_namespace: secure tmp-inst directories")
+
+2020-06-26  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_faillock: add faillock executable to gitignore.
+	* modules/pam_faillock/.gitignore: Add faillock.
+
+	Complements: v1.4.0~76 ("pam_faillock: New module for locking after multiple auth failures")
+
+2020-06-25  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_env: clarify user_readenv option.
+
+2020-06-24  Baurzhan Muftakhidinov  <baurthefirst@gmail.com>
+
+	Translated using Weblate (Kazakh)
+	Currently translated at 100.0% (122 of 122 strings)
+
+	Translation: linux-pam/master
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/kk/
+
+2020-06-24  Yaron Shahrabani  <sh.yaron@gmail.com>
+
+	Translated using Weblate (Hebrew)
+	Currently translated at 44.2% (54 of 122 strings)
+
+	Translation: linux-pam/master
+	Translate-URL: https://translate.fedoraproject.org/projects/linux-pam/master/he/
+
+2020-06-22  Vito Caputo  <vcaputo@pengaru.com>
+
+	modules/pam_limits: add support for nonewprivs.
+	Expose prctl(PR_SET_NO_NEW_PRIVS) as "nonewprivs" item.
+
+	The valid values are a boolean toggle 0/1 to keep semi-consistent
+	with the other numeric limits.  It's slightly awkward as this is
+	an oddball relative to the other items in pam_limits but outside
+	of the item value itself this does seem at home in pam_limits.
+
+	Resolves: https://github.com/linux-pam/linux-pam/issues/224
+	Resolves: https://github.com/linux-pam/linux-pam/pull/225
+
+2020-06-17  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_usertype: avoid determining if user exists.
+	Taking a look at the time for the password prompt to appear it was
+	possible to determine if a user existed in a system. Solved it by
+	matching the runtime until the password prompt was shown by always
+	checking the password hash for an existing and a non-existing user.
+
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1629598
+
+2020-06-17  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_unix: avoid determining if user exists.
+	Taking a look at the time for the password prompt to appear it was
+	possible to determine if a user existed in a system. Solved it by
+	matching the runtime until the password prompt was shown by always
+	checking the password hash for an existing and a non-existing user.
+
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1629598
+
+2020-06-17  ikerexxe  <ipedrosa@redhat.com>
+
+	pam_faillock: change /run/faillock/$USER permissions to 0660.
+	Nowadays, /run/faillock/$USER files have user:root ownership and 0600
+	permissions. This forces the process that writes to these files to have
+	CAP_DAC_OVERRIDE capabilites. Just by changing the permissions to 0660
+	the capability can be removed, which leads to a more secure system.
+
+	Resolves: https://bugzilla.redhat.com/show_bug.cgi?id=1661822
+
+2020-06-16  Dmitry V. Levin  <ldv@altlinux.org>
+
+	pam_modutil_check_user_in_passwd: avoid timing attacks.
+	* libpam/pam_modutil_check_user.c (pam_modutil_check_user_in_passwd): Do
+	not exit the file reading loop when the user is found, continue reading
+	the file to avoid timing attacks.
+
+2020-06-15  Fabrice Fontaine  <fontaine.fabrice@gmail.com>
+
+	pam_faillock: fix build on musl.
+	Use pam_modutil_check_user_in_passwd in pam_faillock.c instead of
+	fgetpwent_r which is not available on musl.
+
+	Resolves: https://github.com/linux-pam/linux-pam/issues/236
+	Resolves: https://github.com/linux-pam/linux-pam/pull/237
+	Fixes: http://autobuild.buildroot.org/results/0432736ffee376dd84757469434a4bbcfdcdaf4b
+
+2020-06-15  Fabrice Fontaine  <fontaine.fabrice@gmail.com>
+	    Dmitry V. Levin  <ldv@altlinux.org>
+
+	Move check_user_in_passwd from pam_localuser.c to pam_modutil.
+
+	* modules/pam_localuser/pam_localuser.c: Include
+	<security/pam_modutil.h>.
+	(pam_sm_authenticate): Replace check_user_in_passwd with
+	pam_modutil_check_user_in_passwd.
+	(check_user_in_passwd): Rename to pam_modutil_check_user_in_passwd,
+	move to ...
+	* libpam/pam_modutil_check_user.c: ... new file.
+	* libpam/Makefile.am (libpam_la_SOURCES): Add pam_modutil_check_user.c.
+	* libpam/include/security/pam_modutil.h
+	(pam_modutil_check_user_in_passwd): New function declaration.
+	* libpam/libpam.map (LIBPAM_MODUTIL_1.4.1): New interface.
+
+2020-06-15  Dmitry V. Levin  <ldv@altlinux.org>
+
+	configure.ac: fix non-portable use of test builtin.
+	Portable code should not assume that test builtin supports == operator.
+
+	* configure.ac (opt_uidmin, opt_sysuidmin, opt_kerneloverflowuid): Fix
+	initialization.
+
+	Resolves: https://github.com/linux-pam/linux-pam/issues/241
+	Fixes: 926d7935e ("pam_usertype: new module to tell if uid is in login.defs ranges")
+
+2020-06-11  Fabrice Fontaine  <fontaine.fabrice@gmail.com>
+
+	configure.ac: fix build failure when crypt() does not require libcrypt.
+	Since commit 522246d20e4cd92fadc2d760228cb7e78cbeb4c5, the build fails
+	if "none required" is returned by AC_SEARCH_LIBS for libcrypt.
+
+	Resolves: https://github.com/linux-pam/linux-pam/pull/235
+	Fixes: http://autobuild.buildroot.org/results/92b3dd7c984d2b843ac9aacacd69eec99f28743e
+	Fixes: v1.4.0~228 ("Use cached 'crypt' library result correctly")
+
+2020-06-04  Dmitry V. Levin  <ldv@altlinux.org>
+
+	build: do not generate tarballs compressed with bzip2 and gzip.
+	There are tarballs compressed with xz, that should be enough.
+
+	* Makefile.am (AUTOMAKE_OPTIONS): Remove dist-bzip2, add no-dist-gzip.
+	(releasedocs): Do not create Linux-PAM-$(VERSION)-docs.tar.bz2
+	and Linux-PAM-$(VERSION)-docs.tar.gz.
+
 2020-06-04  Dmitry V. Levin  <ldv@altlinux.org>
 
 	maint: document release procedure.

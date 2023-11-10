@@ -31,7 +31,7 @@ startuid=1000
 
     Describe the start of the UID range the policy is applied to. (Defaults to
     UID_MIN from login.defs or the uidmin value defined at compile-time if
-    UID_MIN is undefined)
+    UID_MIN is undefined.)
 
 enduid=0
 
@@ -75,6 +75,6 @@ AUTHOR
 
 pam_setquota was originally written by Ruslan Savchenko <savrus@mexmat.net>.
 
-Further modifications were made by Shane Tzen<shane@ict.usc.edu>, Sven Hartge
-<sven@svenharte.de> and Keller Fuchs <kellerfuchs@hashbang.sh>
+Further modifications were made by Shane Tzen <shane@ict.usc.edu>, Sven Hartge
+<sven@svenhartge.de> and Keller Fuchs <kellerfuchs@hashbang.sh>.
 

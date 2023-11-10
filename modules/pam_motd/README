@@ -24,8 +24,9 @@ Similar overriding behavior applies to the directories. Files in /etc/motd.d/
 override files with the same name in /run/motd.d/ and /usr/lib/motd.d/. Files
 in /run/motd.d/ override files with the same name in /usr/lib/motd.d/.
 
-Files the in the directories listed above are displayed in lexicographic order
-by name.
+Files in the directories listed above are displayed in lexicographic order by
+name. Moreover, the files are filtered by reading them with the credentials of
+the target user authenticating on the system.
 
 To silence a message, a symbolic link with target /dev/null may be placed in /
 etc/motd.d with the same filename as the message to be silenced. Example:

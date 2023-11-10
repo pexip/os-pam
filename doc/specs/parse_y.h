@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.5.  */
+/* A Bison parser, made by GNU Bison 3.7.6.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -30,6 +31,10 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 #ifndef YY_YY_PARSE_Y_H_INCLUDED
 # define YY_YY_PARSE_Y_H_INCLUDED
 /* Debug traces.  */
@@ -40,21 +45,30 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    NEW_COUNTER = 258,
-    LABEL = 259,
-    HASH = 260,
-    CHAR = 261,
-    NEWLINE = 262,
-    NO_INDENT = 263,
-    RIGHT = 264
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    NEW_COUNTER = 258,             /* NEW_COUNTER  */
+    LABEL = 259,                   /* LABEL  */
+    HASH = 260,                    /* HASH  */
+    CHAR = 261,                    /* CHAR  */
+    NEWLINE = 262,                 /* NEWLINE  */
+    NO_INDENT = 263,               /* NO_INDENT  */
+    RIGHT = 264                    /* RIGHT  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define NEW_COUNTER 258
 #define LABEL 259
 #define HASH 260
@@ -65,17 +79,16 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 27 "parse_y.y" /* yacc.c:1910  */
+#line 27 "parse_y.y"
 
     int def;
     char *string;
 
-#line 77 "parse_y.h" /* yacc.c:1910  */
-};
+#line 90 "parse_y.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

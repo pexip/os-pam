@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Linux-PAM\n"
 "Report-Msgid-Bugs-To: https://github.com/linux-pam/linux-pam/issues\n"
-"POT-Creation-Date: 2020-06-08 10:18+0000\n"
+"POT-Creation-Date: 2021-07-20 20:00+0000\n"
 "PO-Revision-Date: 2013-04-15 04:49-0400\n"
 "Last-Translator: shanky <prasad.mvs@gmail.com>\n"
 "Language-Team: Kannada (http://www.transifex.com/projects/p/fedora/language/"
@@ -23,21 +23,8 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Zanata 3.8.3\n"
 
-#: libpam_misc/misc_conv.c:33
-msgid "...Time is running out...\n"
-msgstr "...ಸಮಯ ಸರಿಯುತ್ತಿದೆ...\n"
-
-#: libpam_misc/misc_conv.c:34
-msgid "...Sorry, your time is up!\n"
-msgstr "...ಕ್ಷಮಿಸಿ, ನಿಮ್ಮ ಸಮಯ ಮುಗಿಯಿತು!\n"
-
-#: libpam_misc/misc_conv.c:346
-#, c-format
-msgid "erroneous conversation (%d)\n"
-msgstr "ದೋಷಪೂರಿತ ಸಂವಾದ (%d)\n"
-
-#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:178
-#: modules/pam_userdb/pam_userdb.c:55
+#: libpam/pam_get_authtok.c:39 modules/pam_exec/pam_exec.c:181
+#: modules/pam_userdb/pam_userdb.c:53
 msgid "Password: "
 msgstr "ಗುಪ್ತಪದ: "
 
@@ -219,99 +206,55 @@ msgstr "ಅನ್ವಯವು libpam ಅನ್ನು ಪುನಃ ಕರೆಯ�
 msgid "Unknown PAM error"
 msgstr "ಗೊತ್ತಿರದ PAM ದೋಷ"
 
-#: modules/pam_cracklib/pam_cracklib.c:601
-msgid "is the same as the old one"
-msgstr "ಇದು ಹಳೆಯದರ ಹಾಗೆಯೇ ಇದೆ"
+#: libpam_misc/misc_conv.c:33
+msgid "...Time is running out...\n"
+msgstr "...ಸಮಯ ಸರಿಯುತ್ತಿದೆ...\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:607
-#: modules/pam_cracklib/pam_cracklib.c:611
-#: modules/pam_cracklib/pam_cracklib.c:621
-msgid "memory allocation error"
-msgstr "ಮೆಮೊರಿ ನಿಯೋಜನಾ ದೋಷ"
+#: libpam_misc/misc_conv.c:34
+msgid "...Sorry, your time is up!\n"
+msgstr "...ಕ್ಷಮಿಸಿ, ನಿಮ್ಮ ಸಮಯ ಮುಗಿಯಿತು!\n"
 
-#: modules/pam_cracklib/pam_cracklib.c:626
-msgid "is a palindrome"
-msgstr "ಇದು ಒಂದು ಸಮಾನ ಪೂರ್ವಾಪರವಾಗಿದೆ (palindrome)"
-
-#: modules/pam_cracklib/pam_cracklib.c:629
-msgid "case changes only"
-msgstr "ಕೇವಲ ಕೇಸ್ ಗಳ ಬದಲಾವಣೆಯಾಗಿದೆ ಅಷ್ಟೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:632
-msgid "is too similar to the old one"
-msgstr "ಇದು ಹಳೆಯದಕ್ಕೆ ಬಹಳಷ್ಟು ಹೋಲುತ್ತದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:635
-msgid "is too simple"
-msgstr "ಇದು ಬಹಳ ಸರಳವಾಗಿದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:638
-msgid "is rotated"
-msgstr "ಇದು ತಿರುಗಿಸಲಾಗಿದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:641
-msgid "not enough character classes"
-msgstr "ಸಾಕಷ್ಟು ಕ್ಯಾರೆಕ್ಟರ್ ವರ್ಗಗಳು ಇಲ್ಲ"
-
-#: modules/pam_cracklib/pam_cracklib.c:644
-msgid "contains too many same characters consecutively"
-msgstr "ಇದು ಒಂದೇ ಬಗೆಯ ಬಹಳಷ್ಟು ಕ್ಯಾರೆಕ್ಟರುಗಳನ್ನು ಅನುಕ್ರಮವಾಗಿ ಹೊಂದಿದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:647
-msgid "contains too long of a monotonic character sequence"
-msgstr "ಇದು ಒಂದೇ ಬಗೆಯ ಉದ್ದನೆಯ ಅಕ್ಷರಗಳ ಅನುಕ್ರಮವನ್ನು ಹೊಂದಿದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:650
-msgid "contains the user name in some form"
-msgstr "ಇದು ಯಾವುದೊ ಒಂದು ಬಗೆಯಲ್ಲಿ ಬಳಕೆದಾರ ಹೆಸರನ್ನು ಒಳಗೊಂಡಿದೆ"
-
-#: modules/pam_cracklib/pam_cracklib.c:684
-#: modules/pam_unix/pam_unix_passwd.c:563
-#, fuzzy
-msgid "No password has been supplied."
-msgstr "ಯಾವುದೇ ಗುಪ್ತಪದ ನೀಡಲಾಗಿಲ್ಲ"
-
-#: modules/pam_cracklib/pam_cracklib.c:685
-#: modules/pam_unix/pam_unix_passwd.c:564
-#, fuzzy
-msgid "The password has not been changed."
-msgstr "NIS ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ್ಲ."
-
-#: modules/pam_cracklib/pam_cracklib.c:706
-#: modules/pam_cracklib/pam_cracklib.c:788
+#: libpam_misc/misc_conv.c:348
 #, c-format
-msgid "BAD PASSWORD: %s"
-msgstr "ಕೆಟ್ಟ ಗುಪ್ತಪದ: %s"
+msgid "erroneous conversation (%d)\n"
+msgstr "ದೋಷಪೂರಿತ ಸಂವಾದ (%d)\n"
 
-#: modules/pam_exec/pam_exec.c:275
+#: modules/pam_exec/pam_exec.c:279
 #, c-format
 msgid "%s failed: exit code %d"
 msgstr "%s ವಿಫಲಗೊಂಡಿದೆ: ನಿರ್ಗಮಿಸಲು ಸಂಜ್ಞೆ %d "
 
-#: modules/pam_exec/pam_exec.c:284
+#: modules/pam_exec/pam_exec.c:289
 #, c-format
 msgid "%s failed: caught signal %d%s"
 msgstr "%s ವಿಫಲಗೊಂಡಿದೆ: ಹಿಡಿಯಲಾದ ಸೂಚನೆ %d%s"
 
-#: modules/pam_exec/pam_exec.c:293
+#: modules/pam_exec/pam_exec.c:299
 #, c-format
 msgid "%s failed: unknown status 0x%x"
 msgstr "%s ವಿಫಲಗೊಂಡಿದೆ: ಗೊತ್ತಿರದ ಸ್ಥಿತಿ 0x%x"
 
-#: modules/pam_faillock/main.c:104
+#: modules/pam_faillock/main.c:103
 #, fuzzy, c-format
 msgid ""
 "Usage: %s [--dir /path/to/tally-directory] [--user username] [--reset]\n"
 msgstr ""
 "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
 
-#: modules/pam_faillock/pam_faillock.c:645 modules/pam_tally/pam_tally.c:553
-#: modules/pam_tally2/pam_tally2.c:562
+#: modules/pam_faillock/pam_faillock.c:618
 #, fuzzy, c-format
 msgid "The account is locked due to %u failed logins."
 msgstr "ವಿಫಲಗೊಂಡ %u ಪ್ರವೇಶಗಳಿಂದಾಗಿ ಖಾತೆಯನ್ನು ಲಾಕ್ ಮಾಡಲಾಗುತ್ತಿದೆ"
 
-#: modules/pam_faillock/pam_faillock.c:650
+#: modules/pam_faillock/pam_faillock.c:627
+#: modules/pam_faillock/pam_faillock.c:633
+#, c-format
+msgid "(%d minute left to unlock)"
+msgid_plural "(%d minutes left to unlock)"
+msgstr[0] ""
+
+#. TRANSLATORS: only used if dngettext is not supported.
+#: modules/pam_faillock/pam_faillock.c:636
 #, c-format
 msgid "(%d minutes left to unlock)"
 msgstr ""
@@ -362,7 +305,7 @@ msgstr[0] "ಕೊನೆಯ ಬಾರಿಯ ಯಶಸ್ವಿ ಪ್ರವೇಶ
 msgid "There were %d failed login attempts since the last successful login."
 msgstr "ಕೊನೆಯ ಬಾರಿಯ ಯಶಸ್ವಿ ಪ್ರವೇಶದ ನಂತರ %d ಪ್ರವೇಶದ ಪ್ರಯತ್ನಗಳು ವಿಫಲಗೊಂಡಿದೆ."
 
-#: modules/pam_limits/pam_limits.c:1088
+#: modules/pam_limits/pam_limits.c:1164
 #, fuzzy, c-format
 msgid "There were too many logins for '%s'."
 msgstr "'%s'ಗಾಗಿ ಬಹಳಷ್ಟು ಲಾಗಿನ್ನುಗಳು."
@@ -404,22 +347,22 @@ msgstr "%s ಫೋಲ್ಡರಿನಲ್ಲಿ ನಿಮಗಾಗಿ ಹಳೆ 
 msgid "You have mail in folder %s."
 msgstr "%s ಫೋಲ್ಡರಿನಲ್ಲಿ ನಿಮಗಾಗಿ ಮೈಲ್ ಇದೆ."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:107
+#: modules/pam_mkhomedir/pam_mkhomedir.c:123
 #, c-format
 msgid "Creating directory '%s'."
 msgstr "ಕೋಶ '%s' ಅನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ."
 
-#: modules/pam_mkhomedir/pam_mkhomedir.c:174
+#: modules/pam_mkhomedir/pam_mkhomedir.c:206
 #, c-format
 msgid "Unable to create and initialize directory '%s'."
 msgstr "ಕೋಶ '%s' ಅನ್ನು ರಚಿಸಲು ಹಾಗು ಆರಂಭಿಸಲು ಸಾಧ್ಯವಾಗಿಲ್ಲ."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:211
+#: modules/pam_pwhistory/pam_pwhistory.c:371
 #: modules/pam_unix/pam_unix_passwd.c:589
 msgid "Password has been already used. Choose another."
 msgstr "ಗುಪ್ತಪದವು ಈಗಾಗಲೆ ಬಳಸಲ್ಪಟ್ಟಿದೆ. ಬೇರೊಂದನ್ನು ಬಳಸಿ."
 
-#: modules/pam_pwhistory/pam_pwhistory.c:218
+#: modules/pam_pwhistory/pam_pwhistory.c:378
 msgid "Password has been already used."
 msgstr "ಗುಪ್ತಪದವನ್ನು ಈಗಾಗಲೆ ಬಳಸಲಾಗಿದೆ."
 
@@ -455,12 +398,12 @@ msgstr "ಸಮಂಜಸವಾದ ಸುರಕ್ಷತಾ ಸನ್ನಿವೇ�
 msgid "A valid context for %s could not be obtained."
 msgstr ""
 
-#: modules/pam_selinux/pam_selinux.c:629
+#: modules/pam_selinux/pam_selinux.c:640
 #, fuzzy, c-format
 msgid "Security context %s has been assigned."
 msgstr "ಸುರಕ್ಷತಾ ಸನ್ನಿವೇಶ %s ವನ್ನು ನಿಯೋಜಿಸಲಾಗಿದೆ"
 
-#: modules/pam_selinux/pam_selinux.c:645
+#: modules/pam_selinux/pam_selinux.c:656
 #, fuzzy, c-format
 msgid "Key creation context %s has been assigned."
 msgstr "ಕೀಲಿ ನಿರ್ಮಾಣ ಸನ್ನಿವೇಶ %s ವನ್ನು ನಿಯೋಜಿಸಲಾಗಿದೆ"
@@ -480,66 +423,7 @@ msgstr "pam_set_item() ಮಾಡುವಲ್ಲಿ ವಿಫಲತೆ\n"
 msgid "login: failure forking: %m"
 msgstr "ಲಾಗಿನ್: ಫೋರ್ಕಿಂಗ್ ಮಾಡುವಲ್ಲಿ ವಿಫಲತೆ:%m"
 
-#: modules/pam_tally/pam_tally.c:528 modules/pam_tally2/pam_tally2.c:580
-#, fuzzy, c-format
-msgid "The account is temporarily locked (%ld seconds left)."
-msgstr "ಖಾತೆಯನ್ನು ತಾತ್ಕಾಲಿಕವಾಗಿ ಲಾಕ್ ಮಾಡಲಾಗಿದೆ (%ld ಸೆಕೆಂಡುಗಳು ಉಳಿದಿವೆ)"
-
-#: modules/pam_tally/pam_tally.c:729 modules/pam_tally2/pam_tally2.c:846
-msgid "Authentication error"
-msgstr "ದೃಢೀಕರಣ ದೋಷ"
-
-#: modules/pam_tally/pam_tally.c:730 modules/pam_tally2/pam_tally2.c:847
-msgid "Service error"
-msgstr "ಸೇವಾ ದೋಷ"
-
-#: modules/pam_tally/pam_tally.c:731 modules/pam_tally2/pam_tally2.c:848
-msgid "Unknown user"
-msgstr "ಗೊತ್ತಿರದ ಬಳಕೆದಾರ"
-
-#: modules/pam_tally/pam_tally.c:732 modules/pam_tally2/pam_tally2.c:849
-msgid "Unknown error"
-msgstr "ಗೊತ್ತಿರದ ದೋಷ"
-
-#: modules/pam_tally/pam_tally.c:751 modules/pam_tally2/pam_tally2.c:871
-#, c-format
-msgid "%s: Bad number given to --reset=\n"
-msgstr "%s: --reset= ಗೆ ಕೊಡಲಾದ ಕೆಟ್ಟ ಸಂಖ್ಯೆ\n"
-
-#: modules/pam_tally/pam_tally.c:755 modules/pam_tally2/pam_tally2.c:875
-#, c-format
-msgid "%s: Unrecognised option %s\n"
-msgstr "%s: ಗುರುತಿಸಲಾಗದ ಆಯ್ಕೆ %s\n"
-
-#: modules/pam_tally/pam_tally.c:767
-#, c-format
-msgid ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_tally/pam_tally.c:841 modules/pam_tally2/pam_tally2.c:1014
-#, c-format
-msgid "%s: Can't reset all users to non-zero\n"
-msgstr "%s: ಎಲ್ಲಾ ಬಳಕೆದಾರರನ್ನು ಶೂನ್ಯವಲ್ಲದುದಕ್ಕೆ ಪುನರ್ ಸಂಯೋಜಿಸಲು ಆಗುವುದಿಲ್ಲ\n"
-
-#: modules/pam_tally2/pam_tally2.c:903
-#, c-format
-msgid "Login           Failures Latest failure     From\n"
-msgstr "ಪ್ರವೇಶ           ವಿಫಲತೆಗಳು ಇತ್ತೀಚಿನ ವಿಫಲತೆ     ಇಂದ\n"
-
-#: modules/pam_tally2/pam_tally2.c:919
-#, c-format
-msgid ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"   [-u username] [--user username]\n"
-"   [-r] [--reset[=n]] [--quiet]\n"
-msgstr ""
-"%s: [-f rooted-filename] [--file rooted-filename]\n"
-"   [-u username] [--user username]\n"
-"   [-r] [--reset[=n]] [--quiet]\n"
-
-#: modules/pam_timestamp/pam_timestamp.c:354
+#: modules/pam_timestamp/pam_timestamp.c:361
 #, fuzzy, c-format
 msgid "Access has been granted (last access was %ld seconds ago)."
 msgstr ""
@@ -564,20 +448,30 @@ msgid ""
 msgstr ""
 "ನೀವು ಈ ಕೂಡಲೆ ನಿಮ್ಮ ಗುಪ್ತಪದವನ್ನು ಬದಲಿಸುವ ಅಗತ್ಯವಿದೆ (ಗುಪ್ತಪದವು ಬಹಳ ಹಳೆಯದಾಗಿದೆ)"
 
-#: modules/pam_unix/pam_unix_acct.c:265 modules/pam_unix/pam_unix_acct.c:272
+#: modules/pam_unix/pam_unix_acct.c:269 modules/pam_unix/pam_unix_acct.c:276
 #, fuzzy, c-format
 msgid "Warning: your password will expire in %d day."
 msgid_plural "Warning: your password will expire in %d days."
 msgstr[0] "ಎಚ್ಚರಿಕೆ: ನಿಮ್ಮ ಗುಪ್ತಪದದ ವಾಯಿದೆಯು %d ದಿನಗಳ ನಂತರ ತೀರಿಹೋಗುತ್ತದೆ"
 
 #. TRANSLATORS: only used if dngettext is not supported
-#: modules/pam_unix/pam_unix_acct.c:277
+#: modules/pam_unix/pam_unix_acct.c:281
 #, fuzzy, c-format
 msgid "Warning: your password will expire in %d days."
 msgstr "ಎಚ್ಚರಿಕೆ: %d ದಿನಗಳಲ್ಲಿ ನಿಮ್ಮ ಗುಪ್ತಪದದ ಅವಧಿ ಅಂತ್ಯಗೊಳ್ಳುತ್ತದೆ"
 
 #: modules/pam_unix/pam_unix_passwd.c:465
 msgid "NIS password could not be changed."
+msgstr "NIS ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ್ಲ."
+
+#: modules/pam_unix/pam_unix_passwd.c:563
+#, fuzzy
+msgid "No password has been supplied."
+msgstr "ಯಾವುದೇ ಗುಪ್ತಪದ ನೀಡಲಾಗಿಲ್ಲ"
+
+#: modules/pam_unix/pam_unix_passwd.c:564
+#, fuzzy
+msgid "The password has not been changed."
 msgstr "NIS ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸಲಾಗುವುದಿಲ್ಲ್ಲ."
 
 #: modules/pam_unix/pam_unix_passwd.c:581
@@ -598,3 +492,81 @@ msgstr "%s ಗಾಗಿ ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿ�
 #, fuzzy
 msgid "You must wait longer to change your password."
 msgstr "ನಿಮ್ಮ ಗುಪ್ತಪದವನ್ನು ಬದಲಾಯಿಸಲು ನೀವು ಬಹಳ ಸಮಯ ಕಾಯಬೇಕು"
+
+#~ msgid "is the same as the old one"
+#~ msgstr "ಇದು ಹಳೆಯದರ ಹಾಗೆಯೇ ಇದೆ"
+
+#~ msgid "memory allocation error"
+#~ msgstr "ಮೆಮೊರಿ ನಿಯೋಜನಾ ದೋಷ"
+
+#~ msgid "is a palindrome"
+#~ msgstr "ಇದು ಒಂದು ಸಮಾನ ಪೂರ್ವಾಪರವಾಗಿದೆ (palindrome)"
+
+#~ msgid "case changes only"
+#~ msgstr "ಕೇವಲ ಕೇಸ್ ಗಳ ಬದಲಾವಣೆಯಾಗಿದೆ ಅಷ್ಟೆ"
+
+#~ msgid "is too similar to the old one"
+#~ msgstr "ಇದು ಹಳೆಯದಕ್ಕೆ ಬಹಳಷ್ಟು ಹೋಲುತ್ತದೆ"
+
+#~ msgid "is too simple"
+#~ msgstr "ಇದು ಬಹಳ ಸರಳವಾಗಿದೆ"
+
+#~ msgid "is rotated"
+#~ msgstr "ಇದು ತಿರುಗಿಸಲಾಗಿದೆ"
+
+#~ msgid "not enough character classes"
+#~ msgstr "ಸಾಕಷ್ಟು ಕ್ಯಾರೆಕ್ಟರ್ ವರ್ಗಗಳು ಇಲ್ಲ"
+
+#~ msgid "contains too many same characters consecutively"
+#~ msgstr "ಇದು ಒಂದೇ ಬಗೆಯ ಬಹಳಷ್ಟು ಕ್ಯಾರೆಕ್ಟರುಗಳನ್ನು ಅನುಕ್ರಮವಾಗಿ ಹೊಂದಿದೆ"
+
+#~ msgid "contains too long of a monotonic character sequence"
+#~ msgstr "ಇದು ಒಂದೇ ಬಗೆಯ ಉದ್ದನೆಯ ಅಕ್ಷರಗಳ ಅನುಕ್ರಮವನ್ನು ಹೊಂದಿದೆ"
+
+#~ msgid "contains the user name in some form"
+#~ msgstr "ಇದು ಯಾವುದೊ ಒಂದು ಬಗೆಯಲ್ಲಿ ಬಳಕೆದಾರ ಹೆಸರನ್ನು ಒಳಗೊಂಡಿದೆ"
+
+#~ msgid "BAD PASSWORD: %s"
+#~ msgstr "ಕೆಟ್ಟ ಗುಪ್ತಪದ: %s"
+
+#, fuzzy
+#~ msgid "The account is temporarily locked (%ld seconds left)."
+#~ msgstr "ಖಾತೆಯನ್ನು ತಾತ್ಕಾಲಿಕವಾಗಿ ಲಾಕ್ ಮಾಡಲಾಗಿದೆ (%ld ಸೆಕೆಂಡುಗಳು ಉಳಿದಿವೆ)"
+
+#~ msgid "Authentication error"
+#~ msgstr "ದೃಢೀಕರಣ ದೋಷ"
+
+#~ msgid "Service error"
+#~ msgstr "ಸೇವಾ ದೋಷ"
+
+#~ msgid "Unknown user"
+#~ msgstr "ಗೊತ್ತಿರದ ಬಳಕೆದಾರ"
+
+#~ msgid "Unknown error"
+#~ msgstr "ಗೊತ್ತಿರದ ದೋಷ"
+
+#~ msgid "%s: Bad number given to --reset=\n"
+#~ msgstr "%s: --reset= ಗೆ ಕೊಡಲಾದ ಕೆಟ್ಟ ಸಂಖ್ಯೆ\n"
+
+#~ msgid "%s: Unrecognised option %s\n"
+#~ msgstr "%s: ಗುರುತಿಸಲಾಗದ ಆಯ್ಕೆ %s\n"
+
+#~ msgid ""
+#~ "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [--file rooted-filename] [--user username] [--reset[=n]] [--quiet]\n"
+
+#~ msgid "%s: Can't reset all users to non-zero\n"
+#~ msgstr "%s: ಎಲ್ಲಾ ಬಳಕೆದಾರರನ್ನು ಶೂನ್ಯವಲ್ಲದುದಕ್ಕೆ ಪುನರ್ ಸಂಯೋಜಿಸಲು ಆಗುವುದಿಲ್ಲ\n"
+
+#~ msgid "Login           Failures Latest failure     From\n"
+#~ msgstr "ಪ್ರವೇಶ           ವಿಫಲತೆಗಳು ಇತ್ತೀಚಿನ ವಿಫಲತೆ     ಇಂದ\n"
+
+#~ msgid ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "   [-u username] [--user username]\n"
+#~ "   [-r] [--reset[=n]] [--quiet]\n"
+#~ msgstr ""
+#~ "%s: [-f rooted-filename] [--file rooted-filename]\n"
+#~ "   [-u username] [--user username]\n"
+#~ "   [-r] [--reset[=n]] [--quiet]\n"

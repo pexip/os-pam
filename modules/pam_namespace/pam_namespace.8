@@ -2,12 +2,12 @@
 .\"     Title: pam_namespace
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_NAMESPACE" "8" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM_NAMESPACE" "8" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -142,37 +142,7 @@ For the <service>s you need polyinstantiation (login for example) put the follow
 .PP
 session required pam_namespace\&.so [arguments]
 .PP
-To use polyinstantiation with graphical display manager gdm, insert the following line, before exit 0, in /etc/gdm/PostSession/Default:
-.PP
-/usr/sbin/gdm\-safe\-restart
-.PP
-This allows gdm to restart after each session and appropriately adjust namespaces of display manager and the X server\&. If polyinstantiation of /tmp is desired along with the graphical environment, then additional configuration changes are needed to address the interaction of X server and font server namespaces with their use of /tmp to create communication sockets\&. Please use the initialization script
-/etc/security/namespace\&.init
-to ensure that the X server and its clients can appropriately access the communication socket X0\&. Please refer to the sample instructions provided in the comment section of the instance initialization script
-/etc/security/namespace\&.init\&. In addition, perform the following changes to use graphical environment with polyinstantiation of /tmp:
-.PP
-.if n \{\
-.RS 4
-.\}
-.nf
-      1\&. Disable the use of font server by commenting out "FontPath"
-         line in /etc/X11/xorg\&.conf\&. If you do want to use the font server
-         then you will have to augment the instance initialization
-         script to appropriately provide /tmp/\&.font\-unix from the
-         polyinstantiated /tmp\&.
-      2\&. Ensure that the gdm service is setup to use pam_namespace,
-         as described above, by modifying /etc/pam\&.d/gdm\&.
-      3\&. Ensure that the display manager is configured to restart X server
-         with each new session\&. This default setup can be verified by
-         making sure that /usr/share/gdm/defaults\&.conf contains
-         "AlwaysRestartServer=true", and it is not overridden by
-         /etc/gdm/custom\&.conf\&.
-    
-.fi
-.if n \{\
-.RE
-.\}
-.sp
+To use polyinstantiation with graphical display manager gdm, please refer to gdm\*(Aqs documentation\&.
 .SH "SEE ALSO"
 .PP
 \fBnamespace.conf\fR(5),

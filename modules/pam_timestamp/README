@@ -13,6 +13,9 @@ created in the timestampdir directory for the user. When an application
 attempts to authenticate the user, a pam_timestamp will treat a sufficiently
 recent timestamp file as grounds for succeeding.
 
+The default encryption hash is taken from the HMAC_CRYPTO_ALGO variable from /
+etc/login.defs.
+
 OPTIONS
 
 timestampdir=directory
