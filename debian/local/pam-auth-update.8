@@ -23,6 +23,10 @@ pam\-auth\-update - manage PAM configuration using packaged profiles
 .RB [ \-\-package " [" \-\-remove
 .IR profile " [" profile\fR... "]]]"
 .RB [ \-\-force ]
+.RB [ \-\-enable
+.IR profile " [" profile\fR... "]]"
+.RB [ \-\-disable
+.IR profile " [" profile\fR... "]]"
 .SH DESCRIPTION
 .I pam\-auth\-update
 is a utility that permits configuring the central authentication policy
@@ -67,6 +71,9 @@ with a suffix of
 Indicate that the caller is a package maintainer script; lowers the
 priority of debconf questions to `medium' so that the user is not
 prompted by default.
+.TP
+.B \-\-disable \fIprofile \fR[\fIprofile\fR...]
+Disable the specified profiles in system configuration.  This can be used from system administration scripts to disable profiles.
 .TP
 .B \-\-enable \fIprofile \fR[\fIprofile\fR...]
 Enable the specified profiles in system configuration. This is used to

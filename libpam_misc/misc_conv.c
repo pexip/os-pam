@@ -18,7 +18,7 @@
 #include <security/pam_appl.h>
 #include <security/pam_misc.h>
 
-#define INPUTSIZE PAM_MAX_RESP_SIZE          /* maximum length of input+1 */
+#define INPUTSIZE PAM_MISC_CONV_BUFSIZE      /* maximum length of input+1 */
 #define CONV_ECHO_ON  1                            /* types of echo state */
 #define CONV_ECHO_OFF 0
 
@@ -184,15 +184,17 @@ static int read_string(int echo, const char *prompt, char **retstr)
 		     nc++) {
 		    int rv;
 		    if ((rv=read(STDIN_FILENO, line+nc, 1)) != 1) {
-			if (rv < 0)
+			if (rv < 0) {
+			    _pam_overwrite_n(line, (unsigned int) nc);
 			    nc = rv;
+			}
 			break;
 		    }
 		}
 	    if (have_term) {
 		(void) tcsetattr(STDIN_FILENO, TCSADRAIN, &term_before);
 		if (!echo || expired)             /* do we need a newline? */
-		    fprintf(stderr,"\n");
+		    fprintf(stderr, "\n");
 	    }
 	    if ( delay > 0 ) {
 		reset_alarm(&old_sig);
@@ -202,7 +204,7 @@ static int read_string(int echo, const char *prompt, char **retstr)
 	    } else if (nc > 0) {                 /* we got some user input */
 		D(("we got some user input"));
 
-		if (nc > 0 && line[nc-1] == '\n') {     /* <NUL> terminate */
+		if (line[nc-1] == '\n') {     /* <NUL> terminate */
 		    line[--nc] = '\0';
 		} else {
 		    if (echo) {
@@ -244,13 +246,13 @@ static int read_string(int echo, const char *prompt, char **retstr)
     D(("the timer appears to have expired"));
 
     *retstr = NULL;
-    _pam_overwrite(line);
+    _pam_overwrite_n(line, sizeof(line));
 
  cleanexit:
 
     if (have_term) {
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
-	(void) tcsetattr(STDIN_FILENO, TCSADRAIN, &term_before);
+	(void) tcsetattr(STDIN_FILENO, TCSAFLUSH, &term_before);
     }
 
     return nc;

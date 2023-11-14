@@ -2,7 +2,7 @@ Index: pam/modules/pam_mkhomedir/mkhomedir_helper.c
 ===================================================================
 --- pam.orig/modules/pam_mkhomedir/mkhomedir_helper.c
 +++ pam/modules/pam_mkhomedir/mkhomedir_helper.c
-@@ -38,6 +38,7 @@ create_homedir(const struct passwd *pwd,
+@@ -39,6 +39,7 @@
     DIR *d;
     struct dirent *dent;
     int retval = PAM_SESSION_ERR;
@@ -10,7 +10,7 @@ Index: pam/modules/pam_mkhomedir/mkhomedir_helper.c
  
     /* Create the new directory */
     if (mkdir(dest, 0700) && errno != EEXIST)
-@@ -53,6 +54,12 @@ create_homedir(const struct passwd *pwd,
+@@ -54,6 +55,12 @@
        goto go_out;
     }
  

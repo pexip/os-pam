@@ -47,6 +47,11 @@ quiet
     Per default pam_exec.so will echo the exit status of the external command
     if it fails. Specifying this option will suppress the message.
 
+quiet_log
+
+    Per default pam_exec.so will log the exit status of the external command if
+    it fails. Specifying this option will suppress the log message.
+
 seteuid
 
     Per default pam_exec.so will execute the external command with the real

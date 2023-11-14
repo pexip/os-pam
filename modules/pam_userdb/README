@@ -25,7 +25,8 @@ db=/path/database
 
 debug
 
-    Print debug information.
+    Print debug information. Note that password hashes, both from db and
+    computed, will be printed to syslog.
 
 dump
 

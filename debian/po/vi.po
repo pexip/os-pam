@@ -35,7 +35,7 @@ msgstr "Dịch vụ cần khởi chạy lại để nâng cấp thư viện PAM:
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of  services to be restarted now, and correct it if needed."
+"list of services to be restarted now, and correct it if needed."
 msgstr ""
 "Phần lớn dịch vụ sử dụng PAM thì cũng cần phải được khởi chạy lại để sử dụng "
 "những mô-đun được xây dựng cho phiên bản libpam mới này. Hãy xem lại danh "

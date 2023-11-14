@@ -2,12 +2,12 @@
 .\"     Title: pam_pwhistory
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_PWHISTORY" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_PWHISTORY" "8" "09/03/2021" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -50,7 +50,7 @@ Turns on debugging via
 When password changing enforce the module to use the new password provided by a previously stacked
 \fBpassword\fR
 module (this is used in the example of the stacking of the
-\fBpam_cracklib\fR
+\fBpam_passwdqc\fR
 module documented below)\&.
 .RE
 .PP
@@ -130,14 +130,14 @@ password     required       pam_unix\&.so        use_authtok
 .\}
 .PP
 In combination with
-\fBpam_cracklib\fR:
+\fBpam_passwdqc\fR:
 .sp
 .if n \{\
 .RS 4
 .\}
 .nf
 #%PAM\-1\&.0
-password     required       pam_cracklib\&.so    retry=3
+password     required       pam_passwdqc\&.so    config=/etc/passwdqc\&.conf
 password     required       pam_pwhistory\&.so   use_authtok
 password     required       pam_unix\&.so        use_authtok
       

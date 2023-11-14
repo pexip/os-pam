@@ -7,9 +7,11 @@ Authors: ?
 
 Upstream status: submitted in <20070830171918.GB30563@dario.dodds.net>
 
---- a/modules/pam_limits/pam_limits.c
-+++ b/modules/pam_limits/pam_limits.c
-@@ -1043,6 +1043,8 @@
+Index: pam/modules/pam_limits/pam_limits.c
+===================================================================
+--- pam.orig/modules/pam_limits/pam_limits.c
++++ pam/modules/pam_limits/pam_limits.c
+@@ -1111,6 +1111,8 @@
  	if (res != 0)
  	  pam_syslog(pamh, LOG_ERR, "Could not set limit for '%s': %m",
  		     rlimit2str(i));

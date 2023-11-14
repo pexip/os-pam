@@ -62,6 +62,7 @@ limits.conf.
 @faculty        hard    nproc           50
 ftp             hard    nproc           0
 @student        -       maxlogins       4
+@student        -       nonewprivs      1
 :123            hard    cpu             5000
 @500:           soft    cpu             10000
 600:700         hard    locks           10

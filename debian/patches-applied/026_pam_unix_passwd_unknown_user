@@ -1,9 +1,11 @@
 Description: distinguish between password manipulation failure and missing user.
 Author: Martin Schwenke <martin@meltin.net>
 
---- a/modules/pam_unix/passverify.c
-+++ b/modules/pam_unix/passverify.c
-@@ -818,7 +818,7 @@
+Index: pam/modules/pam_unix/passverify.c
+===================================================================
+--- pam.orig/modules/pam_unix/passverify.c
++++ pam/modules/pam_unix/passverify.c
+@@ -801,7 +801,7 @@
      struct passwd *tmpent = NULL;
      struct stat st;
      FILE *pwfile, *opwfile;
@@ -11,8 +13,8 @@ Author: Martin Schwenke <martin@meltin.net>
 +    int err = 1, found = 0;
      int oldmask;
  #ifdef WITH_SELINUX
-     security_context_t prev_context=NULL;
-@@ -889,6 +889,7 @@
+     char *prev_context_raw = NULL;
+@@ -872,6 +872,7 @@
  
  	    tmpent->pw_passwd = assigned_passwd.charp;
  	    err = 0;
@@ -20,7 +22,7 @@ Author: Martin Schwenke <martin@meltin.net>
  	}
  	if (putpwent(tmpent, pwfile)) {
  	    D(("error writing entry to password file: %m"));
-@@ -931,7 +932,7 @@
+@@ -914,7 +915,7 @@
  	return PAM_SUCCESS;
      } else {
  	unlink(PW_TMPFILE);

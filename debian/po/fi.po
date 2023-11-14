@@ -34,7 +34,7 @@ msgstr "Palvelut, jotka käynnistetään uudelleen PAM-kirjastoa päivitettäess
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
-"list of  services to be restarted now, and correct it if needed."
+"list of services to be restarted now, and correct it if needed."
 msgstr ""
 "Useimmat PAMia käyttävät palvelut pitää käynnistää uudelleen libpamin uuden "
 "version käyttöön ottamiseksi. Tarkista seuraava välilyönnein eroteltu lista "

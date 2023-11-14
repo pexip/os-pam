@@ -2,12 +2,12 @@
 .\"     Title: limits.conf
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "LIMITS\&.CONF" "5" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "LIMITS\&.CONF" "5" "09/03/2021" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -245,6 +245,11 @@ maximum number of all logins on system; user is not allowed to log\-in if total 
 \fIuid=0\fR)
 .RE
 .PP
+\fBnonewprivs\fR
+.RS 4
+value of 0 or 1; if set to 1 disables acquiring new privileges by invoking prctl(PR_SET_NO_NEW_PRIVS)
+.RE
+.PP
 \fBpriority\fR
 .RS 4
 the priority to run user process with (negative values boost process priority)
@@ -282,9 +287,11 @@ All items support the values
 or
 \fIinfinity\fR
 indicating no limit, except for
-\fBpriority\fR
-and
-\fBnice\fR\&.
+\fBpriority\fR,
+\fBnice\fR, and
+\fBnonewprivs\fR\&. If
+\fBnofile\fR
+is to be set to one of these values, it will be set to the contents of /proc/sys/fs/nr_open instead (see setrlimit(3))\&.
 .PP
 If a hard limit or soft limit of a resource is set to a valid value, but outside of the supported range of the local system, the system may reject the new limit or unexpected behavior may occur\&. If the control value
 \fIrequired\fR
@@ -321,6 +328,7 @@ These are some example lines which might be specified in
 @faculty        hard    nproc           50
 ftp             hard    nproc           0
 @student        \-       maxlogins       4
+@student        \-       nonewprivs      1
 :123            hard    cpu             5000
 @500:           soft    cpu             10000
 600:700         hard    locks           10

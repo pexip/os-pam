@@ -2,12 +2,12 @@
 .\"     Title: pam.conf
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM\&.CONF" "5" "06/08/2020" "Linux-PAM Manual" "Linux-PAM Manual"
+.TH "PAM\&.CONF" "5" "09/03/2021" "Linux-PAM Manual" "Linux-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -234,12 +234,14 @@ when used with a stack of modules, the module\*(Aqs return status will not contr
 .PP
 bad
 .RS 4
-this action indicates that the return code should be thought of as indicative of the module failing\&. If this module is the first in the stack to fail, its status value will be used for that of the whole stack\&.
+this action indicates that the return code should be thought of as indicative of the module failing\&. If this module is the first in the stack to fail, its status value will be used for that of the whole stack\&. This is the default action for all return codes\&.
 .RE
 .PP
 die
 .RS 4
-equivalent to bad with the side effect of terminating the module stack and PAM immediately returning to the application\&.
+equivalent to
+\fIbad\fR
+with the side effect of terminating the module stack and PAM immediately returning to the application\&.
 .RE
 .PP
 ok
@@ -250,7 +252,9 @@ this tells PAM that the administrator thinks this return code should contribute 
 .PP
 done
 .RS 4
-equivalent to ok with the side effect of terminating the module stack and PAM immediately returning to the application\&.
+equivalent to
+\fIok\fR
+with the side effect of terminating the module stack and PAM immediately returning to the application unless there was a non\-ignored module failure before\&.
 .RE
 .PP
 N (an unsigned integer)
@@ -278,6 +282,13 @@ reset
 .RS 4
 clear all memory of the state of the module stack and start again with the next stacked module\&.
 .RE
+.PP
+If a return code\*(Aqs action is not specifically defined via a
+\fIvalueN\fR
+token, and the
+\fIdefault\fR
+value is not specified, that return code\*(Aqs action defaults to
+\fIbad\fR\&.
 .PP
 Each of the four keywords: required; requisite; sufficient; and optional, have an equivalent expression in terms of the [\&.\&.\&.] syntax\&. They are as follows:
 .PP

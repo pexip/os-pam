@@ -10,7 +10,7 @@ Index: pam/modules/pam_motd/pam_motd.c
 ===================================================================
 --- pam.orig/modules/pam_motd/pam_motd.c
 +++ pam/modules/pam_motd/pam_motd.c
-@@ -286,6 +286,7 @@
+@@ -352,6 +352,7 @@
  			int argc, const char **argv)
  {
      int retval = PAM_IGNORE;
@@ -18,7 +18,7 @@ Index: pam/modules/pam_motd/pam_motd.c
      const char *motd_path = NULL;
      char *motd_path_copy = NULL;
      unsigned int num_motd_paths = 0;
-@@ -295,6 +296,7 @@
+@@ -361,6 +362,7 @@
      unsigned int num_motd_dir_paths = 0;
      char **motd_dir_path_split = NULL;
      int report_missing;
@@ -26,7 +26,7 @@ Index: pam/modules/pam_motd/pam_motd.c
  
      if (flags & PAM_SILENT) {
  	return retval;
-@@ -324,6 +326,9 @@
+@@ -390,6 +392,9 @@
  			   "motd_dir= specification missing argument - ignored");
  	    }
  	}
@@ -36,7 +36,7 @@ Index: pam/modules/pam_motd/pam_motd.c
  	else
  	    pam_syslog(pamh, LOG_ERR, "unknown option: %s", *argv);
      }
-@@ -336,6 +341,19 @@
+@@ -402,6 +407,19 @@
  	report_missing = 1;
      }
  
@@ -60,7 +60,7 @@ Index: pam/modules/pam_motd/pam_motd.8.xml
 ===================================================================
 --- pam.orig/modules/pam_motd/pam_motd.8.xml
 +++ pam/modules/pam_motd/pam_motd.8.xml
-@@ -114,6 +114,17 @@
+@@ -115,6 +115,17 @@
            </para>
          </listitem>
        </varlistentry>
@@ -100,7 +100,7 @@ Index: pam/modules/pam_motd/README
 ===================================================================
 --- pam.orig/modules/pam_motd/README
 +++ pam/modules/pam_motd/README
-@@ -51,6 +51,10 @@
+@@ -52,6 +52,10 @@
      colon-separated list. By default this option is set to /etc/motd.d:/run/
      motd.d:/usr/lib/motd.d.
  

@@ -83,11 +83,11 @@ those modules.  E.g., /etc/pam.d/login includes the line:
 therefore it must depend on libpam-modules, which provides
 /lib/security/pam_limits.so.
 
-Applications need to depend on libpam-runtime (>= 0.76-14) to
-guarantee that /etc/pam.d/common-* exist.
+Applications need to depend on libpam-runtime to guarantee that
+/etc/pam.d/common-* exist.
 
 Applications that use common-session-noninteractive must depend
-on libpam-runtime (>= 1.0.1-11) for this file.
+on libpam-runtime for this file.
 
 
 The pam_unix.so module allows programs to authenticate the uid of the

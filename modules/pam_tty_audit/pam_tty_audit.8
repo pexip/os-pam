@@ -2,12 +2,12 @@
 .\"     Title: pam_tty_audit
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
-.\"      Date: 06/08/2020
+.\"      Date: 09/03/2021
 .\"    Manual: Linux-PAM Manual
 .\"    Source: Linux-PAM Manual
 .\"  Language: English
 .\"
-.TH "PAM_TTY_AUDIT" "8" "06/08/2020" "Linux-PAM Manual" "Linux\-PAM Manual"
+.TH "PAM_TTY_AUDIT" "8" "09/03/2021" "Linux-PAM Manual" "Linux\-PAM Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -85,7 +85,7 @@ Success\&.
 .RE
 .SH "NOTES"
 .PP
-When TTY auditing is enabled, it is inherited by all processes started by that user\&. In particular, daemons restarted by an user will still have TTY auditing enabled, and audit TTY input even by other users unless auditing for these users is explicitly disabled\&. Therefore, it is recommended to use
+When TTY auditing is enabled, it is inherited by all processes started by that user\&. In particular, daemons restarted by a user will still have TTY auditing enabled, and audit TTY input even by other users unless auditing for these users is explicitly disabled\&. Therefore, it is recommended to use
 \fBdisable=*\fR
 as the first option for most daemons using PAM\&.
 .PP
