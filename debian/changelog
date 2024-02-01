@@ -1,3 +1,9 @@
+pam (1.5.2-6+deb12u1+pexip24u3) pexip-bookworm; urgency=medium
+
+  * New versioning scheme
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 01 Feb 2024 16:15:29 +0000
+
 pam (1.5.2-6+deb12u1pexip2) pexip-bookworm; urgency=medium
 
   * Bookworm build for product distribution
