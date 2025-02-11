@@ -33,9 +33,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(HAVE_CONFIG_H)
 #include "config.h"
-#endif
 
 #include <time.h>
 #include <errno.h>
@@ -48,12 +46,14 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <signal.h>
 
 #include <security/pam_modules.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 #include <security/_pam_macros.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 #define ENV_ITEM(n) { (n), #n }
 static struct {
@@ -105,6 +105,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
   FILE *stdout_file = NULL;
   int retval;
   const char *name;
+  struct sigaction newsa, oldsa;
 
   if (argc < 1) {
     pam_syslog (pamh, LOG_ERR,
@@ -154,7 +155,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 
   if (expose_authtok == 1)
     {
-      if (strcmp (pam_type, "auth") != 0)
+      if (strcmp (pam_type, "auth") != 0 && strcmp (pam_type, "password") != 0)
 	{
 	  pam_syslog (pamh, LOG_ERR,
 		      "expose_authtok not supported for type %s", pam_type);
@@ -182,6 +183,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 
 	      if (retval != PAM_SUCCESS)
 		{
+		  pam_overwrite_string (resp);
 		  _pam_drop (resp);
 		  if (retval == PAM_CONV_AGAIN)
 		    retval = PAM_INCOMPLETE;
@@ -192,6 +194,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 		{
 		  pam_set_item (pamh, PAM_AUTHTOK, resp);
 		  strncpy (authtok, resp, sizeof(authtok) - 1);
+		  pam_overwrite_string (resp);
 		  _pam_drop (resp);
 		}
 	    }
@@ -200,6 +203,7 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 
 	  if (pipe(fds) != 0)
 	    {
+	      pam_overwrite_array(authtok);
 	      pam_syslog (pamh, LOG_ERR, "Could not create pipe: %m");
 	      return PAM_SYSTEM_ERR;
 	    }
@@ -210,25 +214,38 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
     {
       if (pipe(stdout_fds) != 0)
 	{
+	  pam_overwrite_array(authtok);
 	  pam_syslog (pamh, LOG_ERR, "Could not create pipe: %m");
 	  return PAM_SYSTEM_ERR;
 	}
       stdout_file = fdopen(stdout_fds[0], "r");
       if (!stdout_file)
 	{
+	  pam_overwrite_array(authtok);
 	  pam_syslog (pamh, LOG_ERR, "Could not fdopen pipe: %m");
 	  return PAM_SYSTEM_ERR;
 	}
     }
 
   if (optargc >= argc) {
+    pam_overwrite_array(authtok);
     pam_syslog (pamh, LOG_ERR, "No path given as argument");
     return PAM_SERVICE_ERR;
   }
 
-  pid = fork();
-  if (pid == -1)
+  memset(&newsa, '\0', sizeof(newsa));
+  newsa.sa_handler = SIG_DFL;
+  if (sigaction(SIGCHLD, &newsa, &oldsa) == -1) {
+    pam_overwrite_array(authtok);
+    pam_syslog(pamh, LOG_ERR, "failed to reset SIGCHLD handler: %m");
     return PAM_SYSTEM_ERR;
+  }
+
+  pid = fork();
+  if (pid == -1) {
+    pam_overwrite_array(authtok);
+    return PAM_SYSTEM_ERR;
+  }
   if (pid > 0) /* parent */
     {
       int status = 0;
@@ -246,23 +263,25 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
           close(fds[1]);
 	}
 
+      pam_overwrite_array(authtok);
+
       if (use_stdout)
 	{
-	  char buf[4096];
+	  char *buf = NULL;
+	  size_t n = 0;
 	  close(stdout_fds[1]);
-	  while (fgets(buf, sizeof(buf), stdout_file) != NULL)
+	  while (getline(&buf, &n, stdout_file) != -1)
 	    {
-	      size_t len;
-	      len = strlen(buf);
-	      if (buf[len-1] == '\n')
-		buf[len-1] = '\0';
+	      buf[strcspn(buf, "\n")] = '\0';
 	      pam_info(pamh, "%s", buf);
 	    }
+	  free(buf);
 	  fclose(stdout_file);
 	}
 
       while ((rc = waitpid (pid, &status, 0)) == -1 &&
 	     errno == EINTR);
+      sigaction(SIGCHLD, &oldsa, NULL);   /* restore old signal handler */
       if (rc == (pid_t)-1)
 	{
 	  pam_syslog (pamh, LOG_ERR, "waitpid returns with -1: %m");
@@ -305,15 +324,17 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
     }
   else /* child */
     {
-      char **arggv;
+      const char **arggv;
       int i;
-      char **envlist, **tmp;
+      char **envlist;
       int envlen, nitems;
       char *envstr;
       enum pam_modutil_redirect_fd redirect_stdin =
 	      expose_authtok ? PAM_MODUTIL_IGNORE_FD : PAM_MODUTIL_PIPE_FD;
       enum pam_modutil_redirect_fd redirect_stdout =
 	      (use_stdout || logfile) ? PAM_MODUTIL_IGNORE_FD : PAM_MODUTIL_NULL_FD;
+
+      pam_overwrite_array(authtok);
 
       /* First, move all the pipes off of stdin, stdout, and stderr, to ensure
        * that calls to dup2 won't close them. */
@@ -413,12 +434,12 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 	  _exit (err);
 	}
 
-      arggv = calloc (argc + 4, sizeof (char *));
+      arggv = calloc ((size_t) argc + 1, sizeof (char *));
       if (arggv == NULL)
 	_exit (ENOMEM);
 
       for (i = 0; i < (argc - optargc); i++)
-	arggv[i] = strdup(argv[i+optargc]);
+        arggv[i] = argv[i+optargc];
       arggv[i] = NULL;
 
       /*
@@ -430,14 +451,12 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
         /* nothing */ ;
       nitems = PAM_ARRAY_SIZE(env_items);
       /* + 2 because of PAM_TYPE and NULL entry */
-      tmp = realloc(envlist, (envlen + nitems + 2) * sizeof(*envlist));
-      if (tmp == NULL)
+      envlist = realloc(envlist, (envlen + nitems + 2) * sizeof(*envlist));
+      if (envlist == NULL)
       {
-        free(envlist);
         pam_syslog (pamh, LOG_CRIT, "realloc environment failed: %m");
         _exit (ENOMEM);
       }
-      envlist = tmp;
       for (i = 0; i < nitems; ++i)
       {
         const void *item;
@@ -446,7 +465,6 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
           continue;
         if (asprintf(&envstr, "%s=%s", env_items[i].name, (const char *)item) < 0)
         {
-          free(envlist);
           pam_syslog (pamh, LOG_CRIT, "prepare environment failed: %m");
           _exit (ENOMEM);
         }
@@ -456,7 +474,6 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
 
       if (asprintf(&envstr, "PAM_TYPE=%s", pam_type) < 0)
         {
-          free(envlist);
           pam_syslog (pamh, LOG_CRIT, "prepare environment failed: %m");
           _exit (ENOMEM);
         }
@@ -466,10 +483,11 @@ call_exec (const char *pam_type, pam_handle_t *pamh,
       if (debug)
 	pam_syslog (pamh, LOG_DEBUG, "Calling %s ...", arggv[0]);
 
-      execve (arggv[0], arggv, envlist);
+      DIAG_PUSH_IGNORE_CAST_QUAL;
+      execve (arggv[0], (char **) arggv, envlist);
+      DIAG_POP_IGNORE_CAST_QUAL;
       i = errno;
       pam_syslog (pamh, LOG_ERR, "execve(%s,...) failed: %m", arggv[0]);
-      free(envlist);
       _exit (i);
     }
   return PAM_SYSTEM_ERR; /* will never be reached. */

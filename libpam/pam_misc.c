@@ -37,44 +37,38 @@
 
 #include "pam_private.h"
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
 #include <ctype.h>
 
-char *_pam_StrTok(char *from, const char *format, char **next)
+#define DELIMITERS " \n\t"
+
+char *_pam_tokenize(char *from, char **next)
 /*
- * this function is a variant of the standard strtok, it differs in that
- * it takes an additional argument and doesn't nul terminate tokens until
+ * this function is a variant of the standard strtok_r, it differs in that
+ * it uses a fixed set of delimiters and doesn't nul terminate tokens until
  * they are actually reached.
  */
 {
-     char table[256], *end;
-     int i;
+     char *end;
 
      if (from == NULL && (from = *next) == NULL)
 	  return from;
 
-     /* initialize table */
-     for (i=1; i<256; table[i++] = '\0');
-     for (i=0; format[i] ;
-	  table[(unsigned char)format[i++]] = 'y');
-
      /* look for first non-format char */
-     while (*from && table[(unsigned char)*from]) {
-	  ++from;
-     }
+     from += strspn(from, DELIMITERS);
 
      if (*from == '[') {
 	 /*
 	  * special case, "[...]" is considered to be a single
-	  * object.  Note, however, if one of the format[] chars is
-	  * '[' this single string will not be read correctly.
-	  * Note, any '[' inside the outer "[...]" pair will survive.
-	  * Note, the first ']' will terminate this string, but
-	  *  that "\]" will get compressed into "]". That is:
+	  * object.  Note, any '[' inside the outer "[...]" pair will
+	  * survive.  Note, the first ']' will terminate this string,
+	  * but that "\]" will get compressed into "]". That is:
 	  *
 	  *   "[..[..\]..]..." --> "..[..].."
 	  */
@@ -93,7 +87,7 @@ char *_pam_StrTok(char *from, const char *format, char **next)
             remains */
      } else if (*from) {
 	 /* simply look for next blank char */
-	 for (end=from; *end && !table[(unsigned char)*end]; ++end);
+	 end = from + strcspn(from, DELIMITERS);
      } else {
 	 return (*next = NULL);                    /* no tokens left */
      }
@@ -123,14 +117,8 @@ char *_pam_strdup(const char *x)
      register char *new=NULL;
 
      if (x != NULL) {
-	  register int len;
-
-	  len = strlen (x) + 1;  /* length of string including NUL */
-	  if ((new = malloc(len)) == NULL) {
-	       len = 0;
+	  if ((new = strdup(x)) == NULL) {
 	       pam_syslog(NULL, LOG_CRIT, "_pam_strdup: failed to get memory");
-	  } else {
-	       strcpy (new, x);
 	  }
 	  x = NULL;
      }
@@ -163,67 +151,62 @@ char *_pam_memdup(const char *x, int len)
 /* Generate argv, argc from s */
 /* caller must free(argv)     */
 
-int _pam_mkargv(const char *s, char ***argv, int *argc)
+size_t _pam_mkargv(const char *s, char ***argv, int *argc)
 {
-    int l;
-    int argvlen = 0;
-    char *sbuf, *sbuf_start;
+    size_t l;
+    size_t argvlen = 0;
     char **our_argv = NULL;
-    char **argvbuf;
-    char *argvbufp;
-#ifdef PAM_DEBUG
-    int count=0;
-#endif
 
-    D(("_pam_mkargv called: %s",s));
+    D(("called: %s",s));
 
     *argc = 0;
 
     l = strlen(s);
-    if (l) {
-	if ((sbuf = sbuf_start = _pam_strdup(s)) == NULL) {
-	    pam_syslog(NULL, LOG_CRIT,
-		       "pam_mkargv: null returned by _pam_strdup");
-	    D(("arg NULL"));
+    if (l && l < SIZE_MAX / (sizeof(char) + sizeof(char *))) {
+	char **argvbuf;
+	/* Overkill on the malloc, but not large */
+	argvlen = (l + 1) * (sizeof(char) + sizeof(char *));
+	if ((our_argv = argvbuf = malloc(argvlen)) == NULL) {
+	    pam_syslog(NULL, LOG_CRIT, "pam_mkargv: null returned by malloc");
+	    argvlen = 0;
 	} else {
-	    /* Overkill on the malloc, but not large */
-	    argvlen = (l + 1) * ((sizeof(char)) + sizeof(char *));
-	    if ((our_argv = argvbuf = malloc(argvlen)) == NULL) {
-		pam_syslog(NULL, LOG_CRIT,
-			   "pam_mkargv: null returned by malloc");
-	    } else {
-		char *tmp=NULL;
-
-		argvbufp = (char *) argvbuf + (l * sizeof(char *));
-		D(("[%s]",sbuf));
-		while ((sbuf = _pam_StrTok(sbuf, " \n\t", &tmp))) {
-		    D(("arg #%d",++count));
-		    D(("->[%s]",sbuf));
-		    strcpy(argvbufp, sbuf);
-		    D(("copied token"));
-		    *argvbuf = argvbufp;
-		    argvbufp += strlen(argvbufp) + 1;
-		    D(("stepped in argvbufp"));
-		    (*argc)++;
-		    argvbuf++;
-		    sbuf = NULL;
-		    D(("loop again?"));
+	    char *argvbufp;
+	    char *tmp=NULL;
+	    char *tok;
+#ifdef PAM_DEBUG
+	    unsigned count=0;
+#endif
+	    argvbufp = (char *) argvbuf + (l * sizeof(char *));
+	    strcpy(argvbufp, s);
+	    D(("[%s]",argvbufp));
+	    while ((tok = _pam_tokenize(argvbufp, &tmp))) {
+		D(("arg #%u",++count));
+		D(("->[%s]",tok));
+		*argvbuf++ = tok;
+		if (*argc == INT_MAX) {
+		    pam_syslog(NULL, LOG_CRIT,
+			       "pam_mkargv: too many arguments");
+		    argvlen = 0;
+		    _pam_drop(our_argv);
+		    break;
 		}
+		(*argc)++;
+		argvbufp = NULL;
+		D(("loop again?"));
 	    }
-	    _pam_drop(sbuf_start);
 	}
     }
 
     *argv = our_argv;
 
-    D(("_pam_mkargv returned"));
+    D(("exiting"));
 
     return(argvlen);
 }
 
 /*
  * this function is used to protect the modules from accidental or
- * semi-mallicious harm that an application may do to confuse the API.
+ * semi-malicious harm that an application may do to confuse the API.
  */
 
 void _pam_sanitize(pam_handle_t *pamh)
@@ -270,10 +253,11 @@ void _pam_parse_control(int *control_array, char *tok)
     int ret;
 
     while (*tok) {
-	int act, len;
+	size_t len;
+	int act;
 
 	/* skip leading space */
-	while (isspace((int)*tok) && *++tok);
+	while (isspace((unsigned char)*tok) && *++tok);
 	if (!*tok)
 	    break;
 
@@ -290,14 +274,14 @@ void _pam_parse_control(int *control_array, char *tok)
 	}
 
 	/* observe '=' */
-	while (isspace((int)*tok) && *++tok);
+	while (isspace((unsigned char)*tok) && *++tok);
 	if (!*tok || *tok++ != '=') {
 	    error = "expecting '='";
 	    goto parse_error;
 	}
 
 	/* skip leading space */
-	while (isspace((int)*tok) && *++tok);
+	while (isspace((unsigned char)*tok) && *++tok);
 	if (!*tok) {
 	    error = "expecting action";
 	    goto parse_error;
@@ -322,16 +306,25 @@ void _pam_parse_control(int *control_array, char *tok)
 	     * cause looping problems.  So, for now, we will just
 	     * allow forward jumps.  (AGM 1998/1/7)
 	     */
-	    if (!isdigit((int)*tok)) {
+	    if (!isdigit((unsigned char)*tok)) {
 		error = "expecting jump number";
 		goto parse_error;
 	    }
 	    /* parse a number */
 	    act = 0;
 	    do {
+		int digit = *tok - '0';
+		if (act > INT_MAX / 10) {
+		    error = "expecting smaller jump number";
+		    goto parse_error;
+		}
 		act *= 10;
-		act += *tok - '0';      /* XXX - this assumes ascii behavior */
-	    } while (*++tok && isdigit((int)*tok));
+		if (act > INT_MAX - digit) {
+		    error = "expecting smaller jump number";
+		    goto parse_error;
+		}
+		act += digit;      /* XXX - this assumes ascii behavior */
+	    } while (*++tok && isdigit((unsigned char)*tok));
 	    if (! act) {
 		/* we do not allow 0 jumps.  There is a token ('ignore')
                    for that */

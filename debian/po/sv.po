@@ -1,8 +1,8 @@
-# Debconf questions for the pam package translated to Swedish.
-# Copyright (C) 2007 Steve Langasek <vorlon@debian.org>
+# Translation of pam debconf template to Swedish
+# Copyright (C) 2023 Martin Bagge <brother@persilja.net>
 # This file is distributed under the same license as the pam package.
 #
-# Martin Bagge <brother@bsnet.se>, 2009, 2010, 2011
+# Martin Bagge <brother@persilja.net>, 2009, 2010, 2011, 2023
 # Christer Andersson <klamm@comhem.se>, 2007.
 msgid ""
 msgstr ""
@@ -10,7 +10,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: pam@packages.debian.org\n"
 "POT-Creation-Date: 2021-02-26 10:32-0500\n"
 "PO-Revision-Date: 2014-04-08 11:37+0200\n"
-"Last-Translator: Martin Bagge / brother <brother@bsnet.se>\n"
+"Last-Translator: Martin Bagge / brother <brother@persilja.net>\n"
 "Language-Team: Swedish <debian-l10n-swedish@lists.debian.org>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -28,12 +28,6 @@ msgstr "Tjänster att starta om efter uppgradering av PAM-biblioteket:"
 #. Type: string
 #. Description
 #: ../libpam0g.templates:1001
-#, fuzzy
-#| msgid ""
-#| "Most services that use PAM need to be restarted to use modules built for "
-#| "this new version of libpam.  Please review the following space-separated "
-#| "list of init.d scripts for services to be restarted now, and correct it "
-#| "if needed."
 msgid ""
 "Most services that use PAM need to be restarted to use modules built for "
 "this new version of libpam.  Please review the following space-separated "
@@ -41,8 +35,8 @@ msgid ""
 msgstr ""
 "De flesta tjänster som använder PAM behöver startas om för att använda "
 "moduler som byggts för denna nya libpam-version. Gå igenom följande lista av "
-"init.d-skript (separerade med mellanslag) för tjänster som nu kommer att "
-"startas om och korrigera den om nödvändigt."
+"tjänster (separerade med mellanslag) som nu kommer att startas om och "
+"korrigera den om nödvändigt."
 
 #. Type: error
 #. Description
@@ -243,7 +237,7 @@ msgstr ""
 #. Description
 #: ../libpam-modules.templates:2001
 msgid "PAM Profiles with Deprecated Modules Disabled"
-msgstr ""
+msgstr "PAM-profiler med utfasade moduler har avaktiverats"
 
 #. Type: error
 #. Description
@@ -254,12 +248,16 @@ msgid ""
 "prevent users from accessing your system. As a result, these profiles have "
 "been disabled."
 msgstr ""
+"Ditt system hade PAM-profiler med PAM-modulerna ${modules} aktiverade. Dessa "
+"moduler har tagits bort från PAM. Om PAM-profilerna fortsatt skulle vara "
+"aktiverade så hade det förhindrat användare för att komma åt systemet. I och "
+"med detta så har profilerna inaktiverats."
 
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:3001
 msgid "you are using pam_tally or pam_tally2 in your configuration"
-msgstr ""
+msgstr "Du använder pam_tally eller pam_tally2 i dina inställningar"
 
 #. Type: error
 #. Description
@@ -271,42 +269,14 @@ msgid ""
 "modules in your PAM configuration after the upgrade will stop users from "
 "being able to log into the system."
 msgstr ""
+"pam_tally och pam_tally2 har tagits bort från PAM. Du använder någon av "
+"dessa moduler i PAMs inställningar i /etc/pam.d. Du måste ta bort "
+"användandet av dessa moduler innan PAM kan uppgraderas. Att ha dessa moduler "
+"i dina inställningar efter uppgraderingen kommer hindra användare från att "
+"logga in i ditt system."
 
 #. Type: error
 #. Description
 #: ../libpam-modules.templates:3001
 msgid "Consider the pam_faillock module as a replacement for pam_tally."
-msgstr ""
-
-#~ msgid "Your system allowed access without a password!"
-#~ msgstr "Ditt system tillät anslutningar utan lösenord!"
-
-#~ msgid ""
-#~ "A bug in a previous version of libpam-runtime resulted in no PAM profiles "
-#~ "being selected for use on this system.  As a result, access was allowed "
-#~ "for a time to all accounts on your system, with or without a correct "
-#~ "password. Especially if this system can be accessed from the Internet, it "
-#~ "is likely that it has been compromised.  Unless you are familiar with "
-#~ "recovering from security failures, viruses, and malicious software, you "
-#~ "should re-install this system from scratch or obtain the services of a "
-#~ "skilled system administrator.  For more information, see:"
-#~ msgstr ""
-#~ "Ett fel i en tidigare version av libpam-runtime innebar att inga PAM-"
-#~ "profiler användes på systemet. Detta betydde i sin tur att alla konton på "
-#~ "systemet kunde använda skal, med eller utan ett korrekt lösenord. Om "
-#~ "detta system är åtkomligt via nätet är det mycket troligt att det kan ha "
-#~ "infiltrerats. Om du inte är säker på hur du ska återställa eventuella fel "
-#~ "på grund av intrång, virus eller skadlig programvara bör du installera om "
-#~ "systemet från grunden eller inhämta hjälp av en erfaren "
-#~ "systemadministratör. Läs mer om detta på:"
-
-#~ msgid ""
-#~ "The bug that allowed this wrong configuration is fixed in the current "
-#~ "version of libpam-runtime, and your configuration has now been corrected. "
-#~ "We apologize that previous versions of libpam-runtime did not detect and "
-#~ "prevent this situation."
-#~ msgstr ""
-#~ "Felet som orsakade dessa problem är åtgärdat i och med den aktuella "
-#~ "versionen av libpam-runtime och dina inställningar ha korrigerats. Vi ber "
-#~ "om ursäkt för att tidigare versioner av libpam-runtime inte upptäckte och "
-#~ "förhindrade att dessa fel uppstod."
+msgstr "Överväg att använda modulen pam_faillock som ersättare för pam_tally."

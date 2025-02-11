@@ -7,6 +7,7 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -71,14 +72,14 @@ static void try_to_display_fd(pam_handle_t *pamh, int fd)
  * Returns 0 in case of error, 1 in case of success.
  */
 static int pam_split_string(const pam_handle_t *pamh, char *arg, char delim,
-			    char ***out_arg_split, unsigned int *out_num_strs)
+			    char ***out_arg_split, size_t *out_num_strs)
 {
     char *arg_extracted = NULL;
     const char *arg_ptr = arg;
     char **arg_split = NULL;
     char delim_str[2];
-    unsigned int i = 0;
-    unsigned int num_strs = 0;
+    size_t i = 0;
+    size_t num_strs = 0;
     int retval = 0;
 
     delim_str[0] = delim;
@@ -166,20 +167,15 @@ static int compare_strings(const void *a, const void *b)
     }
 }
 
-static int filter_dirents(const struct dirent *d)
-{
-    return (d->d_type == DT_REG || d->d_type == DT_LNK);
-}
-
 static void try_to_display_directories_with_overrides(pam_handle_t *pamh,
-	char **motd_dir_path_split, unsigned int num_motd_dirs, int report_missing)
+	char **motd_dir_path_split, size_t num_motd_dirs, int report_missing)
 {
     struct dirent ***dirscans = NULL;
     unsigned int *dirscans_sizes = NULL;
     unsigned int dirscans_size_total = 0;
     char **dirnames_all = NULL;
-    unsigned int i;
-    int i_dirnames = 0;
+    size_t i;
+    unsigned int i_dirnames = 0;
 
     if (pamh == NULL || motd_dir_path_split == NULL) {
 	goto out;
@@ -199,8 +195,7 @@ static void try_to_display_directories_with_overrides(pam_handle_t *pamh,
 
     for (i = 0; i < num_motd_dirs; i++) {
 	int rv;
-	rv = scandir(motd_dir_path_split[i], &(dirscans[i]),
-		filter_dirents, alphasort);
+	rv = scandir(motd_dir_path_split[i], &(dirscans[i]), NULL, NULL);
 	if (rv < 0) {
 	    if (errno != ENOENT || report_missing) {
 		pam_syslog(pamh, LOG_ERR, "error scanning directory %s: %m",
@@ -209,11 +204,50 @@ static void try_to_display_directories_with_overrides(pam_handle_t *pamh,
 	} else {
 	    dirscans_sizes[i] = rv;
 	}
+	if (dirscans_size_total > UINT_MAX - dirscans_sizes[i]) {
+	    pam_syslog(pamh, LOG_CRIT, "encountered too many motd files");
+	    goto out;
+	}
 	dirscans_size_total += dirscans_sizes[i];
     }
 
     if (dirscans_size_total == 0)
         goto out;
+
+    /* filter out unwanted names, directories, and complement data with lstat() */
+    for (i = 0; i < num_motd_dirs; i++) {
+	struct dirent **d = dirscans[i];
+	for (unsigned int j = 0; j < dirscans_sizes[i]; j++) {
+	    int rc;
+	    char *fullpath;
+	    struct stat s;
+
+	    switch(d[j]->d_type) {    /* the filetype determines how to proceed */
+	    case DT_REG:              /* regular files and     */
+	    case DT_LNK:              /* symlinks              */
+		continue;             /* are good.             */
+	    case DT_UNKNOWN:   /* for file systems that do not provide */
+			       /* a filetype, we use lstat()           */
+		if (join_dir_strings(&fullpath, motd_dir_path_split[i],
+				     d[j]->d_name) <= 0)
+		    break;
+		rc = lstat(fullpath, &s);
+		_pam_drop(fullpath);  /* free the memory alloc'ed by join_dir_strings */
+		if (rc != 0)          /* if the lstat() somehow failed */
+		    break;
+
+		if (S_ISREG(s.st_mode) ||          /* regular files and  */
+		    S_ISLNK(s.st_mode)) continue;  /* symlinks are good  */
+		break;
+	    case DT_DIR:          /* We don't want directories     */
+	    default:              /* nor anything else             */
+		break;
+	    }
+	    _pam_drop(d[j]);  /* free memory                   */
+	    d[j] = NULL;      /* indicate this one was dropped */
+	    dirscans_size_total--;
+	}
+    }
 
     /* Allocate space for all file names found in the directories, including duplicates. */
     if ((dirnames_all = calloc(dirscans_size_total, sizeof(*dirnames_all))) == NULL) {
@@ -225,8 +259,10 @@ static void try_to_display_directories_with_overrides(pam_handle_t *pamh,
 	unsigned int j;
 
 	for (j = 0; j < dirscans_sizes[i]; j++) {
-	    dirnames_all[i_dirnames] = dirscans[i][j]->d_name;
-	    i_dirnames++;
+	    if (NULL != dirscans[i][j]) {
+	        dirnames_all[i_dirnames] = dirscans[i][j]->d_name;
+	        i_dirnames++;
+	    }
 	}
     }
 
@@ -304,9 +340,8 @@ static int drop_privileges(pam_handle_t *pamh, struct pam_modutil_privs *privs)
 }
 
 static int try_to_display(pam_handle_t *pamh, char **motd_path_split,
-                          unsigned int num_motd_paths,
-                          char **motd_dir_path_split,
-                          unsigned int num_motd_dir_paths, int report_missing)
+                          size_t num_motd_paths, char **motd_dir_path_split,
+                          size_t num_motd_dir_paths, int report_missing)
 {
     PAM_MODUTIL_DEF_PRIVS(privs);
 
@@ -316,7 +351,7 @@ static int try_to_display(pam_handle_t *pamh, char **motd_path_split,
     }
 
     if (motd_path_split != NULL) {
-        unsigned int i;
+        size_t i;
 
         for (i = 0; i < num_motd_paths; i++) {
             int fd = open(motd_path_split[i], O_RDONLY, 0);
@@ -354,11 +389,11 @@ int pam_sm_open_session(pam_handle_t *pamh, int flags,
     int retval = PAM_IGNORE;
     const char *motd_path = NULL;
     char *motd_path_copy = NULL;
-    unsigned int num_motd_paths = 0;
+    size_t num_motd_paths = 0;
     char **motd_path_split = NULL;
     const char *motd_dir_path = NULL;
     char *motd_dir_path_copy = NULL;
-    unsigned int num_motd_dir_paths = 0;
+    size_t num_motd_dir_paths = 0;
     char **motd_dir_path_split = NULL;
     int report_missing;
 

@@ -5,6 +5,8 @@
  */
 
 #include "pam_private.h"
+#include "pam_inline.h"
+#include "pam_i18n.h"
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -12,7 +14,7 @@
 #include <syslog.h>
 
 #define TRY_SET(X, Y)                      \
-{                                          \
+do {                                       \
     if ((X) != (Y)) {		           \
 	char *_TMP_ = _pam_strdup(Y);      \
 	if (_TMP_ == NULL && (Y) != NULL)  \
@@ -20,7 +22,7 @@
 	free(X);                           \
 	(X) = _TMP_;                       \
     }					   \
-}
+} while(0)
 
 /* functions */
 
@@ -30,13 +32,19 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 
     D(("called"));
 
-    IF_NO_PAMH("pam_set_item", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     retval = PAM_SUCCESS;
 
     switch (item_type) {
 
     case PAM_SERVICE:
+	if (item == NULL) {
+	    pam_syslog(pamh, LOG_ERR,
+		       "pam_set_item: attempt to set service to NULL");
+	    retval = PAM_BAD_ITEM;
+	    break;
+	}
 	/* Setting handlers_loaded to 0 will cause the handlers
 	 * to be reloaded on the next call to a service module.
 	 */
@@ -45,7 +53,7 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	{
 	    char *tmp;
 	    for (tmp=pamh->service_name; *tmp; ++tmp)
-		*tmp = tolower(*tmp);                 /* require lower case */
+		*tmp = tolower((unsigned char)*tmp);                 /* require lower case */
 	}
 	break;
 
@@ -60,7 +68,7 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	break;
 
     case PAM_TTY:
-	D(("setting tty to %s", item));
+	D(("setting tty to %s", (const char *)item));
 	TRY_SET(pamh->tty, item);
 	break;
 
@@ -79,7 +87,7 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	 */
 	if (__PAM_FROM_MODULE(pamh)) {
 	    if (pamh->authtok != item) {
-		_pam_overwrite(pamh->authtok);
+		pam_overwrite_string(pamh->authtok);
 		TRY_SET(pamh->authtok, item);
 	    }
 	} else {
@@ -95,7 +103,7 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	 */
 	if (__PAM_FROM_MODULE(pamh)) {
 	    if (pamh->oldauthtok != item) {
-		_pam_overwrite(pamh->oldauthtok);
+		pam_overwrite_string(pamh->oldauthtok);
 		TRY_SET(pamh->oldauthtok, item);
 	    }
 	} else {
@@ -112,8 +120,7 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	} else {
 	    struct pam_conv *tconv;
 
-	    if ((tconv=
-		 (struct pam_conv *) malloc(sizeof(struct pam_conv))
+	    if ((tconv = malloc(sizeof(struct pam_conv))
 		) == NULL) {
 		pam_syslog(pamh, LOG_CRIT,
 				"pam_set_item: malloc failed for pam_conv");
@@ -139,24 +146,23 @@ int pam_set_item (pam_handle_t *pamh, int item_type, const void *item)
 	if (&pamh->xauth == item)
 	    break;
 	if (pamh->xauth.namelen) {
-	    _pam_overwrite(pamh->xauth.name);
+	    pam_overwrite_string(pamh->xauth.name);
 	    free(pamh->xauth.name);
 	}
 	if (pamh->xauth.datalen) {
-	    _pam_overwrite_n(pamh->xauth.data,
-			   (unsigned int) pamh->xauth.datalen);
+	    pam_overwrite_n(pamh->xauth.data, (unsigned int) pamh->xauth.datalen);
 	    free(pamh->xauth.data);
 	}
 	pamh->xauth = *((const struct pam_xauth_data *) item);
 	if ((pamh->xauth.name=_pam_strdup(pamh->xauth.name)) == NULL) {
-	    memset(&pamh->xauth, '\0', sizeof(pamh->xauth));
+	    pam_overwrite_object(&pamh->xauth);
 	    return PAM_BUF_ERR;
 	}
 	if ((pamh->xauth.data=_pam_memdup(pamh->xauth.data,
 	    pamh->xauth.datalen)) == NULL) {
-	    _pam_overwrite(pamh->xauth.name);
+	    pam_overwrite_string(pamh->xauth.name);
 	    free(pamh->xauth.name);
-	    memset(&pamh->xauth, '\0', sizeof(pamh->xauth));
+	    pam_overwrite_object(&pamh->xauth);
 	    return PAM_BUF_ERR;
 	}
 	break;
@@ -177,7 +183,7 @@ int pam_get_item (const pam_handle_t *pamh, int item_type, const void **item)
     int retval = PAM_SUCCESS;
 
     D(("called."));
-    IF_NO_PAMH("pam_get_item", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (item == NULL) {
 	pam_syslog(pamh, LOG_ERR,
@@ -280,7 +286,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 
     D(("called."));
 
-    IF_NO_PAMH("pam_get_user", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (user == NULL) {
         /* ensure that the module has supplied a destination */
@@ -330,7 +336,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 
 	/* ok, we can resume where we left off last time */
 	pamh->former.want_user = PAM_FALSE;
-	_pam_overwrite(pamh->former.prompt);
+	pam_overwrite_string(pamh->former.prompt);
 	_pam_drop(pamh->former.prompt);
     }
 
@@ -372,7 +378,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 		break;
 	    } else {
 		/* conversation should have given a response */
-		D(("pam_get_user: no response provided"));
+		D(("no response provided"));
 		retval = PAM_CONV_ERR;
 	    }
 	    /* fallthrough */
@@ -388,7 +394,7 @@ int pam_get_user(pam_handle_t *pamh, const char **user, const char *prompt)
 	 * note 'resp' is allocated by the application and is
          * correctly free()'d here
 	 */
-	_pam_drop_reply(resp, 1);
+	pam_drop_response(resp, 1);
     }
 
     D(("completed"));

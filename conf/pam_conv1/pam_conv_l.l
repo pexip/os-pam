@@ -9,15 +9,13 @@
  * distributed with this file.)
  */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include <config.h>
 
 #include <stdio.h>
 
 #include "pam_conv_y.h"
 
-    extern int current_line;
+    extern unsigned long long current_line;
 %}
 
 %option noyywrap

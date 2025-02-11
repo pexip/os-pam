@@ -30,7 +30,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#if !(defined(linux))
+#ifndef __linux__
 #error THIS CODE IS KNOWN TO WORK ONLY ON LINUX !!!
 #endif
 
@@ -90,14 +90,16 @@
 /*
  * Module defines
  */
-#ifndef SECURECONF_DIR
-#define SECURECONF_DIR "/etc/security/"
+#define PAM_NAMESPACE_CONFIG (SCONFIG_DIR "/namespace.conf")
+#define NAMESPACE_INIT_SCRIPT (SCONFIG_DIR "/namespace.init")
+#define NAMESPACE_D_DIR (SCONFIG_DIR "/namespace.d/")
+#define NAMESPACE_D_GLOB (SCONFIG_DIR "/namespace.d/*.conf")
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_NAMESPACE_INIT_SCRIPT (VENDOR_SCONFIG_DIR "/namespace.init")
+#define VENDOR_PAM_NAMESPACE_CONFIG (VENDOR_SCONFIG_DIR "/namespace.conf")
+#define VENDOR_NAMESPACE_D_DIR (VENDOR_SCONFIG_DIR "/namespace.d/")
+#define VENDOR_NAMESPACE_D_GLOB (VENDOR_SCONFIG_DIR "/namespace.d/*.conf")
 #endif
-
-#define PAM_NAMESPACE_CONFIG (SECURECONF_DIR "namespace.conf")
-#define NAMESPACE_INIT_SCRIPT (SECURECONF_DIR "namespace.init")
-#define NAMESPACE_D_DIR (SECURECONF_DIR "namespace.d/")
-#define NAMESPACE_D_GLOB (SECURECONF_DIR "namespace.d/*.conf")
 
 /* module flags */
 #define PAMNS_DEBUG           0x00000100 /* Running in debug mode */
@@ -112,7 +114,7 @@
 #define PAMNS_MOUNT_PRIVATE   0x00080000 /* Make the polydir mounts private */
 
 /* polydir flags */
-#define POLYDIR_EXCLUSIVE     0x00000001 /* polyinstatiate exclusively for override uids */
+#define POLYDIR_EXCLUSIVE     0x00000001 /* polyinstantiate exclusively for override uids */
 #define POLYDIR_CREATE        0x00000002 /* create the polydir */
 #define POLYDIR_NOINIT        0x00000004 /* no init script */
 #define POLYDIR_SHARED        0x00000008 /* share context/level instances among users */

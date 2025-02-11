@@ -123,15 +123,17 @@ int create_digest(const char *d1, const char *d2, const char *d3,
 
     if (fgets(buffer_33, 33, pipe) == NULL) {
 	D(("failed to read digest"));
+	pclose(pipe);
 	return 0;
     }
 
     if (strlen(buffer_33) != 32) {
 	D(("digest was not 32 chars"));
+	pclose(pipe);
 	return 0;
     }
 
-    fclose(pipe);
+    pclose(pipe);
 
     D(("done [%s]", buffer_33));
 
@@ -164,16 +166,14 @@ static int converse(pam_handle_t *pamh, struct ps_state_s *new)
 	retval = conv->conv(1, &msg_ptr, &single_reply, conv->appdata_ptr);
 	if (retval == PAM_SUCCESS) {
 	    if ((single_reply == NULL) || (single_reply->resp == NULL)) {
-		retval == PAM_CONV_ERR;
+		retval = PAM_CONV_ERR;
 	    } else {
 		new->current_reply = (pamc_bp_t) single_reply->resp;
 		single_reply->resp = NULL;
 	    }
 	}
 
-	if (single_reply) {
-	    free(single_reply);
-	}
+	free(single_reply);
     }
 
 #ifdef PAM_DEBUG
@@ -380,7 +380,7 @@ static int auth_sequence(pam_handle_t *pamh,
 
 	/* expect to receive the following {<seqid>|<a_cookie>} */
 	if (new->current_reply == NULL) {
-	    D(("converstation returned [%s] but gave no reply",
+	    D(("conversation returned [%s] but gave no reply",
 	       pam_strerror(pamh, retval)));
 	    new->state = PS_STATE_DEAD;
 	    return PAM_CONV_ERR;

@@ -31,9 +31,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <unistd.h>
@@ -66,6 +64,8 @@ main (void)
       return 1;
     }
 
+  pam_end (pamh, retval);
+
   /* 2: check with NULL for service */
   retval = pam_start (NULL, user, &conv, &pamh);
   if (retval == PAM_SUCCESS)
@@ -83,6 +83,8 @@ main (void)
 	       service, retval);
       return 1;
     }
+
+  pam_end (pamh, retval);
 
 
   /* 4: check with NULL for conv */

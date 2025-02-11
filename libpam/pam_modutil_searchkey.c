@@ -4,8 +4,6 @@
  *     lookup a value for key in login.defs file or similar key value format
  */
 
-#include "config.h"
-
 #include "pam_private.h"
 #include "pam_modutil_private.h"
 #include <security/pam_ext.h>
@@ -14,10 +12,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #ifdef USE_ECONF
-#include <libeconf.h>
+#include "pam_econf.h"
 #endif
-
-#define BUF_SIZE 8192
 
 #ifdef USE_ECONF
 #define LOGIN_DEFS "/etc/login.defs"
@@ -31,10 +27,14 @@ econf_search_key (const char *name, const char *suffix, const char *key)
 {
 	econf_file *key_file = NULL;
 	char *val;
+	econf_err error;
 
-	if (econf_readDirs (&key_file, VENDORDIR, SYSCONFDIR, name, suffix,
-			    " \t", "#"))
-		return NULL;
+	error = pam_econf_readconfig (&key_file, VENDORDIR, SYSCONFDIR, name, suffix,
+				      " \t", "#", NULL, NULL);
+	if (error != ECONF_SUCCESS) {
+                econf_free (key_file);
+                return NULL;
+	}
 
 	if (econf_getStringValue (key_file, NULL, key, &val)) {
 		econf_free (key_file);
@@ -70,29 +70,8 @@ pam_modutil_search_key(pam_handle_t *pamh UNUSED,
 
 	while (!feof(fp)) {
 		char *tmp, *cp;
-#if defined(HAVE_GETLINE)
 		ssize_t n = getline(&buf, &buflen, fp);
-#elif defined (HAVE_GETDELIM)
-		ssize_t n = getdelim(&buf, &buflen, '\n', fp);
-#else
-		ssize_t n;
 
-		if (buf == NULL) {
-			buflen = BUF_SIZE;
-			buf = malloc(buflen);
-			if (buf == NULL) {
-				fclose(fp);
-				return NULL;
-			}
-		}
-		buf[0] = '\0';
-		if (fgets(buf, buflen - 1, fp) == NULL)
-			break;
-		else if (buf != NULL)
-			n = strlen(buf);
-		else
-			n = 0;
-#endif /* HAVE_GETLINE / HAVE_GETDELIM */
 		cp = buf;
 
 		if (n < 1)
@@ -103,14 +82,14 @@ pam_modutil_search_key(pam_handle_t *pamh UNUSED,
 		tmp = strchr(cp, '#');  /* remove comments */
 		if (tmp)
 			*tmp = '\0';
-		while (isspace((int)*cp))    /* remove spaces and tabs */
+		while (isspace((unsigned char)*cp))    /* remove spaces and tabs */
 			++cp;
 		if (*cp == '\0')        /* ignore empty lines */
 			continue;
 
 		tmp = strsep (&cp, " \t=");
 		if (cp != NULL)
-			while (isspace((int)*cp) || *cp == '=')
+			while (isspace((unsigned char)*cp) || *cp == '=')
 				++cp;
 		else
 			cp = buf + n;   /* empty string */

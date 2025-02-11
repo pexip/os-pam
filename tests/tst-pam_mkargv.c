@@ -6,9 +6,7 @@
    the Free Software Foundation in version 2 of the License.
 */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include <config.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -49,6 +47,8 @@ int main(void)
       if (strcmp (myargv[i], argvresult[i]) != 0)
 	return 1;
     }
+
+  free(myargv);
 
   return 0;
 }

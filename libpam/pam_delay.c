@@ -14,12 +14,17 @@
  */
 
 #include "pam_private.h"
+#include <limits.h>
 #include <unistd.h>
 #include <time.h>
 
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
+
 /* **********************************************************************
  * initialize the time as unset, this is set on the return from the
- * authenticating pair of of the libpam pam_XXX calls.
+ * authenticating pair of the libpam pam_XXX calls.
  */
 
 void _pam_reset_timer(pam_handle_t *pamh)
@@ -51,29 +56,40 @@ void _pam_start_timer(pam_handle_t *pamh)
  * in C'. It is *not* a cryptographically strong generator, but it is
  * probably "good enough" for our purposes here.
  *
- * /dev/random might be a better place to look for some numbers...
+ * If getrandom is available, retrieve random number from there.
  */
 
 static unsigned int _pam_rand(unsigned int seed)
 {
+#ifdef HAVE_GETRANDOM
+     unsigned int value;
+
+     if (getrandom(&value, sizeof(value), GRND_NONBLOCK) ==
+	 (ssize_t) sizeof(value)) {
+	  return value;
+     }
+#endif
+
 #define N1 1664525
 #define N2 1013904223
      return N1*seed + N2;
 }
 
-static unsigned int _pam_compute_delay(unsigned int seed, unsigned int base)
+static unsigned long long _pam_compute_delay(unsigned int seed,
+					     unsigned int base)
 {
      int i;
      double sum;
-     unsigned int ans;
+     unsigned long long ans;
 
      for (sum=i=0; i<3; ++i) {
 	  seed = _pam_rand(seed);
 	  sum += (double) ((seed / 10) % 1000000);
      }
      sum = (sum/3.)/1e6 - .5;                      /* rescale */
-     ans = (unsigned int) ( base*(1.+sum) );
-     D(("random number: base=%u -> ans=%u\n", base, ans));
+     sum = base*(1.+sum);
+     ans = sum > (double) ULLONG_MAX ? ULLONG_MAX : (unsigned long long) sum;
+     D(("random number: base=%u -> ans=%llu\n", base, ans));
 
      return ans;
 }
@@ -88,7 +104,7 @@ static unsigned int _pam_compute_delay(unsigned int seed, unsigned int base)
 
 void _pam_await_timer(pam_handle_t *pamh, int status)
 {
-    unsigned int delay;
+    unsigned long long delay;
     D(("waiting?..."));
 
     delay = _pam_compute_delay(pamh->fail_delay.begin,
@@ -99,6 +115,7 @@ void _pam_await_timer(pam_handle_t *pamh, int status)
 	    void (*fn)(int, unsigned, void *);
 	} hack_fn_u;
 	void *appdata_ptr;
+	unsigned int delay_uint;
 
 	if (pamh->pam_conversation) {
 	    appdata_ptr = pamh->pam_conversation->appdata_ptr;
@@ -106,14 +123,16 @@ void _pam_await_timer(pam_handle_t *pamh, int status)
 	    appdata_ptr = NULL;
 	}
 
-	/* always call the applications delay function, even if
+	delay_uint = delay > UINT_MAX ? UINT_MAX : (unsigned int) delay;
+
+	/* always call the application's delay function, even if
 	   the delay is zero - indicate status */
 	hack_fn_u.value = pamh->fail_delay.delay_fn_ptr;
-	hack_fn_u.fn(status, delay, appdata_ptr);
+	hack_fn_u.fn(status, delay_uint, appdata_ptr);
 
     } else if (status != PAM_SUCCESS && pamh->fail_delay.set) {
 
-	D(("will wait %u usec", delay));
+	D(("will wait %llu usec", delay));
 
 	if (delay > 0) {
 	    struct timeval tval;
@@ -138,7 +157,7 @@ int pam_fail_delay(pam_handle_t *pamh, unsigned int usec)
 {
      unsigned int largest;
 
-     IF_NO_PAMH("pam_fail_delay", pamh, PAM_SYSTEM_ERR);
+     IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
      D(("setting delay to %u",usec));
 

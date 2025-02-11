@@ -70,7 +70,8 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
     const char *uttyname;
     const char *str;
     const void *void_uttyname;
-    char ttyfileline[256];
+    char *ttyfileline = NULL;
+    size_t ttyfilelinelen = 0;
     char ptname[256];
     struct stat ttyfileinfo;
     struct passwd *user_pwd;
@@ -148,7 +149,7 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
 	return PAM_SERVICE_ERR;
     }
 
-    if (isdigit(uttyname[0])) {
+    if (isdigit((unsigned char)uttyname[0])) {
 	snprintf(ptname, sizeof(ptname), "pts/%s", uttyname);
     } else {
 	ptname[0] = '\0';
@@ -156,14 +157,13 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
 
     retval = 1;
 
-    while ((fgets(ttyfileline, sizeof(ttyfileline)-1, ttyfile) != NULL)
-	   && retval) {
-	if (ttyfileline[strlen(ttyfileline) - 1] == '\n')
-	    ttyfileline[strlen(ttyfileline) - 1] = '\0';
+    while (retval && getline(&ttyfileline, &ttyfilelinelen, ttyfile) != -1) {
+	ttyfileline[strcspn(ttyfileline, "\n")] = '\0';
 
 	retval = ( strcmp(ttyfileline, uttyname)
 		   && (!ptname[0] || strcmp(ptname, uttyname)) );
     }
+    free(ttyfileline);
     fclose(ttyfile);
 
     if (retval && !(ctrl & PAM_NOCONSOLE_ARG)) {
@@ -173,9 +173,14 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
         cmdlinefile = fopen(CMDLINE_FILE, "r");
 
         if (cmdlinefile != NULL) {
-            char line[LINE_MAX], *p;
+            char *p;
+            char *line = NULL;
+            size_t linelen = 0;
 
-            p = fgets(line, sizeof(line), cmdlinefile);
+            if (getline(&line, &linelen, cmdlinefile) == -1)
+                p = NULL;
+            else
+                p = line;
             fclose(cmdlinefile);
 
             for (; p; p = strstr(p+1, "console=")) {
@@ -195,6 +200,8 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
                     break;
                 }
             }
+
+            free(line);
         }
     }
     if (retval && !(ctrl & PAM_NOCONSOLE_ARG)) {
@@ -204,16 +211,19 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
         consoleactivefile = fopen(CONSOLEACTIVE_FILE, "r");
 
         if (consoleactivefile != NULL) {
-            char line[LINE_MAX], *p, *n;
+            char *p, *n;
+            char *line = NULL;
+            size_t linelen = 0;
 
-            line[0] = 0;
-            p = fgets(line, sizeof(line), consoleactivefile);
+            if (getline(&line, &linelen, consoleactivefile) == -1)
+                p = NULL;
+            else
+                p = line;
             fclose(consoleactivefile);
 
 	    if (p) {
 		/* remove the newline character at end */
-		if (line[strlen(line)-1] == '\n')
-		    line[strlen(line)-1] = 0;
+		line[strcspn(line, "\n")] = '\0';
 
 		for (n = p; n != NULL; p = n+1) {
 		    if ((n = strchr(p, ' ')) != NULL)
@@ -225,6 +235,8 @@ securetty_perform_check (pam_handle_t *pamh, int ctrl,
 		    }
 		}
 	    }
+
+	    free(line);
 	}
     }
 

@@ -17,6 +17,7 @@ extern "C" {
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 /* opaque agent handling structure */
@@ -24,7 +25,8 @@ extern "C" {
 typedef struct pamc_handle_s *pamc_handle_t;
 
 /* binary prompt structure pointer */
-typedef struct { uint32_t length; uint8_t control; } *pamc_bp_t;
+typedef struct { uint32_t length; uint8_t control; }
+	__attribute__ ((__packed__)) *pamc_bp_t;
 
 /*
  * functions provided by libpamc
@@ -69,10 +71,6 @@ char **pamc_list_agents(pamc_handle_t pch);
 /*
  * PAM_BP_ MACROS for creating, destroying and manipulating binary prompts
  */
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
 
 #ifndef PAM_BP_ASSERT
 # ifdef NDEBUG
@@ -120,7 +118,7 @@ do {                                                                       \
 	if (cntrl) {                                                       \
 	    uint32_t __size;                                              \
                                                                            \
-	    __size = PAM_BP_MIN_SIZE + data_length;                        \
+	    __size = PAM_BP_MIN_SIZE + (data_length);                      \
 	    if ((*(old_p) = PAM_BP_CALLOC(1, 1+__size))) {                 \
 		__PAM_BP_WOCTET(*(old_p), 3) =  __size      & 0xFF;        \
 		__PAM_BP_WOCTET(*(old_p), 2) = (__size>>=8) & 0xFF;        \
@@ -131,7 +129,7 @@ do {                                                                       \
 		PAM_BP_ASSERT("out of memory for binary prompt");          \
 	    }                                                              \
 	} else {                                                           \
-	    *old_p = NULL;                                                 \
+	    *(old_p) = NULL;                                               \
 	}                                                                  \
     } else {                                                               \
 	PAM_BP_ASSERT("programming error, invalid binary prompt pointer"); \

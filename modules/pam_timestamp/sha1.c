@@ -37,6 +37,7 @@
  */
 /* See http://www.itl.nist.gov/fipspubs/fip180-1.htm for descriptions. */
 
+#include "pam_inline.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
@@ -48,7 +49,7 @@
 #include <unistd.h>
 #include "sha1.h"
 
-static unsigned char
+static const unsigned char
 padding[SHA1_BLOCK_SIZE] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0,
 	   0, 0, 0, 0, 0, 0, 0, 0,     0, 0, 0, 0, 0, 0, 0, 0,
@@ -142,8 +143,8 @@ sha1_process(struct sha1_context *ctx, uint32_t buffer[SHA1_BLOCK_SIZE / 4])
 	ctx->d += d;
 	ctx->e += e;
 
-	memset(buffer, 0, sizeof(buffer[0]) * SHA1_BLOCK_SIZE / 4);
-	memset(data, 0, sizeof(data));
+	pam_overwrite_n(buffer, sizeof(buffer[0]) * SHA1_BLOCK_SIZE / 4);
+	pam_overwrite_array(data);
 }
 
 void

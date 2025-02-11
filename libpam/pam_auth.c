@@ -15,9 +15,9 @@ int pam_authenticate(pam_handle_t *pamh, int flags)
 {
     int retval;
 
-    D(("pam_authenticate called"));
+    D(("called."));
 
-    IF_NO_PAMH("pam_authenticate", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from module!?"));
@@ -36,7 +36,7 @@ int pam_authenticate(pam_handle_t *pamh, int flags)
     if (retval != PAM_INCOMPLETE) {
 	_pam_sanitize(pamh);
 	_pam_await_timer(pamh, retval);   /* if unsuccessful then wait now */
-	D(("pam_authenticate exit"));
+	D(("exiting"));
     } else {
 	D(("will resume when ready"));
     }
@@ -52,9 +52,9 @@ int pam_setcred(pam_handle_t *pamh, int flags)
 {
     int retval;
 
-    D(("pam_setcred called"));
+    D(("called."));
 
-    IF_NO_PAMH("pam_setcred", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from module!?"));
@@ -67,7 +67,7 @@ int pam_setcred(pam_handle_t *pamh, int flags)
 
     retval = _pam_dispatch(pamh, flags, PAM_SETCRED);
 
-    D(("pam_setcred exit"));
+    D(("exiting"));
 
     return retval;
 }

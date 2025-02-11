@@ -8,6 +8,7 @@
  */
 
 #include "pam_private.h"
+#include "pam_i18n.h"
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -24,6 +25,21 @@ static int _pam_start_internal (
 {
     D(("called pam_start: [%s] [%s] [%p] [%p]"
        ,service_name, user, pam_conversation, pamh));
+
+#if defined HAVE_BINDTEXTDOMAIN && defined ENABLE_NLS
+    /* Bind text domain to pull in PAM translations for a case where
+       linux-pam is installed to non-default prefix.
+
+       It is safe to call bindtextdomain() from multiple threads, but it
+       has a chance to have some overhead. Let's try to do it once (or a
+       small number of times as `bound_text_domain` is not protected by
+       a lock. */
+    static int bound_text_domain = 0;
+    if (!bound_text_domain) {
+	bound_text_domain = 1;
+	bindtextdomain(PACKAGE, LOCALEDIR);
+    }
+#endif
 
     if (pamh == NULL) {
 	pam_syslog(NULL, LOG_CRIT,
@@ -67,7 +83,7 @@ static int _pam_start_internal (
 	char *tmp;
 
 	for (tmp=(*pamh)->service_name; *tmp; ++tmp)
-	    *tmp = tolower(*tmp);                   /* require lower case */
+	    *tmp = tolower((unsigned char)*tmp);                   /* require lower case */
     }
 
     if (user) {
@@ -143,6 +159,7 @@ static int _pam_start_internal (
 
     if ( _pam_init_handlers(*pamh) != PAM_SUCCESS ) {
 	pam_syslog(*pamh, LOG_ERR, "pam_start: failed to initialize handlers");
+	_pam_free_handlers(*pamh);
 	_pam_drop_env(*pamh);                 /* purge the environment */
 	_pam_drop((*pamh)->pam_conversation);
 	_pam_drop((*pamh)->service_name);
@@ -152,7 +169,7 @@ static int _pam_start_internal (
 	return PAM_ABORT;
     }
 
-    D(("exiting pam_start successfully"));
+    D(("exiting successfully"));
 
     return PAM_SUCCESS;
 }

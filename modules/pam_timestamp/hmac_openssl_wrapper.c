@@ -49,11 +49,17 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
+#include <openssl/rand.h>
 
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
 #include "hmac_openssl_wrapper.h"
+#include "pam_inline.h"
+
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
 
 #define LOGIN_DEFS          "/etc/login.defs"
 #define CRYPTO_KEY          "HMAC_CRYPTO_ALGO"
@@ -80,30 +86,48 @@ get_crypto_algorithm(pam_handle_t *pamh, int debug){
 }
 
 static int
+PAM_NONNULL((1, 2))
 generate_key(pam_handle_t *pamh, char **key, size_t key_size)
 {
     int fd = 0;
-    size_t bytes_read = 0;
-    char * tmp = NULL;
+    ssize_t bytes_read = 0;
+    char *tmp = *key = NULL;
 
-    fd = open("/dev/urandom", O_RDONLY);
-    if (fd == -1) {
-        pam_syslog(pamh, LOG_ERR, "Cannot open /dev/urandom: %m");
+    tmp = calloc(1, key_size);
+    if (!tmp) {
+        pam_syslog(pamh, LOG_CRIT, "Not enough memory");
         return PAM_AUTH_ERR;
     }
 
-    tmp = malloc(key_size);
-    if (!tmp) {
-        pam_syslog(pamh, LOG_CRIT, "Not enough memory");
-        close(fd);
+    /* Try to get random data from OpenSSL first */
+    if (RAND_priv_bytes((unsigned char *)tmp, key_size) == 1) {
+        *key = tmp;
+        return PAM_SUCCESS;
+    }
+
+#ifdef HAVE_GETRANDOM
+    /* Fallback to getrandom(2) if available */
+    if (getrandom(tmp, key_size, 0) == (ssize_t)key_size) {
+        *key = tmp;
+        return PAM_SUCCESS;
+    }
+#endif
+
+    /* Fallback to /dev/urandom */
+    fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1) {
+        pam_syslog(pamh, LOG_ERR, "Cannot open /dev/urandom: %m");
+        pam_overwrite_n(tmp, key_size);
+        free(tmp);
         return PAM_AUTH_ERR;
     }
 
     bytes_read = pam_modutil_read(fd, tmp, key_size);
     close(fd);
 
-    if (bytes_read < key_size) {
+    if (bytes_read < 0 || (size_t)bytes_read < key_size) {
         pam_syslog(pamh, LOG_ERR, "Short read on random device");
+        pam_overwrite_n(tmp, key_size);
         free(tmp);
         return PAM_AUTH_ERR;
     }
@@ -114,10 +138,11 @@ generate_key(pam_handle_t *pamh, char **key, size_t key_size)
 }
 
 static int
+PAM_NONNULL((1, 3, 4))
 read_file(pam_handle_t *pamh, int fd, char **text, size_t *text_length)
 {
     struct stat st;
-    size_t bytes_read = 0;
+    ssize_t bytes_read = 0;
     char *tmp = NULL;
 
     if (fstat(fd, &st) == -1) {
@@ -132,7 +157,13 @@ read_file(pam_handle_t *pamh, int fd, char **text, size_t *text_length)
         return PAM_AUTH_ERR;
     }
 
-    tmp = malloc(st.st_size);
+    if ((uintmax_t)st.st_size > (uintmax_t)INT_MAX) {
+        pam_syslog(pamh, LOG_ERR, "Key file is too large");
+        close(fd);
+        return PAM_AUTH_ERR;
+    }
+
+    tmp = calloc(1, st.st_size);
     if (!tmp) {
         pam_syslog(pamh, LOG_CRIT, "Not enough memory");
         close(fd);
@@ -142,9 +173,9 @@ read_file(pam_handle_t *pamh, int fd, char **text, size_t *text_length)
     bytes_read = pam_modutil_read(fd, tmp, st.st_size);
     close(fd);
 
-    if (bytes_read < (size_t)st.st_size) {
+    if (bytes_read < st.st_size) {
         pam_syslog(pamh, LOG_ERR, "Short read on key file");
-        memset(tmp, 0, st.st_size);
+        pam_overwrite_n(tmp, st.st_size);
         free(tmp);
         return PAM_AUTH_ERR;
     }
@@ -156,25 +187,26 @@ read_file(pam_handle_t *pamh, int fd, char **text, size_t *text_length)
 }
 
 static int
+PAM_NONNULL((1, 2, 3))
 write_file(pam_handle_t *pamh, const char *file_name, char *text,
            size_t text_length, uid_t owner, gid_t group)
 {
     int fd = 0;
-    size_t bytes_written = 0;
+    ssize_t bytes_written = 0;
 
     fd = open(file_name,
               O_WRONLY | O_CREAT | O_TRUNC,
               S_IRUSR | S_IWUSR);
     if (fd == -1) {
         pam_syslog(pamh, LOG_ERR, "Unable to open [%s]: %m", file_name);
-        memset(text, 0, text_length);
+        pam_overwrite_n(text, text_length);
         free(text);
         return PAM_AUTH_ERR;
     }
 
     if (fchown(fd, owner, group) == -1) {
         pam_syslog(pamh, LOG_ERR, "Unable to change ownership [%s]: %m", file_name);
-        memset(text, 0, text_length);
+        pam_overwrite_n(text, text_length);
         free(text);
         close(fd);
         return PAM_AUTH_ERR;
@@ -183,8 +215,9 @@ write_file(pam_handle_t *pamh, const char *file_name, char *text,
     bytes_written = pam_modutil_write(fd, text, text_length);
     close(fd);
 
-    if (bytes_written < text_length) {
+    if (bytes_written < 0 || (size_t)bytes_written < text_length) {
         pam_syslog(pamh, LOG_ERR, "Short write on %s", file_name);
+        pam_overwrite_n(text, text_length);
         free(text);
         return PAM_AUTH_ERR;
     }
@@ -193,6 +226,7 @@ write_file(pam_handle_t *pamh, const char *file_name, char *text,
 }
 
 static int
+PAM_NONNULL((1, 2, 3))
 key_management(pam_handle_t *pamh, const char *file_name, char **text,
                 size_t text_length, uid_t owner, gid_t group)
 {
@@ -267,7 +301,7 @@ hmac_management(pam_handle_t *pamh, int debug, void **out, size_t *out_length,
         goto done;
     }
 
-    hmac_message = (unsigned char*)malloc(sizeof(unsigned char) * MAX_HMAC_LENGTH);
+    hmac_message = malloc(sizeof(unsigned char) * MAX_HMAC_LENGTH);
     if (!hmac_message) {
         pam_syslog(pamh, LOG_CRIT, "Not enough memory");
         goto done;
@@ -290,11 +324,9 @@ hmac_management(pam_handle_t *pamh, int debug, void **out, size_t *out_length,
     ret = PAM_SUCCESS;
 
 done:
-    if (hmac_message != NULL) {
-        free(hmac_message);
-    }
+    free(hmac_message);
     if (key != NULL) {
-        memset(key, 0, key_length);
+        pam_overwrite_n(key, key_length);
         free(key);
     }
     if (ctx != NULL) {

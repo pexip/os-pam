@@ -15,14 +15,14 @@ int pam_chauthtok(pam_handle_t *pamh, int flags)
 
     D(("called."));
 
-    IF_NO_PAMH("pam_chauthtok", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from module!?"));
 	return PAM_SYSTEM_ERR;
     }
 
-    /* applications are not allowed to set this flags */
+    /* applications are not allowed to set these flags */
     if (flags & (PAM_PRELIM_CHECK | PAM_UPDATE_AUTHTOK)) {
       pam_syslog (pamh, LOG_ERR,
 		  "PAM_PRELIM_CHECK or PAM_UPDATE_AUTHTOK set by application");
@@ -52,9 +52,9 @@ int pam_chauthtok(pam_handle_t *pamh, int flags)
 	_pam_sanitize(pamh);
 	pamh->former.update = PAM_FALSE;
 	_pam_await_timer(pamh, retval);   /* if unsuccessful then wait now */
-	D(("pam_chauthtok exit %d - %d", retval, pamh->former.choice));
+	D(("exiting %d - %d", retval, pamh->former.choice));
     } else {
-	D(("will resume when ready", retval));
+	D(("will resume when ready"));
     }
 
     return retval;
