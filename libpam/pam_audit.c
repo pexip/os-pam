@@ -44,7 +44,7 @@ _pam_audit_writelog(pam_handle_t *pamh, int audit_fd, int type,
       free(buf);
   }
 
-  /* libaudit sets errno to his own negative error code. This can be
+  /* libaudit sets errno to its own negative error code. This can be
      an official errno number, but must not. It can also be a audit
      internal error code. Which makes errno useless :-((. Try the
      best to fix it. */
@@ -203,7 +203,7 @@ int
 _pam_audit_end(pam_handle_t *pamh, int status UNUSED)
 {
   if (! (pamh->audit_state & PAMAUDIT_LOGGED)) {
-    /* PAM library is being shut down without any of the auditted
+    /* PAM library is being shut down without any of the audited
      * stacks having been run. Assume that this is sshd faking
      * things for an unknown user.
      */

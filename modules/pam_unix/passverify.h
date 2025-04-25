@@ -4,11 +4,12 @@
 
 #include <sys/types.h>
 #include <pwd.h>
+#include <shadow.h>
 #include <security/pam_modules.h>
 
 #define PAM_UNIX_RUN_HELPER PAM_CRED_INSUFFICIENT
 
-#define OLD_PASSWORDS_FILE      "/etc/security/opasswd"
+#define OLD_PASSWORDS_FILE      SCONFIG_DIR "/opasswd"
 
 int
 is_pwd_shadowed(const struct passwd *pwd);
@@ -37,6 +38,7 @@ save_old_password(pam_handle_t *pamh, const char *forwho, const char *oldpass,
 
 #ifdef HELPER_COMPILE
 void
+PAM_FORMAT((printf, 2, 3))
 helper_log_err(int err, const char *format,...);
 
 int

@@ -94,16 +94,18 @@ static int process_args(pam_handle_t *pamh
 	*evp = NULL;
     } else {
 	char **levp;
+	char *p;
 	const char *user = NULL;
 	const void *tmp;
-	int i,size, retval;
+	int i, retval;
+	size_t size;
 
 	*filtername = *++argv;
 	if (ctrl & FILTER_DEBUG) {
 	    pam_syslog(pamh, LOG_DEBUG, "will run filter %s", *filtername);
 	}
 
-	levp = (char **) malloc(5*sizeof(char *));
+	levp = malloc(5*sizeof(char *));
 	if (levp == NULL) {
 	    pam_syslog(pamh, LOG_CRIT, "no memory for environment of filter");
 	    return -1;
@@ -127,92 +129,54 @@ static int process_args(pam_handle_t *pamh
 	    return -1;
 	}
 
-	strcpy(levp[0], ARGS_NAME);
-	size = ARGS_OFFSET;
+	p = stpcpy(levp[0], ARGS_NAME);
 	for (i=0; i<argc; ++i) {
 	    if (i)
-		levp[0][size++] = ' ';
-	    strcpy(levp[0]+size, argv[i]);
-	    size += strlen(argv[i]);
+		p = stpcpy(p, " ");
+	    p = stpcpy(p, argv[i]);
 	}
 
 	/* the "SERVICE" variable */
 
-#define SERVICE_NAME      "SERVICE="
-#define SERVICE_OFFSET    (sizeof(SERVICE_NAME) - 1)
-
 	retval = pam_get_item(pamh, PAM_SERVICE, &tmp);
 	if (retval != PAM_SUCCESS || tmp == NULL) {
 	    pam_syslog(pamh, LOG_CRIT, "service name not found");
-	    if (levp) {
-		free(levp[0]);
-		free(levp);
-	    }
+	    free(levp[0]);
+	    free(levp);
 	    return -1;
 	}
-	size = SERVICE_OFFSET+strlen(tmp);
 
-	levp[1] = (char *) malloc(size+1);
-	if (levp[1] == NULL) {
+	if (asprintf(&levp[1], "SERVICE=%s", (const char *) tmp) < 0) {
 	    pam_syslog(pamh, LOG_CRIT, "no memory for service name");
-	    if (levp) {
-		free(levp[0]);
-		free(levp);
-	    }
+	    free(levp[0]);
+	    free(levp);
 	    return -1;
 	}
-
-	strcpy(levp[1], SERVICE_NAME);
-	strcpy(levp[1]+SERVICE_OFFSET, tmp);
-	levp[1][size] = '\0';                      /* <NUL> terminate */
 
 	/* the "USER" variable */
-
-#define USER_NAME      "USER="
-#define USER_OFFSET    (sizeof(USER_NAME) - 1)
 
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS) {
 	    user = "<unknown>";
 	}
-	size = USER_OFFSET+strlen(user);
 
-	levp[2] = (char *) malloc(size+1);
-	if (levp[2] == NULL) {
+	if (asprintf(&levp[2], "USER=%s", user) < 0) {
 	    pam_syslog(pamh, LOG_CRIT, "no memory for user's name");
-	    if (levp) {
-		free(levp[1]);
-		free(levp[0]);
-		free(levp);
-	    }
+	    free(levp[1]);
+	    free(levp[0]);
+	    free(levp);
 	    return -1;
 	}
-
-	strcpy(levp[2], USER_NAME);
-	strcpy(levp[2]+USER_OFFSET, user);
-	levp[2][size] = '\0';                      /* <NUL> terminate */
 
 	/* the "USER" variable */
 
-#define TYPE_NAME      "TYPE="
-#define TYPE_OFFSET    (sizeof(TYPE_NAME) - 1)
-
-	size = TYPE_OFFSET+strlen(type);
-
-	levp[3] = (char *) malloc(size+1);
-	if (levp[3] == NULL) {
+	if (asprintf(&levp[3], "TYPE=%s", type) < 0) {
 	    pam_syslog(pamh, LOG_CRIT, "no memory for type");
-	    if (levp) {
-		free(levp[2]);
-		free(levp[1]);
-		free(levp[0]);
-		free(levp);
-	    }
+	    free(levp[2]);
+	    free(levp[1]);
+	    free(levp[0]);
+	    free(levp);
 	    return -1;
 	}
-
-	strcpy(levp[3], TYPE_NAME);
-	strcpy(levp[3]+TYPE_OFFSET, type);
-	levp[3][size] = '\0';                      /* <NUL> terminate */
 
 	levp[4] = NULL;	                     /* end list */
 
@@ -238,8 +202,7 @@ static void free_evp(char *evp[])
 
     if (evp)
 	for (i=0; i<4; ++i) {
-	    if (evp[i])
-		free(evp[i]);
+	    free(evp[i]);
 	}
     free(evp);
 }
@@ -349,33 +312,31 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 	if (aterminal) {
 
 	    /* close the controlling tty */
-
-#if defined(__hpux) && defined(O_NOCTTY)
-	    int t = open("/dev/tty", O_RDWR|O_NOCTTY);
-#else
 	    int t = open("/dev/tty",O_RDWR);
 	    if (t >= 0) {
 		(void) ioctl(t, TIOCNOTTY, NULL);
 		close(t);
 	    }
-#endif /* defined(__hpux) && defined(O_NOCTTY) */
 
-	    /* make this process it's own process leader */
+	    /* make this process its own process leader */
 	    if (setsid() == -1) {
 		pam_syslog(pamh, LOG_ERR,
 			   "child cannot become new session: %m");
+		close(fd[0]);
 		return PAM_ABORT;
 	    }
 
 	    /* grant slave terminal */
 	    if (grantpt (fd[0]) < 0) {
 		pam_syslog(pamh, LOG_ERR, "Cannot grant access to slave terminal");
+		close(fd[0]);
 		return PAM_ABORT;
 	    }
 
 	    /* unlock slave terminal */
 	    if (unlockpt (fd[0]) < 0) {
 		pam_syslog(pamh, LOG_ERR, "Cannot unlock slave terminal");
+		close(fd[0]);
 		return PAM_ABORT;
 	    }
 
@@ -385,6 +346,7 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 	    if (terminal == NULL) {
 		pam_syslog(pamh, LOG_ERR,
 			   "Cannot get the name of the slave terminal: %m");
+		close(fd[0]);
 		return PAM_ABORT;
 	    }
 
@@ -408,7 +370,8 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 	    }
 	} else {
 
-	    /* nothing to do for a simple stream socket */
+	    /* nothing else to do for a simple stream socket */
+	    close(fd[0]);
 
 	}
 
@@ -423,6 +386,10 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 	    return PAM_ABORT;
 	}
 
+	/* now the user input is read from the parent/filter: forget fd */
+
+	close(fd[1]);
+
 	/* make sure that file descriptors survive 'exec's */
 
 	if ( fcntl(STDIN_FILENO, F_SETFD, 0) ||
@@ -433,15 +400,14 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 	    return PAM_ABORT;
 	}
 
-	/* now the user input is read from the parent/filter: forget fd */
-
-	close(fd[1]);
-
 	/* the current process is now apparently working with filtered
 	   stdio/stdout/stderr --- success! */
 
 	return PAM_SUCCESS;
     }
+
+    if (!aterminal)
+	    close(fd[1]);
 
     /* Clear out passwords... there is a security problem here in
      * that this process never executes pam_end.  Consequently, any
@@ -510,7 +476,7 @@ set_filter (pam_handle_t *pamh, int flags UNUSED, int ctrl,
 
 	    } else if (chid == child2) {
 		/*
-		 * if the filter has exited. Let the child die
+		 * if the filter has exited, let the child die
 		 * naturally below
 		 */
 		if (WIFEXITED(lstatus) || WIFSIGNALED(lstatus))

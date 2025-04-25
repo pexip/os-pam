@@ -51,6 +51,7 @@
 
 #include "pam_cc_compat.h"
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 /* argument parsing */
 #define MKHOMEDIR_DEBUG      020	/* be verbose about things */
@@ -125,15 +126,6 @@ create_homedir (pam_handle_t *pamh, options_t *opt,
 
    D(("called."));
 
-   /*
-    * This code arranges that the demise of the child does not cause
-    * the application to receive a signal it is not expecting - which
-    * may kill the application or worse.
-    */
-   memset(&newsa, '\0', sizeof(newsa));
-   newsa.sa_handler = SIG_DFL;
-   sigaction(SIGCHLD, &newsa, &oldsa);
-
    if (opt->ctrl & MKHOMEDIR_DEBUG) {
         pam_syslog(pamh, LOG_DEBUG, "Executing mkhomedir_helper.");
    }
@@ -152,6 +144,15 @@ create_homedir (pam_handle_t *pamh, options_t *opt,
    } else {
       login_homemode = _pam_conv_str_umask_to_homemode(opt->umask);
    }
+
+   /*
+    * This code arranges that the demise of the child does not cause
+    * the application to receive a signal it is not expecting - which
+    * may kill the application or worse.
+    */
+   memset(&newsa, '\0', sizeof(newsa));
+   newsa.sa_handler = SIG_DFL;
+   sigaction(SIGCHLD, &newsa, &oldsa);
 
    /* fork */
    child = fork();
@@ -242,7 +243,7 @@ pam_sm_open_session (pam_handle_t *pamh, int flags, int argc,
    if (pwd == NULL)
    {
       pam_syslog(pamh, LOG_NOTICE, "User unknown.");
-      D(("couldn't identify user %s", user));
+      D(("couldn't identify user %s", (const char *) user));
       return PAM_USER_UNKNOWN;
    }
 

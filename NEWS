@@ -1,5 +1,90 @@
 Linux-PAM NEWS -- history of user-visible changes.
 
+Release 1.7.0
+* build: changed build system from autotools to meson.
+* libpam_misc: use ECHOCTL in the terminal input
+* pam_access: support UID and GID in access.conf
+* pam_env: install environment file in vendordir if vendordir is enabled
+* pam_issue: only count class user if logind support is enabled
+* pam_limits: use systemd-logind instead of utmp if logind support is enabled
+* pam_unix: compare password hashes in constant time
+* Multiple minor bug fixes, build fixes, portability fixes,
+  documentation improvements, and translation updates.
+
+Release 1.6.1
+* build: fail if specified configure options cannot be satisfied.
+* pam_env: fixed --disable-econf --enable-vendordir support.
+* pam_unix: do not warn if password aging is disabled.
+* pam_unix: try to set uid to 0 before unix_chkpwd invocation.
+* pam_unix: allow empty passwords with non-empty hashes.
+* Multiple minor bug fixes, build fixes, portability fixes,
+  documentation improvements, and translation updates.
+
+Release 1.6.0
+* Added support of configuration files with arbitrarily long lines.
+* build: fixed build outside of the source tree.
+* libpam: added use of getrandom(2) as a source of randomness if available.
+* libpam: fixed calculation of fail delay with very long delays.
+* libpam: fixed potential infinite recursion with includes.
+* libpam: implemented string to number conversions validation when parsing
+  controls in configuration.
+* pam_access: added quiet_log option.
+* pam_access: fixed truncation of very long group names.
+* pam_canonicalize_user: new module to canonicalize user name.
+* pam_echo: fixed file handling to prevent overflows and short reads.
+* pam_env: added support of '\' character in environment variable values.
+* pam_exec: allowed expose_authtok for password PAM_TYPE.
+* pam_exec: fixed stack overflow with binary output of programs.
+* pam_faildelay: implemented parameter ranges validation.
+* pam_listfile: changed to treat \r and \n exactly the same in configuration.
+* pam_mkhomedir: hardened directory creation against timing attacks.
+  Please note that using *at functions leads to more open file handles
+  during creation.
+* pam_namespace: fixed potential local DoS (CVE-2024-22365).
+* pam_nologin: fixed file handling to prevent short reads.
+* pam_pwhistory: helper binary is now built only if SELinux support is enabled.
+* pam_pwhistory: implemented reliable usernames handling when remembering
+  passwords.
+* pam_shells: changed to allow shell entries with absolute paths only.
+* pam_succeed_if: fixed treating empty strings as numerical value 0.
+* pam_unix: added support of disabled password aging.
+* pam_unix: synchronized password aging with shadow.
+* pam_unix: implemented string to number conversions validation.
+* pam_unix: fixed truncation of very long user names.
+* pam_unix: corrected rounds retrieval for configured encryption method.
+* pam_unix: implemented reliable usernames handling when remembering passwords.
+* pam_unix: changed to always run the helper to obtain shadow password entries.
+* pam_unix: unix_update helper binary is now built only if SELinux support
+  is enabled.
+* pam_unix: added audit support to unix_update helper.
+* pam_userdb: added gdbm support.
+* Multiple minor bug fixes, portability fixes, documentation improvements,
+  and translation updates.
+
+Release 1.5.3
+* configure: added options to configure stylesheets.
+* configure: added --enable-logind option to use logind instead of utmp
+  in pam_issue and pam_timestamp.
+* pam_modutil_getlogin: changed to use getlogin() from libc instead of parsing utmp.
+* Added libeconf support to pam_env and pam_shells.
+* Added vendor directory support to pam_access, pam_env, pam_group, pam_faillock,
+  pam_limits, pam_namespace, pam_pwhistory, pam_sepermit, pam_shells, and pam_time.
+* pam_limits: changed to not fail on missing config files.
+* pam_pwhistory: added conf= option to specify config file location.
+* pam_pwhistory: added file= option to specify password history file location.
+* pam_shells: added shells.d support when libeconf and vendordir are enabled.
+* Deprecated pam_lastlog: this module is no longer built by default because
+  it uses utmp, wtmp, btmp and lastlog, but none of them are Y2038 safe,
+  even on 64bit architectures.
+  pam_lastlog will be removed in one of the next releases, consider using
+  pam_lastlog2 (from https://github.com/thkukuk/lastlog2) and/or
+  pam_wtmpdb (from https://github.com/thkukuk/wtmpdb) instead.
+* Deprecated _pam_overwrite(), _pam_overwrite_n(), and _pam_drop_reply() macros
+  provided by _pam_macros.h; the memory override performed by these macros can
+  be optimized out by the compiler and therefore can no longer be relied upon.
+* Multiple minor bug fixes, portability fixes, documentation improvements,
+  and translation updates.
+
 Release 1.5.2
 * pam_exec: implemented quiet_log option.
 * pam_mkhomedir: added support of HOME_MODE and UMASK from /etc/login.defs.
@@ -162,7 +247,7 @@ Release 1.1.5
 Release 1.1.4
 
 * Add vietnamese translation
-* pam_namepace: Add new functionality
+* pam_namespace: Add new functionality
 * pam_securetty: Honour console= kernel option, add noconsole option
 * pam_limits: Add %group syntax, drop change_uid option, add set_all option
 * Lot of small bug fixes
@@ -174,7 +259,7 @@ Release 1.1.3
 
 * pam_namespace: Clean environment for child processes (CVE-2010-3853)
 * libpam: New interface to drop/regain privileges
-* Drop root privilegs in pam_env, pam_mail and pam_xauth before
+* Drop root privileges in pam_env, pam_mail and pam_xauth before
   accessing user files (CVE-2010-3430, CVE-2010-3431)
 * pam_unix: Add minlen option, change default from 6 to 0
 * Documentation improvements

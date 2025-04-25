@@ -84,7 +84,7 @@ static int lookup(const char *name, const char *list, char **_user)
 	}
     } else {
 #define MAX_L 2
-	static const char *l[MAX_L] = { "ftp", "anonymous" };
+	static const char *const l[MAX_L] = { "ftp", "anonymous" };
 	int i;
 
 	for (i=0; i<MAX_L; ++i) {
@@ -157,7 +157,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 			       GUEST_LOGIN_PROMPT);
 
 	if (retval != PAM_SUCCESS) {
-	    _pam_overwrite (resp);
+	    pam_overwrite_string (resp);
 	    _pam_drop (resp);
 	    return ((retval == PAM_CONV_AGAIN)
 		    ? PAM_INCOMPLETE:PAM_AUTHINFO_UNAVAIL);
@@ -196,7 +196,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 	}
 
 	/* clean up */
-	_pam_overwrite(resp);
+	pam_overwrite_string(resp);
 	_pam_drop(resp);
 
 	/* success or failure */

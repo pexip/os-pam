@@ -27,6 +27,10 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
+#ifdef HAVE_LIBAUDIT
+#include <libaudit.h>
+#include "audit.h"
+#endif
 
 #include <security/_pam_types.h>
 #include <security/_pam_macros.h>
@@ -38,6 +42,7 @@ static int
 set_password(const char *forwho, const char *shadow, const char *remember)
 {
     struct passwd *pwd = NULL;
+    uid_t ruid;
     int retval;
     char pass[PAM_MAX_RESP_SIZE + 1];
     char towhat[PAM_MAX_RESP_SIZE + 1];
@@ -55,15 +60,18 @@ set_password(const char *forwho, const char *shadow, const char *remember)
     if (npass != 2) {	/* is it a valid password? */
       if (npass == 1) {
         helper_log_err(LOG_DEBUG, "no new password supplied");
-	memset(pass, '\0', PAM_MAX_RESP_SIZE);
+        pam_overwrite_array(pass);
       } else {
         helper_log_err(LOG_DEBUG, "no valid passwords supplied");
       }
       return PAM_AUTHTOK_ERR;
     }
 
-    if (lock_pwdf() != PAM_SUCCESS)
+    if (lock_pwdf() != PAM_SUCCESS) {
+	pam_overwrite_array(pass);
+	pam_overwrite_array(towhat);
 	return PAM_AUTHTOK_LOCK_BUSY;
+    }
 
     pwd = getpwnam(forwho);
 
@@ -73,11 +81,25 @@ set_password(const char *forwho, const char *shadow, const char *remember)
     }
 
     /* If real caller uid is not root we must verify that
-       received old pass agrees with the current one.
-       We always allow change from null pass. */
-    if (getuid()) {
+     * the target user is the caller and the
+     * received old pass agrees with the current one.
+     * We always allow change from null pass. */
+    ruid = getuid();
+    if (ruid != 0) {
+	if (pwd->pw_uid != ruid) {
+	    helper_log_err(LOG_NOTICE, "user mismatch detected: source=%d target=%d",
+	                   ruid, pwd->pw_uid);
+	    retval = PAM_AUTHTOK_ERR;
+	    goto done;
+	}
+
 	retval = helper_verify_password(forwho, pass, 1);
+#ifdef HAVE_LIBAUDIT
+	audit_log(AUDIT_USER_AUTH, getuidname(getuid()), retval);
+#endif
 	if (retval != PAM_SUCCESS) {
+	    helper_log_err(LOG_NOTICE, "password check failed for user (%s)",
+	                   getuidname(getuid()));
 	    goto done;
 	}
     }
@@ -97,9 +119,14 @@ set_password(const char *forwho, const char *shadow, const char *remember)
 	retval = unix_update_passwd(forwho, towhat);
     }
 
+#ifdef HAVE_LIBAUDIT
+    audit_log(AUDIT_USER_CHAUTHTOK, getuidname(getuid()), retval);
+#endif
+
+
 done:
-    memset(pass, '\0', PAM_MAX_RESP_SIZE);
-    memset(towhat, '\0', PAM_MAX_RESP_SIZE);
+    pam_overwrite_array(pass);
+    pam_overwrite_array(towhat);
 
     unlock_pwdf();
 
@@ -122,7 +149,7 @@ int main(int argc, char *argv[])
 	/*
 	 * we establish that this program is running with non-tty stdin.
 	 * this is to discourage casual use. It does *NOT* prevent an
-	 * intruder from repeatadly running this program to determine the
+	 * intruder from repeatedly running this program to determine the
 	 * password of the current user (brute force attack, but one for
 	 * which the attacker must already have gained access to the user's
 	 * account).
@@ -132,6 +159,9 @@ int main(int argc, char *argv[])
 		helper_log_err(LOG_NOTICE
 		      ,"inappropriate use of Unix helper binary [UID=%d]"
 			 ,getuid());
+#ifdef HAVE_LIBAUDIT
+		audit_log(AUDIT_ANOM_EXEC, getuidname(getuid()), PAM_SYSTEM_ERR);
+#endif
 		fprintf(stderr
 		 ,"This binary is not designed for running in this way\n"
 		      "-- the system administrator has been informed\n");

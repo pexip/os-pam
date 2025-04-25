@@ -8,32 +8,53 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <pwd.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 #include <syslog.h>
 #include <unistd.h>
+#if defined (USE_ECONF)	&& defined (VENDORDIR)
+#include "pam_econf.h"
+#endif
 
 #include <security/pam_modules.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 
 #define SHELL_FILE "/etc/shells"
-
+#define SHELLS "shells"
+#define ETCDIR "/etc"
 #define DEFAULT_SHELL "/bin/sh"
+
+static bool check_file(const char *filename, const void *pamh)
+{
+    struct stat sb;
+
+    if (stat(filename, &sb)) {
+	pam_syslog(pamh, LOG_ERR, "Cannot stat %s: %m", filename);
+	return false;		/* must have /etc/shells */
+    }
+
+    if ((sb.st_mode & S_IWOTH) || !S_ISREG(sb.st_mode)) {
+	pam_syslog(pamh, LOG_ERR,
+		   "%s is either world writable or not a normal file",
+		   filename);
+	return false;
+    }
+    return true;
+}
 
 static int perform_check(pam_handle_t *pamh)
 {
     int retval = PAM_AUTH_ERR;
     const char *userName;
     const char *userShell;
-    char shellFileLine[256];
-    struct stat sb;
     struct passwd * pw;
-    FILE * shellFile;
 
     retval = pam_get_user(pamh, &userName, NULL);
     if (retval != PAM_SUCCESS) {
@@ -41,24 +62,66 @@ static int perform_check(pam_handle_t *pamh)
     }
 
     pw = pam_modutil_getpwnam(pamh, userName);
-    if (pw == NULL || pw->pw_shell == NULL) {
-	return PAM_AUTH_ERR;		/* user doesn't exist */
+    if (pw == NULL) {
+	return PAM_USER_UNKNOWN;
+    }
+    if (pw->pw_shell == NULL) {
+	/* TODO: when does this happen? I would join it with
+	 * the case userShell[0] == '\0' below.
+	 *
+	 * For now, keep the existing stricter behaviour
+	 */
+	return PAM_AUTH_ERR;
     }
     userShell = pw->pw_shell;
     if (userShell[0] == '\0')
 	userShell = DEFAULT_SHELL;
 
-    if (stat(SHELL_FILE,&sb)) {
-	pam_syslog(pamh, LOG_ERR, "Cannot stat %s: %m", SHELL_FILE);
-	return PAM_AUTH_ERR;		/* must have /etc/shells */
-    }
+#if defined (USE_ECONF)	&& defined (VENDORDIR)
+    size_t size = 0;
+    econf_err error;
+    char **keys;
+    econf_file *key_file = NULL;
 
-    if ((sb.st_mode & S_IWOTH) || !S_ISREG(sb.st_mode)) {
+    error = pam_econf_readconfig(&key_file,
+				 VENDORDIR,
+				 ETCDIR,
+				 SHELLS,
+				 NULL,
+				 "", /* key only */
+				 "#", /* comment */
+				 check_file, pamh);
+    if (error != ECONF_SUCCESS) {
 	pam_syslog(pamh, LOG_ERR,
-		   "%s is either world writable or not a normal file",
-		   SHELL_FILE);
+		   "Cannot parse shell files: %s",
+		   econf_errString(error));
 	return PAM_AUTH_ERR;
     }
+
+    error = econf_getKeys(key_file, NULL, &size, &keys);
+    if (error) {
+	pam_syslog(pamh, LOG_ERR,
+		   "Cannot evaluate entries in shell files: %s",
+		   econf_errString(error));
+	econf_free (key_file);
+	return PAM_AUTH_ERR;
+    }
+
+    retval = 1;
+    for (size_t i = 0; i < size; i++) {
+	retval = strcmp(keys[i], userShell);
+        if (!retval)
+	   break;
+    }
+    econf_free (keys);
+    econf_free (key_file);
+#else
+    FILE *shellFile;
+    char *p = NULL;
+    size_t n = 0;
+
+    if (!check_file(SHELL_FILE, pamh))
+        return PAM_AUTH_ERR;
 
     shellFile = fopen(SHELL_FILE,"r");
     if (shellFile == NULL) {       /* Check that we opened it successfully */
@@ -68,15 +131,21 @@ static int perform_check(pam_handle_t *pamh)
 
     retval = 1;
 
-    while(retval && (fgets(shellFileLine, 255, shellFile) != NULL)) {
-	if (shellFileLine[strlen(shellFileLine) - 1] == '\n')
-	    shellFileLine[strlen(shellFileLine) - 1] = '\0';
-	retval = strcmp(shellFileLine, userShell);
+    while (retval && getline(&p, &n, shellFile) != -1) {
+	p[strcspn(p, "\n")] = '\0';
+
+	if (p[0] != '/') {
+		continue;
+	}
+	retval = strcmp(p, userShell);
     }
 
+    free(p);
     fclose(shellFile);
+#endif
 
     if (retval) {
+	pam_syslog(pamh, LOG_NOTICE, "User has an invalid shell '%s'", userShell);
 	return PAM_AUTH_ERR;
     } else {
 	return PAM_SUCCESS;

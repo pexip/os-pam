@@ -70,13 +70,13 @@ evaluate_num(const pam_handle_t *pamh, const char *left,
 
 	errno = 0;
 	l = strtoll(left, &p, 0);
-	if ((p == NULL) || (*p != '\0') || errno) {
+	if ((p == NULL) || (*p != '\0') || (p == left) || errno) {
 		pam_syslog(pamh, LOG_INFO, "\"%s\" is not a number", left);
 		ret = PAM_SERVICE_ERR;
 	}
 
 	r = strtoll(right, &p, 0);
-	if ((p == NULL) || (*p != '\0') || errno) {
+	if ((p == NULL) || (*p != '\0') || (p == right) || errno) {
 		pam_syslog(pamh, LOG_INFO, "\"%s\" is not a number", right);
 		ret = PAM_SERVICE_ERR;
 	}
@@ -292,15 +292,8 @@ evaluate(pam_handle_t *pamh, int debug,
 	 const char *left, const char *qual, const char *right,
 	 struct passwd **pwd, const char *user)
 {
-	char buf[LINE_MAX] = "";
+	char numstr[sizeof(long) * 3 + 1] = "";
 	const char *attribute = left;
-	/* Figure out what we're evaluating here, and convert it to a string.*/
-	if ((strcasecmp(left, "login") == 0) ||
-	    (strcasecmp(left, "name") == 0) ||
-	    (strcasecmp(left, "user") == 0)) {
-		snprintf(buf, sizeof(buf), "%s", user);
-		left = buf;
-	}
 	/* Get information about the user if needed. */
 	if ((*pwd == NULL) &&
 	    ((strcasecmp(left, "uid") == 0) ||
@@ -314,59 +307,51 @@ evaluate(pam_handle_t *pamh, int debug,
 			return PAM_USER_UNKNOWN;
 		}
 	}
-	if (strcasecmp(left, "uid") == 0) {
-		snprintf(buf, sizeof(buf), "%lu", (unsigned long) (*pwd)->pw_uid);
-		left = buf;
-	}
-	if (strcasecmp(left, "gid") == 0) {
-		snprintf(buf, sizeof(buf), "%lu", (unsigned long) (*pwd)->pw_gid);
-		left = buf;
-	}
-	if (strcasecmp(left, "shell") == 0) {
-		snprintf(buf, sizeof(buf), "%s", (*pwd)->pw_shell);
-		left = buf;
-	}
-	if ((strcasecmp(left, "home") == 0) ||
+	/* Figure out what we're evaluating here, and convert it to a string.*/
+	if ((strcasecmp(left, "login") == 0) ||
+	    (strcasecmp(left, "name") == 0) ||
+	    (strcasecmp(left, "user") == 0)) {
+		left = user;
+	} else if (strcasecmp(left, "uid") == 0) {
+		snprintf(numstr, sizeof(numstr), "%lu",
+			(unsigned long) (*pwd)->pw_uid);
+		left = numstr;
+	} else if (strcasecmp(left, "gid") == 0) {
+		snprintf(numstr, sizeof(numstr), "%lu",
+			(unsigned long) (*pwd)->pw_gid);
+		left = numstr;
+	} else if (strcasecmp(left, "shell") == 0) {
+		left = (*pwd)->pw_shell;
+	} else if ((strcasecmp(left, "home") == 0) ||
 	    (strcasecmp(left, "dir") == 0) ||
 	    (strcasecmp(left, "homedir") == 0)) {
-		snprintf(buf, sizeof(buf), "%s", (*pwd)->pw_dir);
-		left = buf;
-	}
-	if (strcasecmp(left, "service") == 0) {
+		left = (*pwd)->pw_dir;
+	} else if (strcasecmp(left, "service") == 0) {
 		const void *svc;
 		if (pam_get_item(pamh, PAM_SERVICE, &svc) != PAM_SUCCESS ||
 			svc == NULL)
 			svc = "";
-		snprintf(buf, sizeof(buf), "%s", (const char *)svc);
-		left = buf;
-	}
-	if (strcasecmp(left, "ruser") == 0) {
+		left = (const char *)svc;
+	} else if (strcasecmp(left, "ruser") == 0) {
 		const void *ruser;
 		if (pam_get_item(pamh, PAM_RUSER, &ruser) != PAM_SUCCESS ||
 			ruser == NULL)
 			ruser = "";
-		snprintf(buf, sizeof(buf), "%s", (const char *)ruser);
-		left = buf;
-		user = buf;
-	}
-	if (strcasecmp(left, "rhost") == 0) {
+		left = (const char *)ruser;
+	} else if (strcasecmp(left, "rhost") == 0) {
 		const void *rhost;
 		if (pam_get_item(pamh, PAM_RHOST, &rhost) != PAM_SUCCESS ||
 			rhost == NULL)
 			rhost = "";
-		snprintf(buf, sizeof(buf), "%s", (const char *)rhost);
-		left = buf;
-	}
-	if (strcasecmp(left, "tty") == 0) {
+		left = (const char *)rhost;
+	} else if (strcasecmp(left, "tty") == 0) {
 		const void *tty;
 		if (pam_get_item(pamh, PAM_TTY, &tty) != PAM_SUCCESS ||
 			tty == NULL)
 			tty = "";
-		snprintf(buf, sizeof(buf), "%s", (const char *)tty);
-		left = buf;
-	}
-	/* If we have no idea what's going on, return an error. */
-	if (left != buf) {
+		left = (const char *)tty;
+	} else {
+		/* If we have no idea what's going on, return an error. */
 		pam_syslog(pamh, LOG_ERR, "unknown attribute \"%s\"", left);
 		return PAM_SERVICE_ERR;
 	}
@@ -453,9 +438,8 @@ evaluate(pam_handle_t *pamh, int debug,
 	return PAM_SERVICE_ERR;
 }
 
-int
-pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
-		     int argc, const char **argv)
+static int
+pam_succeed_if(pam_handle_t *pamh, int argc, const char **argv)
 {
 	const char *user;
 	struct passwd *pwd = NULL;
@@ -579,6 +563,7 @@ pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
 		pam_syslog(pamh, LOG_ERR,
 			"incomplete condition detected");
 	} else if (count == 0) {
+		ret = PAM_SUCCESS;
 		pam_syslog(pamh, LOG_INFO,
 			"no condition detected; module succeeded");
 	}
@@ -594,25 +579,36 @@ pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
 }
 
 int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_succeed_if(pamh, argc, argv);
 }
 
 int
-pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_succeed_if(pamh, argc, argv);
 }
 
 int
-pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_succeed_if(pamh, argc, argv);
 }
 
 int
-pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
+		     int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_succeed_if(pamh, argc, argv);
+}
+
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
+{
+	return pam_succeed_if(pamh, argc, argv);
 }

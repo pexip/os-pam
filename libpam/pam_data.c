@@ -31,8 +31,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-
 #include "pam_private.h"
 
 #include <stdlib.h>
@@ -45,7 +43,7 @@ static struct pam_data *_pam_locate_data(const pam_handle_t *pamh,
 
     D(("called"));
 
-    IF_NO_PAMH("_pam_locate_data", pamh, NULL);
+    IF_NO_PAMH(pamh, NULL);
 
     data = pamh->data;
 
@@ -69,7 +67,7 @@ int pam_set_data(
 
     D(("called"));
 
-    IF_NO_PAMH("pam_set_data", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_APP(pamh)) {
 	D(("called from application!?"));
@@ -122,7 +120,7 @@ int pam_get_data(
 
     D(("called"));
 
-    IF_NO_PAMH("pam_get_data", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_APP(pamh)) {
 	D(("called from application!?"));
@@ -151,7 +149,7 @@ void _pam_free_data(pam_handle_t *pamh, int status)
 
     D(("called"));
 
-    IF_NO_PAMH("_pam_free_data", pamh, /* no return value for void fn */);
+    IF_NO_PAMH(pamh, /* no return value for void fn */);
     data = pamh->data;
 
     while (data) {

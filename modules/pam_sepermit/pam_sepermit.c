@@ -61,6 +61,12 @@
 
 #include <selinux/selinux.h>
 
+#include "pam_inline.h"
+
+#define SEPERMIT_CONF_FILE	(SCONFIG_DIR "/sepermit.conf")
+#ifdef VENDOR_SCONFIG_DIR
+# define SEPERMIT_VENDOR_CONF_FILE	(VENDOR_SCONFIG_DIR "/sepermit.conf");
+#endif
 #define MODULE "pam_sepermit"
 #define OPT_DELIM ":"
 
@@ -76,21 +82,27 @@ struct lockfd {
 static int
 match_process_uid(pid_t pid, uid_t uid)
 {
-	char buf[128];
+	char *buf;
+	size_t n;
 	uid_t puid;
 	FILE *f;
 	int re = 0;
 
-	snprintf (buf, sizeof buf, PROC_BASE "/%d/status", pid);
-	if (!(f = fopen (buf, "r")))
+	if (asprintf (&buf, PROC_BASE "/%d/status", pid) < 0)
 		return 0;
+	n = strlen(buf) + 1;
+	if (!(f = fopen (buf, "r"))) {
+		free(buf);
+		return 0;
+	}
 
-	while (fgets(buf, sizeof buf, f)) {
+	while (getline(&buf, &n, f) != -1) {
 		if (sscanf (buf, "Uid:\t%d", &puid)) {
 			re = uid == puid;
 			break;
 		}
 	}
+	free(buf);
 	fclose(f);
 	return re;
 }
@@ -293,10 +305,10 @@ sepermit_match(pam_handle_t *pamh, const char *cfgfile, const char *user,
 			continue;
 
 		start = line;
-		while (isspace(*start))
+		while (isspace((unsigned char)*start))
 			++start;
 		n = strlen(start);
-		while (n > 0 && isspace(start[n-1])) {
+		while (n > 0 && isspace((unsigned char)start[n-1])) {
 			--n;
 		}
 		if (n == 0)
@@ -359,9 +371,8 @@ sepermit_match(pam_handle_t *pamh, const char *cfgfile, const char *user,
 		return -1;
 }
 
-int
-pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
-		    int argc, const char **argv)
+static int
+pam_sepermit(pam_handle_t *pamh, int argc, const char **argv)
 {
 	int i;
 	int rv;
@@ -370,16 +381,31 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
 	const char *user = NULL;
 	char *seuser = NULL;
 	char *level = NULL;
-	const char *cfgfile = SEPERMIT_CONF_FILE;
+	const char *cfgfile = NULL;
 
 	/* Parse arguments. */
 	for (i = 0; i < argc; i++) {
+		const char *str;
+
 		if (strcmp(argv[i], "debug") == 0) {
 			debug = 1;
+		} else if ((str = pam_str_skip_prefix(argv[i], "conf=")) != NULL) {
+			cfgfile = str;
+		} else {
+			pam_syslog(pamh, LOG_ERR, "unknown option: %s", argv[i]);
 		}
-		if (strcmp(argv[i], "conf=") == 0) {
-			cfgfile = argv[i] + 5;
-		}
+	}
+
+	if (cfgfile == NULL) {
+#ifdef SEPERMIT_VENDOR_CONF_FILE
+		struct stat buffer;
+
+		cfgfile = SEPERMIT_CONF_FILE;
+		if (stat(cfgfile, &buffer) != 0 && errno == ENOENT)
+			cfgfile = SEPERMIT_VENDOR_CONF_FILE;
+#else
+		cfgfile = SEPERMIT_CONF_FILE;
+#endif
 	}
 
 	if (debug)
@@ -433,8 +459,15 @@ pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
 }
 
 int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags,
-		     int argc, const char **argv)
+pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_sepermit(pamh, argc, argv);
+}
+
+int
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
+{
+	return pam_sepermit(pamh, argc, argv);
 }

@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <syslog.h>
 #include <sys/resource.h>
-#ifdef HAVE_RPCSVC_YPCLNT_H
+#ifdef HAVE_NIS
 #include <rpcsvc/ypclnt.h>
 #endif
 
@@ -44,6 +44,18 @@ int _make_remark(pam_handle_t * pamh, unsigned long long ctrl,
 		retval = pam_prompt(pamh, type, NULL, "%s", text);
 	}
 	return retval;
+}
+
+static int _unix_strtoi(const char *str, int minval, int *result)
+{
+	char *ep;
+	long value = strtol(str, &ep, 10);
+	if (value < minval || value > INT_MAX || str == ep || *ep != '\0') {
+		*result = minval;
+		return -1;
+	}
+	*result = (int)value;
+	return 0;
 }
 
 /*
@@ -97,17 +109,6 @@ unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
 	    ctrl |= unix_args[j].flag;	/* for turning things on  */
 	  }
 	  free (val);
-
-	  /* read number of rounds for crypt algo */
-	  if (rounds && (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl))) {
-	    val = pam_modutil_search_key(pamh, LOGIN_DEFS, "SHA_CRYPT_MAX_ROUNDS");
-
-	    if (val) {
-	      *rounds = strtol(val, NULL, 10);
-	      set(UNIX_ALGO_ROUNDS, ctrl);
-	      free (val);
-	    }
-	  }
 	}
 
 	/* now parse the arguments to this module */
@@ -137,9 +138,11 @@ unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
 					    "option remember not allowed for this module type");
 					continue;
 				}
-				*remember = strtol(str, NULL, 10);
-				if ((*remember == INT_MIN) || (*remember == INT_MAX))
-					*remember = -1;
+				if (_unix_strtoi(str, -1, remember)) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option remember invalid [%s]", str);
+					continue;
+				}
 				if (*remember > 400)
 					*remember = 400;
 			} else if (j == UNIX_MIN_PASS_LEN) {
@@ -148,14 +151,22 @@ unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
 					    "option minlen not allowed for this module type");
 					continue;
 				}
-				*pass_min_len = atoi(str);
+				if (_unix_strtoi(str, 0, pass_min_len)) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option minlen invalid [%s]", str);
+					continue;
+				}
 			} else if (j == UNIX_ALGO_ROUNDS) {
 				if (rounds == NULL) {
 					pam_syslog(pamh, LOG_ERR,
 					    "option rounds not allowed for this module type");
 					continue;
 				}
-				*rounds = strtol(str, NULL, 10);
+				if (_unix_strtoi(str, 0, rounds)) {
+					pam_syslog(pamh, LOG_ERR,
+					    "option rounds invalid [%s]", str);
+					continue;
+				}
 			}
 
 			ctrl &= unix_args[j].mask;	/* for turning things off */
@@ -175,6 +186,29 @@ unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
 		set(UNIX__NONULL, ctrl);
 	}
 
+	/* Read number of rounds for sha256, sha512 and yescrypt */
+	if (off(UNIX_ALGO_ROUNDS, ctrl) && rounds != NULL) {
+		const char *key = NULL;
+		if (on(UNIX_YESCRYPT_PASS, ctrl))
+			key = "YESCRYPT_COST_FACTOR";
+		else if (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl))
+			key = "SHA_CRYPT_MAX_ROUNDS";
+		else
+			key = NULL;
+
+		if (key != NULL) {
+			val = pam_modutil_search_key(pamh, LOGIN_DEFS, key);
+			if (val) {
+				if (_unix_strtoi(val, 0, rounds))
+					pam_syslog(pamh, LOG_ERR,
+					    "option %s invalid [%s]", key, val);
+				else
+					set(UNIX_ALGO_ROUNDS, ctrl);
+				free (val);
+			}
+		}
+	}
+
 	/* Set default rounds for blowfish, gost-yescrypt and yescrypt */
 	if (off(UNIX_ALGO_ROUNDS, ctrl) && rounds != NULL) {
 		if (on(UNIX_BLOWFISH_PASS, ctrl) ||
@@ -189,11 +223,15 @@ unsigned long long _set_ctrl(pam_handle_t *pamh, int flags, int *remember,
 	if (on(UNIX_ALGO_ROUNDS, ctrl)) {
 		if (on(UNIX_GOST_YESCRYPT_PASS, ctrl) ||
 		    on(UNIX_YESCRYPT_PASS, ctrl)) {
-			if (*rounds < 3 || *rounds > 11)
-				*rounds = 5;
+			if (*rounds < 3)
+				*rounds = 3;
+			else if (*rounds > 11)
+				*rounds = 11;
 		} else if (on(UNIX_BLOWFISH_PASS, ctrl)) {
-			if (*rounds < 4 || *rounds > 31)
-				*rounds = 5;
+			if (*rounds < 4)
+				*rounds = 4;
+			else if (*rounds > 31)
+				*rounds = 31;
 		} else if (on(UNIX_SHA256_PASS, ctrl) || on(UNIX_SHA512_PASS, ctrl)) {
 			if ((*rounds < 1000) || (*rounds == INT_MAX)) {
 				/* don't care about bogus values */
@@ -279,7 +317,8 @@ static void _cleanup_failures(pam_handle_t * pamh, void *fl, int err)
 				         tty ? (const char *)tty : "", ruser ? (const char *)ruser : "",
 				         rhost ? (const char *)rhost : "",
 				         (failure->user && failure->user[0] != '\0')
-				          ? " user=" : "", failure->user
+				          ? " user=" : "",
+					 failure->user ? failure->user : ""
 				);
 
 				if (failure->count > UNIX_MAX_RETRIES) {
@@ -308,33 +347,40 @@ static void _unix_cleanup(pam_handle_t *pamh UNUSED, void *data, int error_statu
 int _unix_getpwnam(pam_handle_t *pamh, const char *name,
 		   int files, int nis, struct passwd **ret)
 {
-	FILE *passwd;
-	char buf[16384];
-	int matched = 0, buflen;
-	char *slogin, *spasswd, *suid, *sgid, *sgecos, *shome, *sshell, *p;
+	char *buf = NULL;
+	int matched = 0;
 
-	memset(buf, 0, sizeof(buf));
+	if (!matched && files && strchr(name, ':') == NULL) {
+		FILE *passwd;
 
-	if (!matched && files) {
-		int userlen = strlen(name);
-		passwd = fopen("/etc/passwd", "r");
+		passwd = fopen("/etc/passwd", "re");
 		if (passwd != NULL) {
-			while (fgets(buf, sizeof(buf), passwd) != NULL) {
-				if ((buf[userlen] == ':') &&
+			size_t n = 0, userlen;
+			ssize_t r;
+
+			userlen = strlen(name);
+
+			while ((r = getline(&buf, &n, passwd)) != -1) {
+				if ((size_t)r > userlen && (buf[userlen] == ':') &&
 				    (strncmp(name, buf, userlen) == 0)) {
+					char *p;
+
 					p = buf + strlen(buf) - 1;
-					while (isspace(*p) && (p >= buf)) {
+					while (isspace((unsigned char)*p) && (p >= buf)) {
 						*p-- = '\0';
 					}
 					matched = 1;
 					break;
 				}
 			}
+			if (!matched) {
+				_pam_drop(buf);
+			}
 			fclose(passwd);
 		}
 	}
 
-#if defined(HAVE_YP_GET_DEFAULT_DOMAIN) && defined (HAVE_YP_BIND) && defined (HAVE_YP_MATCH) && defined (HAVE_YP_UNBIND)
+#if defined(HAVE_NIS) && defined(HAVE_YP_GET_DEFAULT_DOMAIN) && defined (HAVE_YP_BIND) && defined (HAVE_YP_MATCH) && defined (HAVE_YP_UNBIND)
 	if (!matched && nis) {
 		char *userinfo = NULL, *domain = NULL;
 		int len = 0, i;
@@ -346,9 +392,7 @@ int _unix_getpwnam(pam_handle_t *pamh, const char *name,
 			i = yp_match(domain, "passwd.byname", name,
 				     strlen(name), &userinfo, &len);
 			yp_unbind(domain);
-			if ((i == YPERR_SUCCESS) && ((size_t)len < sizeof(buf))) {
-				strncpy(buf, userinfo, sizeof(buf) - 1);
-				buf[sizeof(buf) - 1] = '\0';
+			if (i == YPERR_SUCCESS && (buf = strdup(userinfo)) != NULL) {
 				matched = 1;
 			}
 		}
@@ -359,70 +403,68 @@ int _unix_getpwnam(pam_handle_t *pamh, const char *name,
 #endif
 
 	if (matched && (ret != NULL)) {
+		char *slogin, *spasswd, *suid, *sgid, *sgecos, *shome, *sshell, *p;
+		size_t retlen;
+
 		*ret = NULL;
 
 		slogin = buf;
 
 		spasswd = strchr(slogin, ':');
 		if (spasswd == NULL) {
-			return matched;
+			goto fail;
 		}
 		*spasswd++ = '\0';
 
 		suid = strchr(spasswd, ':');
 		if (suid == NULL) {
-			return matched;
+			goto fail;
 		}
 		*suid++ = '\0';
 
 		sgid = strchr(suid, ':');
 		if (sgid == NULL) {
-			return matched;
+			goto fail;
 		}
 		*sgid++ = '\0';
 
 		sgecos = strchr(sgid, ':');
 		if (sgecos == NULL) {
-			return matched;
+			goto fail;
 		}
 		*sgecos++ = '\0';
 
 		shome = strchr(sgecos, ':');
 		if (shome == NULL) {
-			return matched;
+			goto fail;
 		}
 		*shome++ = '\0';
 
 		sshell = strchr(shome, ':');
 		if (sshell == NULL) {
-			return matched;
+			goto fail;
 		}
 		*sshell++ = '\0';
 
-		buflen = sizeof(struct passwd) +
+		retlen = sizeof(struct passwd) +
 			 strlen(slogin) + 1 +
 			 strlen(spasswd) + 1 +
 			 strlen(sgecos) + 1 +
 			 strlen(shome) + 1 +
 			 strlen(sshell) + 1;
-		*ret = malloc(buflen);
+		*ret = calloc(retlen, sizeof(char));
 		if (*ret == NULL) {
-			return matched;
+			goto fail;
 		}
-		memset(*ret, '\0', buflen);
 
 		(*ret)->pw_uid = strtol(suid, &p, 10);
 		if ((strlen(suid) == 0) || (*p != '\0')) {
-			free(*ret);
-			*ret = NULL;
-			return matched;
+			goto fail;
 		}
 
 		(*ret)->pw_gid = strtol(sgid, &p, 10);
 		if ((strlen(sgid) == 0) || (*p != '\0')) {
-			free(*ret);
-			*ret = NULL;
-			return matched;
+			goto fail;
 		}
 
 		p = ((char*)(*ret)) + sizeof(struct passwd);
@@ -436,15 +478,23 @@ int _unix_getpwnam(pam_handle_t *pamh, const char *name,
 		p += strlen(p) + 1;
 		(*ret)->pw_shell = strcpy(p, sshell);
 
-		snprintf(buf, sizeof(buf), "_pam_unix_getpwnam_%s", name);
+		_pam_drop(buf);
+		if (asprintf(&buf, "_pam_unix_getpwnam_%s", name) < 0) {
+			buf = NULL;
+			goto fail;
+		}
 
 		if (pam_set_data(pamh, buf,
 				 *ret, _unix_cleanup) != PAM_SUCCESS) {
-			free(*ret);
-			*ret = NULL;
+			goto fail;
 		}
 	}
 
+	_pam_drop(buf);
+	return matched;
+fail:
+	_pam_drop(buf);
+	_pam_drop(*ret);
 	return matched;
 }
 
@@ -513,13 +563,13 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 		_exit(PAM_AUTHINFO_UNAVAIL);
 	}
 
-	if (geteuid() == 0) {
-          /* must set the real uid to 0 so the helper will not error
-	     out if pam is called from setuid binary (su, sudo...) */
-	  if (setuid(0) == -1) {
-             D(("setuid failed"));
-	     _exit(PAM_AUTHINFO_UNAVAIL);
-          }
+	/* must set the real uid to 0 so the helper will not error
+	   out if pam is called from setuid binary (su, sudo...) */
+	if (setuid(0) == -1) {
+	   D(("setuid failed"));
+	   if (geteuid() == 0) {
+	      _exit(PAM_AUTHINFO_UNAVAIL);
+	   }
 	}
 
 	/* exec binary helper */
@@ -543,7 +593,7 @@ static int _unix_run_helper_binary(pam_handle_t *pamh, const char *passwd,
 	/* if the stored password is NULL */
         int rc=0;
 	if (passwd != NULL) {            /* send the password to the child */
-	    int len = strlen(passwd);
+	    size_t len = strlen(passwd);
 
 	    if (len > PAM_MAX_RESP_SIZE)
 	      len = PAM_MAX_RESP_SIZE;
@@ -609,7 +659,7 @@ _unix_blankpasswd (pam_handle_t *pamh, unsigned long long ctrl, const char *name
 
 	/*
 	 * This function does not have to be too smart if something goes
-	 * wrong, return FALSE and let this case to be treated somewhere
+	 * wrong, return FALSE and let this case be treated somewhere
 	 * else (CG)
 	 */
 
@@ -670,12 +720,10 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 
 	D(("called"));
 
-#ifdef HAVE_PAM_FAIL_DELAY
 	if (off(UNIX_NODELAY, ctrl)) {
 		D(("setting delay"));
 		(void) pam_fail_delay(pamh, 2000000);	/* 2 sec delay for on failure */
 	}
-#endif
 
 	/* locate the entry for this user */
 
@@ -683,12 +731,9 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 
 	retval = get_pwd_hash(pamh, name, &pwd, &salt);
 
-	data_name = (char *) malloc(sizeof(FAIL_PREFIX) + strlen(name));
-	if (data_name == NULL) {
+	if (asprintf(&data_name, "%s%s", FAIL_PREFIX, name) < 0) {
 		pam_syslog(pamh, LOG_CRIT, "no memory for data-name");
-	} else {
-		strcpy(data_name, FAIL_PREFIX);
-		strcpy(data_name + sizeof(FAIL_PREFIX) - 1, name);
+		data_name = NULL;
 	}
 
 	if (p != NULL && strlen(p) > PAM_MAX_RESP_SIZE) {
@@ -790,7 +835,7 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 					         rhost ? (const char *)rhost : "",
 					         (new->user && new->user[0] != '\0')
 					          ? " user=" : "",
-					         new->user
+					         new->user ? new->user : ""
 					);
 					new->count = 1;
 				}
@@ -805,7 +850,7 @@ int _unix_verify_password(pam_handle_t * pamh, const char *name
 	}
 
 cleanup:
-	memset(pw, 0, sizeof(pw)); /* clear memory of the password */
+	pam_overwrite_array(pw); /* clear memory of the password */
 	if (data_name)
 		_pam_delete(data_name);
 	if (salt)

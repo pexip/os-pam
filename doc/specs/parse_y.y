@@ -1,8 +1,6 @@
 
 %{
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -282,9 +280,7 @@ char *new_counter(const char *key)
 
     counter_root = set_key(counter_root, key, new);
 
-    if (last_label) {
-	free(last_label);
-    }
+    free(last_label);
     last_label = strdup(new);
 
     return new;
