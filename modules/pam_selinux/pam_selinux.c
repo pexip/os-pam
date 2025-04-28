@@ -57,6 +57,7 @@
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 #include <selinux/selinux.h>
 #include <selinux/get_context_list.h>
@@ -97,7 +98,7 @@ send_audit_message(const pam_handle_t *pamh, int success, const char *default_co
 		pam_syslog(pamh, LOG_ERR, "Error translating selected context '%s'.", selected_context);
 		selected_raw = NULL;
 	}
-	if (asprintf(&msg, "pam: default-context=%s selected-context=%s",
+	if (asprintf(&msg, "op=pam_selinux default-context=%s selected-context=%s",
 		     default_raw ? default_raw : (default_context ? default_context : "?"),
 		     selected_raw ? selected_raw : (selected_context ? selected_context : "?")) < 0) {
 		msg = NULL; /* asprintf leaves msg in undefined state on failure */
@@ -114,7 +115,8 @@ send_audit_message(const pam_handle_t *pamh, int success, const char *default_co
       fallback:
 #endif /* HAVE_LIBAUDIT */
         pam_syslog(pamh, LOG_NOTICE, "pam: default-context=%s selected-context=%s success %d",
-		   default_context, selected_context, success);
+		   default_context ? default_context : "(null)",
+		   selected_context ? selected_context : "(null)", success);
 
 #ifdef HAVE_LIBAUDIT
       cleanup:
@@ -393,7 +395,6 @@ free_module_data(module_data_t *data)
   freecon(data->prev_exec_context);
   if (data->exec_context != data->default_user_context)
     freecon(data->exec_context);
-  memset(data, 0, sizeof(*data));
   free(data);
 }
 
@@ -553,7 +554,7 @@ compute_tty_context(const pam_handle_t *pamh, module_data_t *data)
     }
     pam_syslog(pamh, LOG_ERR, "Failed to get current context for %s: %m",
 	       data->tty_path);
-    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+    return (security_getenforce() != 0) ? PAM_SESSION_ERR : PAM_SUCCESS;
   }
 
   tclass = string_to_security_class("chr_file");
@@ -563,7 +564,7 @@ compute_tty_context(const pam_handle_t *pamh, module_data_t *data)
     data->prev_tty_context = NULL;
     free(data->tty_path);
     data->tty_path = NULL;
-    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+    return (security_getenforce() != 0) ? PAM_SESSION_ERR : PAM_SUCCESS;
   }
 
   if (security_compute_relabel(data->exec_context, data->prev_tty_context,
@@ -575,7 +576,7 @@ compute_tty_context(const pam_handle_t *pamh, module_data_t *data)
     data->prev_tty_context = NULL;
     free(data->tty_path);
     data->tty_path = NULL;
-    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+    return (security_getenforce() != 0) ? PAM_SESSION_ERR : PAM_SUCCESS;
   }
 
   return PAM_SUCCESS;
@@ -606,7 +607,7 @@ restore_context(const pam_handle_t *pamh, const module_data_t *data, int debug)
 	       data->prev_exec_context ? data->prev_exec_context : "");
   err |= set_exec_context(pamh, data->prev_exec_context);
 
-  if (err && security_getenforce() == 1)
+  if (err && security_getenforce() != 0)
     return PAM_SESSION_ERR;
 
   return PAM_SUCCESS;
@@ -658,7 +659,7 @@ set_context(pam_handle_t *pamh, const module_data_t *data,
   }
 #endif
 
-  if (err && security_getenforce() == 1)
+  if (err && security_getenforce() != 0)
     return PAM_SESSION_ERR;
 
   return PAM_SUCCESS;
@@ -717,7 +718,7 @@ create_context(pam_handle_t *pamh, int argc, const char **argv,
 
   if (!data->exec_context) {
     free_module_data(data);
-    return (security_getenforce() == 1) ? PAM_SESSION_ERR : PAM_SUCCESS;
+    return (security_getenforce() != 0) ? PAM_SESSION_ERR : PAM_SUCCESS;
   }
 
   if (ttys && (i = compute_tty_context(pamh, data)) != PAM_SUCCESS) {

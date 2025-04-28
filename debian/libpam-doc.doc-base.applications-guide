@@ -15,3 +15,6 @@ Files: /usr/share/doc/libpam-doc/html/Linux-PAM_ADG.html /usr/share/doc/libpam-d
 
 Format: text
 Files: /usr/share/doc/libpam-doc/txt/Linux-PAM_ADG.txt.gz
+
+Format: pdf
+Files: /usr/share/doc/libpam-doc/Linux-PAM_ADG.pdf.gz

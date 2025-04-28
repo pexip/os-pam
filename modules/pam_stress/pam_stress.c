@@ -18,6 +18,7 @@
 #include <security/pam_modules.h>
 #include <security/_pam_macros.h>
 #include <security/pam_ext.h>
+#include "pam_inline.h"
 
 /* ---------- */
 
@@ -240,7 +241,7 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags,
      /* try to set password item */
 
      retval = pam_set_item(pamh,PAM_AUTHTOK,pass);
-     _pam_overwrite(pass); /* clean up local copy of password */
+     pam_overwrite_string(pass); /* clean up local copy of password */
      free(pass);
      pass = NULL;
      if (retval != PAM_SUCCESS) {
@@ -432,7 +433,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		    return retval;
 	       }
 	       retval = pam_set_item(pamh, PAM_OLDAUTHTOK, pass);
-	       _pam_overwrite(pass);
+	       pam_overwrite_string(pass);
 	       free(pass);
 	       pass = NULL;
 	       if (retval != PAM_SUCCESS) {
@@ -475,10 +476,8 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	  resp = NULL;
 
 	  retval = converse(pamh,i,pmsg,&resp);
-	  if (txt) {
-	       free(txt);
-	       txt = NULL;               /* clean up */
-	  }
+	  free(txt);
+	  txt = NULL;               /* clean up */
 	  if (retval != PAM_SUCCESS) {
 	       return retval;
 	  }
@@ -495,7 +494,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	       if (strcmp(resp[i-2].resp,resp[i-1].resp)) {
 		    /* passwords are not the same; forget and return error */
 
-		    _pam_drop_reply(resp, i);
+		    pam_drop_response(resp, i);
 
 		    if (!(flags & PAM_SILENT) && !(ctrl & PAM_ST_NO_WARN)) {
 			 pmsg[0] = &msg[0];
@@ -505,7 +504,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 			 resp = NULL;
 			 (void) converse(pamh,1,pmsg,&resp);
 			 if (resp) {
-			     _pam_drop_reply(resp, 1);
+			     pam_drop_response(resp, 1);
 			 }
 		    }
 		    return PAM_AUTHTOK_ERR;
@@ -523,7 +522,7 @@ int pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 	       retval = PAM_SYSTEM_ERR;
 	  }
 
-	  _pam_drop_reply(resp, i);      /* clean up the passwords */
+	  pam_drop_response(resp, i);      /* clean up the passwords */
      } else {
 	  pam_syslog(pamh, LOG_ERR,
 		     "pam_sm_chauthtok: this must be a Linux-PAM error");

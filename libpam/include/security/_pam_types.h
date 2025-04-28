@@ -22,7 +22,7 @@ typedef struct pam_handle pam_handle_t;
 /* Major and minor version number of the Linux-PAM package.  Use
    these macros to test for features in specific releases.  */
 #define __LINUX_PAM__ 1
-#define __LINUX_PAM_MINOR__ 0
+#define __LINUX_PAM_MINOR__ 7
 
 /* ----------------- The Linux-PAM return values ------------------ */
 
@@ -158,6 +158,12 @@ typedef struct pam_handle pam_handle_t;
 # define PAM_FORMAT(params) __attribute__((__format__ params))
 #else
 # define PAM_FORMAT(params)
+#endif
+
+#if PAM_GNUC_PREREQ(3,1)
+# define PAM_DEPRECATED __attribute__((__deprecated__))
+#else
+# define PAM_DEPRECATED
 #endif
 
 #if PAM_GNUC_PREREQ(3,3) && !defined(LIBPAM_COMPILE)

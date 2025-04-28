@@ -16,6 +16,7 @@
 
 #include "config.h"
 
+#include <stddef.h>
 #include <syslog.h>
 
 #include <security/pam_appl.h>
@@ -47,7 +48,7 @@
 
 /* components of the pam_handle structure */
 
-#define _PAM_INVALID_RETVAL  -1    /* default value for cached_retval */
+#define _PAM_INVALID_RETVAL  (-1)    /* default value for cached_retval */
 
 struct handler {
     int handler_type;
@@ -192,14 +193,14 @@ struct pam_handle {
 
 #define _PAM_ACTION_IS_JUMP(x)  ((x) > 0)
 #define _PAM_ACTION_IGNORE      0
-#define _PAM_ACTION_OK         -1
-#define _PAM_ACTION_DONE       -2
-#define _PAM_ACTION_BAD        -3
-#define _PAM_ACTION_DIE        -4
-#define _PAM_ACTION_RESET      -5
+#define _PAM_ACTION_OK         (-1)
+#define _PAM_ACTION_DONE       (-2)
+#define _PAM_ACTION_BAD        (-3)
+#define _PAM_ACTION_DIE        (-4)
+#define _PAM_ACTION_RESET      (-5)
 /* Add any new entries here.  Will need to change ..._UNDEF and then
  * need to change pam_tokens.h */
-#define _PAM_ACTION_UNDEF      -6   /* this is treated as an error
+#define _PAM_ACTION_UNDEF      (-6)   /* this is treated as an error
 				       ( = _PAM_ACTION_BAD) */
 
 #define PAM_SUBSTACK_MAX_LEVEL 16   /* maximum level of substacks */
@@ -255,7 +256,7 @@ const char *_pam_dlerror (void);
 
 /* For now we just use a stack and linear search for module data. */
 /* If it becomes apparent that there is a lot of data, it should  */
-/* changed to either a sorted list or a hash table.               */
+/* be changed to either a sorted list or a hash table.            */
 
 struct pam_data {
      char *name;
@@ -266,13 +267,13 @@ struct pam_data {
 
 void _pam_free_data(pam_handle_t *pamh, int status);
 
-char *_pam_StrTok(char *from, const char *format, char **next);
+char *_pam_tokenize(char *from, char **next);
 
 char *_pam_strdup(const char *s);
 
 char *_pam_memdup(const char *s, int len);
 
-int _pam_mkargv(const char *s, char ***argv, int *argc);
+size_t _pam_mkargv(const char *s, char ***argv, int *argc);
 
 void _pam_sanitize(pam_handle_t *pamh);
 
@@ -287,11 +288,13 @@ void _pam_parse_control(int *control_array, char *tok);
  *       else
  */
 
-#define IF_NO_PAMH(X,pamh,ERR)                    \
-if ((pamh) == NULL) {                             \
-    syslog(LOG_ERR, _PAM_SYSTEM_LOG_PREFIX " " X ": NULL pam handle passed"); \
-    return ERR;                                   \
-}
+#define IF_NO_PAMH(pamh,ERR)                      \
+do {                                              \
+    if ((pamh) == NULL) {                         \
+        syslog(LOG_ERR, _PAM_SYSTEM_LOG_PREFIX " %s: NULL pam handle passed", __FUNCTION__); \
+        return ERR;                               \
+    }                                             \
+} while(0)
 
 /*
  * include some helpful macros

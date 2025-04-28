@@ -9,6 +9,7 @@
 #define PAM_INLINE_H
 
 #include "pam_cc_compat.h"
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -33,9 +34,35 @@
  * 0, otherwise.
  */
 #define PAM_MUST_BE_ARRAY(a_)		PAM_FAIL_BUILD_ON_ZERO(!PAM_IS_NOT_ARRAY(a_))
+/*
+ * Evaluates to
+ * - a syntax error if the argument is an array,
+ * 0, otherwise.
+ */
+#define PAM_MUST_NOT_BE_ARRAY(a_)	PAM_FAIL_BUILD_ON_ZERO(PAM_IS_NOT_ARRAY(a_))
 
 /* Evaluates to the number of elements in the specified array.  */
 #define PAM_ARRAY_SIZE(a_)		(sizeof(a_) / sizeof((a_)[0]) + PAM_MUST_BE_ARRAY(a_))
+
+/*
+ * Zero-extend a signed integer type to unsigned long long.
+ */
+# define zero_extend_signed_to_ull(v_) \
+	(sizeof(v_) == sizeof(char) ? (unsigned long long) (unsigned char) (v_) : \
+	 sizeof(v_) == sizeof(short) ? (unsigned long long) (unsigned short) (v_) : \
+	 sizeof(v_) == sizeof(int) ? (unsigned long long) (unsigned int) (v_) : \
+	 sizeof(v_) == sizeof(long) ? (unsigned long long) (unsigned long) (v_) : \
+	 (unsigned long long) (v_))
+
+/*
+ * Sign-extend an unsigned integer type to long long.
+ */
+# define sign_extend_unsigned_to_ll(v_) \
+	(sizeof(v_) == sizeof(char) ? (long long) (signed char) (v_) : \
+	 sizeof(v_) == sizeof(short) ? (long long) (signed short) (v_) : \
+	 sizeof(v_) == sizeof(int) ? (long long) (signed int) (v_) : \
+	 sizeof(v_) == sizeof(long) ? (long long) (signed long) (v_) : \
+	 (long long) (v_))
 
 /*
  * Returns NULL if STR does not start with PREFIX,
@@ -65,6 +92,59 @@ pam_str_skip_icase_prefix_len(const char *str, const char *prefix, size_t prefix
 
 #define pam_str_skip_icase_prefix(str_, prefix_)	\
 	pam_str_skip_icase_prefix_len((str_), (prefix_), sizeof(prefix_) - 1 + PAM_MUST_BE_ARRAY(prefix_))
+
+
+/*
+ * Macros to securely erase memory
+ */
+
+#ifdef HAVE_MEMSET_EXPLICIT
+static inline void pam_overwrite_n(void *ptr, size_t len)
+{
+	if (ptr)
+		memset_explicit(ptr, '\0', len);
+}
+#elif defined HAVE_EXPLICIT_BZERO
+static inline void pam_overwrite_n(void *ptr, size_t len)
+{
+	if (ptr)
+		explicit_bzero(ptr, len);
+}
+#else
+static inline void pam_overwrite_n(void *ptr, size_t len)
+{
+	if (ptr) {
+		ptr = memset(ptr, '\0', len);
+		__asm__ __volatile__ ("" : : "r"(ptr) : "memory");
+	}
+}
+#endif
+
+#define pam_overwrite_string(x)                      \
+do {                                                 \
+	char *xx__ = (x) + PAM_MUST_NOT_BE_ARRAY(x); \
+	if (xx__)                                    \
+		pam_overwrite_n(xx__, strlen(xx__)); \
+} while(0)
+
+#define pam_overwrite_array(x) pam_overwrite_n(x, sizeof(x) + PAM_MUST_BE_ARRAY(x))
+
+#define pam_overwrite_object(x) pam_overwrite_n(x, sizeof(*(x)) + PAM_MUST_NOT_BE_ARRAY(x))
+
+static inline void
+pam_drop_response(struct pam_response *reply, int replies)
+{
+	int reply_i;
+
+	for (reply_i = 0; reply_i < replies; ++reply_i) {
+		if (reply[reply_i].resp) {
+			pam_overwrite_string(reply[reply_i].resp);
+			free(reply[reply_i].resp);
+		}
+	}
+	free(reply);
+}
+
 
 static inline int
 pam_read_passwords(int fd, int npass, char **passwords)
@@ -101,7 +181,7 @@ pam_read_passwords(int fd, int npass, char **passwords)
 				if (npass > 0) {
 					memcpy(passwords[i], pptr, rbytes);
 				}
-				memset(pptr, '\0', rbytes);
+				pam_overwrite_n(pptr, rbytes);
 			}
 		}
 		offset += rbytes;
@@ -109,10 +189,24 @@ pam_read_passwords(int fd, int npass, char **passwords)
 
 	/* clear up */
 	if (offset > 0 && npass > 0) {
-		memset(passwords[i], '\0', offset);
+		pam_overwrite_n(passwords[i], offset);
 	}
 
 	return i;
+}
+
+static inline int
+pam_consttime_streq(const char *userinput, const char *secret) {
+	volatile const char *u = userinput, *s = secret;
+	volatile int ret = 0;
+
+	do {
+		ret |= *u ^ *s;
+
+		s += !!*s;
+	} while (*u++ != '\0');
+
+	return ret == 0;
 }
 
 #endif /* PAM_INLINE_H */

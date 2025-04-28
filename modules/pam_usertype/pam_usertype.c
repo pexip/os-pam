@@ -169,7 +169,7 @@ pam_usertype_get_id(pam_handle_t *pamh,
 
     /* taken from get_lastlog_uid_max() */
     ep = value + strlen(value);
-    while (ep > value && isspace(*(--ep))) {
+    while (ep > value && isspace((unsigned char)*(--ep))) {
         *ep = '\0';
     }
 
@@ -194,17 +194,11 @@ static int
 pam_usertype_is_system(pam_handle_t *pamh, uid_t uid)
 {
     uid_t uid_min;
-    uid_t sys_min;
     uid_t sys_max;
 
     if (uid == (uid_t)-1) {
         pam_syslog(pamh, LOG_WARNING, "invalid uid");
         return PAM_USER_UNKNOWN;
-    }
-
-    if (uid <= 99) {
-        /* Reserved. */
-        return PAM_SUCCESS;
     }
 
     if (uid == PAM_USERTYPE_OVERFLOW_UID) {
@@ -213,10 +207,13 @@ pam_usertype_is_system(pam_handle_t *pamh, uid_t uid)
     }
 
     uid_min = pam_usertype_get_id(pamh, "UID_MIN", PAM_USERTYPE_UIDMIN);
-    sys_min = pam_usertype_get_id(pamh, "SYS_UID_MIN", PAM_USERTYPE_SYSUIDMIN);
     sys_max = pam_usertype_get_id(pamh, "SYS_UID_MAX", uid_min - 1);
 
-    return uid >= sys_min && uid <= sys_max ? PAM_SUCCESS : PAM_AUTH_ERR;
+    if (uid <= sys_max && uid < uid_min) {
+        return PAM_SUCCESS;
+    }
+
+    return PAM_AUTH_ERR;
 }
 
 static int
@@ -253,14 +250,13 @@ pam_usertype_evaluate(struct pam_usertype_opts *opts,
 
 /**
  * Arguments:
- * - issystem: uid in <SYS_UID_MIN, SYS_UID_MAX>
+ * - issystem: uid less than SYS_UID_MAX
  * - isregular: not issystem
  * - use_uid: use user that runs application not that is being authenticate (same as in pam_succeed_if)
  * - audit: log unknown users to syslog
  */
-int
-pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
-                    int argc, const char **argv)
+static int
+pam_usertype(pam_handle_t *pamh, int argc, const char **argv)
 {
     struct pam_usertype_opts opts;
     uid_t uid = -1;
@@ -287,25 +283,36 @@ pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
 }
 
 int
-pam_sm_acct_mgmt(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_usertype(pamh, argc, argv);
 }
 
 int
-pam_sm_open_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_acct_mgmt(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_usertype(pamh, argc, argv);
 }
 
 int
-pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_open_session(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_usertype(pamh, argc, argv);
 }
 
 int
-pam_sm_chauthtok(pam_handle_t *pamh, int flags, int argc, const char **argv)
+pam_sm_close_session(pam_handle_t *pamh, int flags UNUSED,
+		     int argc, const char **argv)
 {
-	return pam_sm_authenticate(pamh, flags, argc, argv);
+	return pam_usertype(pamh, argc, argv);
+}
+
+int
+pam_sm_chauthtok(pam_handle_t *pamh, int flags UNUSED,
+		 int argc, const char **argv)
+{
+	return pam_usertype(pamh, argc, argv);
 }

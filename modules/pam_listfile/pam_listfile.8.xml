@@ -1,45 +1,42 @@
-<?xml version="1.0" encoding='UTF-8'?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-	"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
-
-<refentry id="pam_listfile">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="pam_listfile">
 
   <refmeta>
     <refentrytitle>pam_listfile</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class="sectdesc">Linux-PAM Manual</refmiscinfo>
+    <refmiscinfo class="source">Linux-PAM</refmiscinfo>
+    <refmiscinfo class="manual">Linux-PAM Manual</refmiscinfo>
   </refmeta>
 
-  <refnamediv id="pam_listfile-name">
+  <refnamediv xml:id="pam_listfile-name">
     <refname>pam_listfile</refname>
     <refpurpose>deny or allow services based on an arbitrary file</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
-    <cmdsynopsis id="pam_listfile-cmdsynopsis">
+    <cmdsynopsis xml:id="pam_listfile-cmdsynopsis" sepchar=" ">
       <command>pam_listfile.so</command>
-      <arg choice="plain">
+      <arg choice="plain" rep="norepeat">
 	item=[tty|user|rhost|ruser|group|shell]
       </arg>
-      <arg choice="plain">
+      <arg choice="plain" rep="norepeat">
         sense=[allow|deny]
       </arg>
-      <arg choice="plain">
+      <arg choice="plain" rep="norepeat">
         file=<replaceable>/path/filename</replaceable>
       </arg>
-      <arg choice="plain">
+      <arg choice="plain" rep="norepeat">
         onerr=[succeed|fail]
       </arg>
-      <arg choice="opt">
+      <arg choice="opt" rep="norepeat">
         apply=[<replaceable>user</replaceable>|<replaceable>@group</replaceable>]
       </arg>
-      <arg choice="opt">
+      <arg choice="opt" rep="norepeat">
         quiet
       </arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
-  <refsect1 id="pam_listfile-description">
+  <refsect1 xml:id="pam_listfile-description">
 
     <title>DESCRIPTION</title>
 
@@ -50,28 +47,27 @@
     <para>
       The module gets the <option>item</option> of the type specified --
       <emphasis>user</emphasis> specifies the username,
-      <emphasis>PAM_USER</emphasis>; tty specifies the name of the terminal
-      over which the request has been made, <emphasis>PAM_TTY</emphasis>;
-      rhost specifies the name of the remote host (if any) from which the
-      request was made, <emphasis>PAM_RHOST</emphasis>; and ruser specifies
+      <emphasis>PAM_USER</emphasis>; <emphasis>tty</emphasis> specifies the
+      name of the terminal (if any) over which the request has been made,
+      <emphasis>PAM_TTY</emphasis>; <emphasis>rhost</emphasis> specifies the
+      name of the remote host (if any) from which the request was made,
+      <emphasis>PAM_RHOST</emphasis>; and <emphasis>ruser</emphasis> specifies
       the name of the remote user (if available) who made the request,
-      <emphasis>PAM_RUSER</emphasis> -- and looks for an instance of that
-      item in the <option>file=<replaceable>filename</replaceable></option>.
-      <filename>filename</filename> contains one line per item listed. If
-      the item is found, then if
-      <option>sense=<replaceable>allow</replaceable></option>,
+      <emphasis>PAM_RUSER</emphasis> -- and looks for an instance of that item
+      in the <option>file=<replaceable>filename</replaceable></option>.
+      <filename>filename</filename> contains one line per item listed.  If the
+      item is found, then if <option>sense=allow</option>,
       <emphasis>PAM_SUCCESS</emphasis> is returned, causing the authorization
-      request to succeed; else if
-      <option>sense=<replaceable>deny</replaceable></option>,
+      request to succeed; else if <option>sense=deny</option>,
       <emphasis>PAM_AUTH_ERR</emphasis> is returned, causing the authorization
       request to fail.
     </para>
     <para>
       If an error is encountered (for instance, if
       <filename>filename</filename> does not exist, or a poorly-constructed
-      argument is encountered), then if <emphasis>onerr=succeed</emphasis>,
+      argument is encountered), then if <option>onerr=succeed</option>,
       <emphasis>PAM_SUCCESS</emphasis> is returned, otherwise if
-      <emphasis>onerr=fail</emphasis>, <emphasis>PAM_AUTH_ERR</emphasis> or
+      <option>onerr=fail</option>, <emphasis>PAM_AUTH_ERR</emphasis> or
       <emphasis>PAM_SERVICE_ERR</emphasis> (as appropriate) will be returned.
     </para>
     <para>
@@ -93,7 +89,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="pam_listfile-options">
+  <refsect1 xml:id="pam_listfile-options">
 
     <title>OPTIONS</title>
     <para>
@@ -101,7 +97,7 @@
 
         <varlistentry>
           <term>
-            <option>item=[tty|user|rhost|ruser|group|shell]</option>
+            item=[tty|user|rhost|ruser|group|shell]
           </term>
           <listitem>
             <para>
@@ -112,19 +108,20 @@
 
         <varlistentry>
           <term>
-            <option>sense=[allow|deny]</option>
+            sense=[allow|deny]
           </term>
           <listitem>
             <para>
-              Action to take if found in file, if the item is NOT found in
-              the file, then the opposite action is requested.
+              Action to take if the item is found in the file.
+              If the item is NOT found in the file,
+              then the opposite action is requested.
             </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term>
-            <option>file=<replaceable>/path/filename</replaceable></option>
+            file=/path/filename
           </term>
           <listitem>
             <para>
@@ -136,7 +133,7 @@
 
         <varlistentry>
           <term>
-            <option>onerr=[succeed|fail]</option>
+            onerr=[succeed|fail]
           </term>
           <listitem>
             <para>
@@ -148,20 +145,20 @@
 
         <varlistentry>
           <term>
-            <option>apply=[<replaceable>user</replaceable>|<replaceable>@group</replaceable>]</option>
+            apply=[user|@group]
           </term>
           <listitem>
             <para>
               Restrict the user class for which the restriction apply. Note that
               with <option>item=[user|ruser|group]</option> this does not make sense,
-              but for <option>item=[tty|rhost|shell]</option> it have a meaning.
+              but for <option>item=[tty|rhost|shell]</option> it has a meaning.
             </para>
           </listitem>
         </varlistentry>
 
         <varlistentry>
           <term>
-            <option>quiet</option>
+            quiet
           </term>
           <listitem>
             <para>
@@ -175,7 +172,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="pam_listfile-types">
+  <refsect1 xml:id="pam_listfile-types">
     <title>MODULE TYPES PROVIDED</title>
     <para>
       All module types (<option>auth</option>, <option>account</option>,
@@ -183,7 +180,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id='pam_listfile-return_values'>
+  <refsect1 xml:id="pam_listfile-return_values">
     <title>RETURN VALUES</title>
     <para>
       <variablelist>
@@ -235,7 +232,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id='pam_listfile-examples'>
+  <refsect1 xml:id="pam_listfile-examples">
     <title>EXAMPLES</title>
     <para>
       Classic 'ftpusers' authentication can be implemented with this entry
@@ -271,7 +268,7 @@ auth    required       pam_listfile.so \
     </para>
   </refsect1>
 
-  <refsect1 id='pam_listfile-see_also'>
+  <refsect1 xml:id="pam_listfile-see_also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
@@ -286,7 +283,7 @@ auth    required       pam_listfile.so \
     </para>
   </refsect1>
 
-  <refsect1 id='pam_listfile-author'>
+  <refsect1 xml:id="pam_listfile-author">
     <title>AUTHOR</title>
       <para>
         pam_listfile was written by Michael K. Johnson &lt;johnsonm@redhat.com&gt;

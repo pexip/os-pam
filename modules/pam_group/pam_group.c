@@ -16,6 +16,7 @@
 #include <time.h>
 #include <syslog.h>
 #include <string.h>
+#include <errno.h>
 
 #include <grp.h>
 #include <sys/types.h>
@@ -23,6 +24,10 @@
 #include <fcntl.h>
 #include <netdb.h>
 
+#define PAM_GROUP_CONF		SCONFIG_DIR "/group.conf"
+#ifdef VENDOR_SCONFIG_DIR
+# define VENDOR_PAM_GROUP_CONF	VENDOR_SCONFIG_DIR "/group.conf"
+#endif
 #define PAM_GROUP_BUFLEN        1000
 #define FIELD_SEPARATOR         ';'   /* this is new as of .02 */
 
@@ -39,6 +44,7 @@ typedef enum { AND, OR } operator;
 #include <security/_pam_macros.h>
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
+#include "pam_inline.h"
 
 /* --- static functions for checking whether the user should be let in --- */
 
@@ -48,7 +54,7 @@ shift_buf(char *mem, int from)
     char *start = mem;
     while ((*mem = mem[from]) != '\0')
 	++mem;
-    memset(mem, '\0', PAM_GROUP_BUFLEN - (mem - start));
+    pam_overwrite_n(mem, PAM_GROUP_BUFLEN - (mem - start));
     return mem;
 }
 
@@ -70,7 +76,8 @@ trim_spaces(char *buf, char *from)
 #define STATE_EOF      3 /* end of file or error */
 
 static int
-read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
+read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state,
+	   const char *conf_filename)
 {
     char *to;
     char *src;
@@ -80,7 +87,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
 
     /* is buf set ? */
     if (! *buf) {
-	*buf = (char *) calloc(1, PAM_GROUP_BUFLEN+1);
+	*buf = calloc(1, PAM_GROUP_BUFLEN+1);
 	if (! *buf) {
 	    pam_syslog(pamh, LOG_CRIT, "out of memory");
 	    D(("no memory"));
@@ -89,9 +96,9 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
 	}
 	*from = 0;
         *state = STATE_NL;
-	fd = open(PAM_GROUP_CONF, O_RDONLY);
+	fd = open(conf_filename, O_RDONLY);
 	if (fd < 0) {
-	    pam_syslog(pamh, LOG_ERR, "error opening %s: %m", PAM_GROUP_CONF);
+	    pam_syslog(pamh, LOG_ERR, "error opening %s: %m", conf_filename);
 	    _pam_drop(*buf);
 	    *state = STATE_EOF;
 	    return -1;
@@ -106,9 +113,9 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
     while (fd != -1 && to - *buf < PAM_GROUP_BUFLEN) {
 	i = pam_modutil_read(fd, to, PAM_GROUP_BUFLEN - (to - *buf));
 	if (i < 0) {
-	    pam_syslog(pamh, LOG_ERR, "error reading %s: %m", PAM_GROUP_CONF);
+	    pam_syslog(pamh, LOG_ERR, "error reading %s: %m", conf_filename);
 	    close(fd);
-	    memset(*buf, 0, PAM_GROUP_BUFLEN);
+	    pam_overwrite_n(*buf, PAM_GROUP_BUFLEN);
 	    _pam_drop(*buf);
 	    *state = STATE_EOF;
 	    return -1;
@@ -127,7 +134,7 @@ read_field(const pam_handle_t *pamh, int fd, char **buf, int *from, int *state)
 	return -1;
     }
 
-    memset(to, '\0', PAM_GROUP_BUFLEN - (to - *buf));
+    pam_overwrite_n(to, PAM_GROUP_BUFLEN - (to - *buf));
 
     to = *buf;
     onspace = 1; /* delete any leading spaces */
@@ -225,7 +232,7 @@ static int logic_member(const char *string, int *at)
 	       break;
 
 	  default:
-	       if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
 		    || c == '-' || c == '.' || c == '/' || c == ':') {
 		    token = 1;
 	       } else if (token) {
@@ -259,7 +266,7 @@ logic_field (const pam_handle_t *pamh, const void *me,
 	  if (next == VAL) {
 	       if (c == '!')
 		    not = !not;
-	       else if (isalpha(c) || c == '*' || isdigit(c) || c == '_'
+	       else if (isalpha((unsigned char)c) || c == '*' || isdigit((unsigned char)c) || c == '_'
                     || c == '-' || c == '.' || c == '/' || c == ':') {
 		    right = not ^ agrees(pamh, me, x+at, l, rule);
 		    if (oper == AND)
@@ -387,13 +394,13 @@ check_time (const pam_handle_t *pamh, const void *AT,
 	  not = FALSE;
      }
 
-     for (marked_day = 0; len > 0 && isalpha(times[j]); --len) {
+     for (marked_day = 0; len > 0 && isalpha((unsigned char)times[j]); --len) {
 	  int this_day=-1;
 
 	  D(("%c%c ?", times[j], times[j+1]));
 	  for (i=0; days[i].d != NULL; ++i) {
-	       if (tolower(times[j]) == days[i].d[0]
-		   && tolower(times[j+1]) == days[i].d[1] ) {
+	       if (tolower((unsigned char)times[j]) == days[i].d[0]
+		   && tolower((unsigned char)times[j+1]) == days[i].d[1] ) {
 		    this_day = days[i].bit;
 		    break;
 	       }
@@ -412,7 +419,7 @@ check_time (const pam_handle_t *pamh, const void *AT,
      D(("day range = 0%o", marked_day));
 
      time_start = 0;
-     for (i=0; len > 0 && i < 4 && isdigit(times[i+j]); ++i, --len) {
+     for (i=0; len > 0 && i < 4 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	  time_start *= 10;
 	  time_start += times[i+j]-'0';       /* is this portable? */
      }
@@ -420,7 +427,7 @@ check_time (const pam_handle_t *pamh, const void *AT,
 
      if (times[j] == '-') {
 	  time_end = 0;
-	  for (i=1; len > 0 && i < 5 && isdigit(times[i+j]); ++i, --len) {
+	  for (i=1; len > 0 && i < 5 && isdigit((unsigned char)times[i+j]); ++i, --len) {
 	       time_end *= 10;
 	       time_end += times[i+j]-'0';    /* is this portable? */
 	  }
@@ -490,7 +497,7 @@ static int find_member(const char *string, int *at)
                break;
 
           default:
-               if (isalpha(c) || isdigit(c) || c == '_' || c == '*'
+               if (isalpha((unsigned char)c) || isdigit((unsigned char)c) || c == '_' || c == '*'
                     || c == '-') {
                     token = 1;
                } else if (token) {
@@ -506,7 +513,7 @@ static int find_member(const char *string, int *at)
 }
 
 #define GROUP_BLK 10
-#define blk_size(len) (((len-1 + GROUP_BLK)/GROUP_BLK)*GROUP_BLK)
+#define blk_size(len) ((((len)-1 + GROUP_BLK)/GROUP_BLK)*GROUP_BLK)
 
 static int mkgrplist(pam_handle_t *pamh, char *buf, gid_t **list, int len)
 {
@@ -523,8 +530,7 @@ static int mkgrplist(pam_handle_t *pamh, char *buf, gid_t **list, int len)
 	       gid_t *tmp;
 
 	       D(("allocating new block"));
-	       tmp = (gid_t *) realloc((*list)
-				       , sizeof(gid_t) * (blks += GROUP_BLK));
+	       tmp = realloc((*list), sizeof(gid_t) * (blks += GROUP_BLK));
 	       if (tmp != NULL) {
 		    (*list) = tmp;
 	       } else {
@@ -573,6 +579,18 @@ static int check_account(pam_handle_t *pamh, const char *service,
     int retval=PAM_SUCCESS;
     gid_t *grps;
     int no_grps;
+    const char *conf_filename = PAM_GROUP_CONF;
+
+#ifdef VENDOR_PAM_GROUP_CONF
+    /*
+     * Check whether PAM_GROUP_CONF file is available.
+     * If it does not exist, fall back to VENDOR_PAM_GROUP_CONF file.
+     */
+    struct stat stat_buffer;
+    if (stat(conf_filename, &stat_buffer) != 0 && errno == ENOENT) {
+	conf_filename = VENDOR_PAM_GROUP_CONF;
+    }
+#endif
 
     /*
      * first we get the current list of groups - the application
@@ -611,7 +629,7 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 	/* here we get the service name field */
 
-	fd = read_field(pamh, fd, &buffer, &from, &state);
+	fd = read_field(pamh, fd, &buffer, &from, &state, conf_filename);
 	if (!buffer || !buffer[0]) {
 	    /* empty line .. ? */
 	    continue;
@@ -621,7 +639,7 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 	if (state != STATE_FIELD) {
 	    pam_syslog(pamh, LOG_ERR,
-		       "%s: malformed rule #%d", PAM_GROUP_CONF, count);
+		       "%s: malformed rule #%d", conf_filename, count);
 	    continue;
 	}
 
@@ -630,10 +648,10 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 	/* here we get the terminal name field */
 
-	fd = read_field(pamh, fd, &buffer, &from, &state);
+	fd = read_field(pamh, fd, &buffer, &from, &state, conf_filename);
 	if (state != STATE_FIELD) {
 	    pam_syslog(pamh, LOG_ERR,
-		       "%s: malformed rule #%d", PAM_GROUP_CONF, count);
+		       "%s: malformed rule #%d", conf_filename, count);
 	    continue;
 	}
 	good &= logic_field(pamh,tty, buffer, count, is_same);
@@ -641,10 +659,10 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 	/* here we get the username field */
 
-	fd = read_field(pamh, fd, &buffer, &from, &state);
+	fd = read_field(pamh, fd, &buffer, &from, &state, conf_filename);
 	if (state != STATE_FIELD) {
 	    pam_syslog(pamh, LOG_ERR,
-		       "%s: malformed rule #%d", PAM_GROUP_CONF, count);
+		       "%s: malformed rule #%d", conf_filename, count);
 	    continue;
 	}
 	/* If buffer starts with @, we are using netgroups */
@@ -663,20 +681,20 @@ static int check_account(pam_handle_t *pamh, const char *service,
 
 	/* here we get the time field */
 
-	fd = read_field(pamh, fd, &buffer, &from, &state);
+	fd = read_field(pamh, fd, &buffer, &from, &state, conf_filename);
 	if (state != STATE_FIELD) {
 	    pam_syslog(pamh, LOG_ERR,
-		       "%s: malformed rule #%d", PAM_GROUP_CONF, count);
+		       "%s: malformed rule #%d", conf_filename, count);
 	    continue;
 	}
 
 	good &= logic_field(pamh,&here_and_now, buffer, count, check_time);
 	D(("with time: %s", good ? "passes":"fails" ));
 
-	fd = read_field(pamh, fd, &buffer, &from, &state);
+	fd = read_field(pamh, fd, &buffer, &from, &state, conf_filename);
 	if (state == STATE_FIELD) {
 	    pam_syslog(pamh, LOG_ERR,
-		       "%s: poorly terminated rule #%d", PAM_GROUP_CONF, count);
+		       "%s: poorly terminated rule #%d", conf_filename, count);
 	    continue;
 	}
 
@@ -726,7 +744,7 @@ static int check_account(pam_handle_t *pamh, const char *service,
     }
 
     if (grps) {                                          /* tidy up */
-	memset(grps, 0, sizeof(gid_t) * blk_size(no_grps));
+	pam_overwrite_n(grps, sizeof(gid_t) * blk_size(no_grps));
 	_pam_drop(grps);
 	no_grps = 0;
     }
@@ -803,7 +821,7 @@ pam_sm_setcred (pam_handle_t *pamh, int flags,
 
     /* good, now we have the service name, the user and the terminal name */
 
-    D(("service=%s", service));
+    D(("service=%s", (const char *) service));
     D(("user=%s", user));
     D(("tty=%s", tty));
 

@@ -13,7 +13,7 @@
  * See end for Copyright information
  */
 
-#if !defined(linux) && !defined(__linux)
+#ifndef __linux__
 #warning THIS CODE IS KNOWN TO WORK ONLY ON LINUX !!!
 #endif
 
@@ -28,13 +28,20 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <signal.h>
+#ifdef __linux__
 #include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
 #include <limits.h>
 #include <glob.h>
+#ifdef USE_LOGIND
+#include <systemd/sd-login.h>
+#else
 #include <utmp.h>
+#endif
+
 #ifndef UT_USER  /* some systems have ut_name instead of ut_user */
 #define UT_USER ut_user
 #endif
@@ -47,9 +54,11 @@
 #include <libaudit.h>
 #endif
 
-/* Module defines */
-#define LINE_LENGTH 1024
+#ifndef PR_SET_NO_NEW_PRIVS
+# define PR_SET_NO_NEW_PRIVS 38 /* from <linux/prctl.h> */
+#endif
 
+/* Module defines */
 #define LIMITS_DEF_USER     0 /* limit was set by a user entry */
 #define LIMITS_DEF_GROUP    1 /* limit was set by a group entry */
 #define LIMITS_DEF_ALLGROUP 2 /* limit was set by a group entry */
@@ -58,13 +67,13 @@
 #define LIMITS_DEF_KERNEL   5 /* limit was set from /proc/1/limits */
 #define LIMITS_DEF_NONE     6 /* this limit was not set yet */
 
-#define LIMIT_RANGE_ERR    -1 /* error in specified uid/gid range */
+#define LIMIT_RANGE_ERR  (-1) /* error in specified uid/gid range */
 #define LIMIT_RANGE_NONE    0 /* no range specified */
 #define LIMIT_RANGE_ONE     1 /* exact uid/gid specified (:max_uid)*/
 #define LIMIT_RANGE_MIN     2 /* only minimum uid/gid specified (min_uid:) */
 #define LIMIT_RANGE_MM      3 /* both min and max uid/gid specified (min_uid:max_uid) */
 
-static const char *limits_def_names[] = {
+static const char *const limits_def_names[] = {
        "USER",
        "GROUP",
        "ALLGROUP",
@@ -93,14 +102,14 @@ struct pam_limit_s {
     struct user_limits_struct limits[RLIM_NLIMITS];
     const char *conf_file;
     int utmp_after_pam_call;
-    char login_group[LINE_LENGTH];
+    char *login_group;
 };
 
-#define LIMIT_LOGIN RLIM_NLIMITS+1
-#define LIMIT_NUMSYSLOGINS RLIM_NLIMITS+2
+#define LIMIT_LOGIN (RLIM_NLIMITS+1)
+#define LIMIT_NUMSYSLOGINS (RLIM_NLIMITS+2)
 
-#define LIMIT_PRI RLIM_NLIMITS+3
-#define LIMIT_NONEWPRIVS RLIM_NLIMITS+4
+#define LIMIT_PRI (RLIM_NLIMITS+3)
+#define LIMIT_NONEWPRIVS (RLIM_NLIMITS+4)
 
 #define LIMIT_SOFT  1
 #define LIMIT_HARD  2
@@ -110,6 +119,7 @@ struct pam_limit_s {
 #include <security/pam_modutil.h>
 #include <security/pam_ext.h>
 #include "pam_inline.h"
+#include "pam_i18n.h"
 
 /* argument parsing */
 
@@ -119,9 +129,14 @@ struct pam_limit_s {
 #define PAM_SET_ALL         0x0010
 
 /* Limits from globbed files. */
-#define LIMITS_CONF_GLOB LIMITS_FILE_DIR
+#define LIMITS_CONF_GLOB	(LIMITS_FILE_DIR "/*.conf")
 
-#define CONF_FILE (pl->conf_file != NULL)?pl->conf_file:LIMITS_FILE
+#define LIMITS_FILE	(SCONFIG_DIR "/limits.conf")
+
+#ifdef VENDOR_SCONFIG_DIR
+#define VENDOR_LIMITS_FILE (VENDOR_SCONFIG_DIR "/limits.conf")
+#define VENDOR_LIMITS_CONF_GLOB  (VENDOR_SCONFIG_DIR "/limits.d/*.conf")
+#endif
 
 static int
 _pam_parse (const pam_handle_t *pamh, int argc, const char **argv,
@@ -230,7 +245,6 @@ static int
 check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
               struct pam_limit_s *pl)
 {
-    struct utmp *ut;
     int count;
 
     if (ctrl & PAM_DEBUG_ARG) {
@@ -244,8 +258,6 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
         pam_syslog(pamh, LOG_WARNING, "No logins allowed for '%s'", name);
         return LOGIN_ERR;
     }
-
-    setutent();
 
     /* Because there is no definition about when an application
        actually adds a utmp entry, some applications bizarrely do the
@@ -263,6 +275,78 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
 	count = 1;
     }
 
+#ifdef USE_LOGIND
+    char **sessions_list;
+    int sessions = sd_get_sessions(&sessions_list);
+
+    /* maxlogins needs to be 2 with systemd-logind because
+       of the systemd --user process started with first login by
+       pam_systemd.
+       Which is also calling pam_limits, but in this very first special
+       case the session does already exist and is counted twice.
+       With start of the second session, session manager is already running
+       and no longer counted. */
+    if (limit == 1) {
+        pam_syslog(pamh, LOG_WARNING, "Maxlogin limit needs to be 2 or higher with systemd-logind");
+        return LIMIT_ERR;
+    }
+
+    if (sessions < 0) {
+      pam_syslog(pamh, LOG_ERR, "logind error getting session list: %s",
+		 strerror(-sessions));
+      return LIMIT_ERR;
+    } else if (sessions > 0 && sessions_list != NULL && !pl->flag_numsyslogins) {
+      int i;
+
+      for (i = 0; i < sessions; i++) {
+	char *user = NULL;
+	char *class = NULL;
+
+	if (sd_session_get_class(sessions_list[i], &class) < 0 || class == NULL)
+	  continue;
+
+	if (strncmp(class, "user", 4) != 0)  { /* user, user-early, user-incomplete */
+	  free (class);
+	  continue;
+	}
+	free (class);
+
+	if (sd_session_get_username(sessions_list[i], &user) < 0 || user == NULL) {
+	  pam_syslog(pamh, LOG_ERR, "logind error getting username: %s",
+		     strerror(-sessions));
+	  return LIMIT_ERR;
+	}
+
+	if (((pl->login_limit_def == LIMITS_DEF_USER)
+	     || (pl->login_limit_def == LIMITS_DEF_GROUP)
+	     || (pl->login_limit_def == LIMITS_DEF_DEFAULT))
+	    && strcmp(name, user) != 0) {
+	  free(user);
+	  continue;
+	}
+	if ((pl->login_limit_def == LIMITS_DEF_ALLGROUP)
+	    && pl->login_group != NULL
+	    && !pam_modutil_user_in_group_nam_nam(pamh, user, pl->login_group)) {
+	  free(user);
+	  continue;
+	}
+	free(user);
+
+	if (++count > limit) {
+	  break;
+	}
+      }
+      for (i = 0; i < sessions; i++)
+	free(sessions_list[i]);
+      free(sessions_list);
+    } else {
+      count = sessions;
+    }
+#else
+    struct utmp *ut;
+
+    setutent();
+
     while((ut = getutent())) {
 #ifdef USER_PROCESS
         if (ut->ut_type != USER_PROCESS) {
@@ -274,8 +358,8 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
 	}
         if (!pl->flag_numsyslogins) {
 	    char user[sizeof(ut->UT_USER) + 1];
-	    user[0] = '\0';
-	    strncat(user, ut->UT_USER, sizeof(ut->UT_USER));
+	    memcpy(user, ut->UT_USER, sizeof(ut->UT_USER));
+	    user[sizeof(ut->UT_USER)] = '\0';
 
 	    if (((pl->login_limit_def == LIMITS_DEF_USER)
 	         || (pl->login_limit_def == LIMITS_DEF_GROUP)
@@ -284,6 +368,7 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
                 continue;
 	    }
 	    if ((pl->login_limit_def == LIMITS_DEF_ALLGROUP)
+		&& pl->login_group != NULL
 		&& !pam_modutil_user_in_group_nam_nam(pamh, user, pl->login_group)) {
                 continue;
 	    }
@@ -300,6 +385,7 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
 	}
     }
     endutent();
+#endif
     if (count > limit) {
 	if (name) {
 	    pam_syslog(pamh, LOG_NOTICE,
@@ -312,7 +398,8 @@ check_logins (pam_handle_t *pamh, const char *name, int limit, int ctrl,
     return 0;
 }
 
-static const char *lnames[RLIM_NLIMITS] = {
+#ifdef __linux__
+static const char *const lnames[RLIM_NLIMITS] = {
         [RLIMIT_CPU] = "Max cpu time",
         [RLIMIT_FSIZE] = "Max file size",
         [RLIMIT_DATA] = "Max data size",
@@ -378,15 +465,16 @@ static rlim_t str2rlim_t(char *value) {
         pos--; \
         while (pos && line[pos] != ' ') pos--; \
         if (!pos) continue; \
-        item = line + pos + 1; \
+        (item) = line + pos + 1; \
 }
 
 static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 {
-    int i, maxlen = 0;
+    int i;
     FILE *limitsfile;
     const char *proclimits = "/proc/1/limits";
-    char line[256];
+    char *line = NULL;
+    size_t maxlen = 0, n = 0;
     char *hard, *soft, *name;
 
     if (!(limitsfile = fopen(proclimits, "r"))) {
@@ -394,8 +482,8 @@ static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int 
         return;
     }
 
-    while (fgets(line, 256, limitsfile)) {
-        int pos = strlen(line);
+    while (getline(&line, &n, limitsfile) != -1) {
+        size_t pos = strlen(line);
         if (pos < 2) continue;
 
         /* drop trailing newline */
@@ -439,8 +527,10 @@ static void parse_kernel_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int 
         pl->limits[i].src_soft = LIMITS_DEF_KERNEL;
         pl->limits[i].src_hard = LIMITS_DEF_KERNEL;
     }
+    free(line);
     fclose(limitsfile);
 }
+#endif
 
 static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 {
@@ -483,6 +573,7 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
       retval = !PAM_SUCCESS;
     pl->login_limit = -2;
     pl->login_limit_def = LIMITS_DEF_NONE;
+    pl->login_group = NULL;
 
     return retval;
 }
@@ -495,14 +586,16 @@ static int init_limits(pam_handle_t *pamh, struct pam_limit_s *pl, int ctrl)
 static int
 value_from_file(const char *pathname, rlim_t *valuep)
 {
-    char buf[128];
     FILE *fp;
     int retval;
 
     retval = 0;
 
     if ((fp = fopen(pathname, "r")) != NULL) {
-	if (fgets(buf, sizeof(buf), fp) != NULL) {
+	char *buf = NULL;
+	size_t n = 0;
+
+	if (getline(&buf, &n, fp) != -1) {
 	    char *endptr;
 	    unsigned long long value;
 
@@ -516,6 +609,7 @@ value_from_file(const char *pathname, rlim_t *valuep)
 	    }
 	}
 
+	free(buf);
 	fclose(fp);
     }
 
@@ -753,7 +847,6 @@ process_limit (const pam_handle_t *pamh, int source, const char *lim_type,
 	    }
 	}
     }
-    return;
 }
 
 static int
@@ -805,37 +898,94 @@ parse_uid_range(pam_handle_t *pamh, const char *domain,
 }
 
 static int
+set_if_null(char **dest, char *def)
+{
+    if (*dest == NULL) {
+	*dest = def;
+	return 0;
+    }
+    return 1;
+}
+
+static char *
+trim(char *s)
+{
+    char *p;
+
+    if (s == NULL)
+	return NULL;
+
+    while (*s == ' ' || *s == '\t')
+	s++;
+
+    if (*s == '\0')
+	return NULL;
+
+    p = s + strlen(s) - 1;
+    while (p >= s && (*p == ' ' || *p == '\t'))
+	*p-- = '\0';
+    return s;
+}
+
+static int
+split(char *line, char **domain, char **ltype, char **item, char **value)
+{
+    char *blank, *saveptr;
+    int count;
+
+    blank = line + strlen(line);
+    saveptr = NULL;
+
+    *domain = strtok_r(line, " \t", &saveptr);
+    *ltype = strtok_r(NULL, " \t", &saveptr);
+    *item = strtok_r(NULL, " \t", &saveptr);
+    *value = trim(strtok_r(NULL, "", &saveptr));
+
+    count = 0;
+    count += set_if_null(domain, blank);
+    count += set_if_null(ltype, blank);
+    count += set_if_null(item, blank);
+    count += set_if_null(value, blank);
+
+    return count;
+}
+
+static int
 parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
-			     int ctrl, struct pam_limit_s *pl)
+		  int ctrl, struct pam_limit_s *pl, const int conf_file_set_by_user)
 {
     FILE *fil;
-    char buf[LINE_LENGTH];
+    char *buf = NULL;
+    size_t n = 0;
+    unsigned long long lineno = 0;
 
-    /* check for the LIMITS_FILE */
+    /* check for the conf_file */
     if (ctrl & PAM_DEBUG_ARG)
-        pam_syslog(pamh, LOG_DEBUG, "reading settings from '%s'", CONF_FILE);
-    fil = fopen(CONF_FILE, "r");
+        pam_syslog(pamh, LOG_DEBUG, "reading settings from '%s'", pl->conf_file);
+    fil = fopen(pl->conf_file, "r");
     if (fil == NULL) {
-        pam_syslog (pamh, LOG_WARNING,
-		    "cannot read settings from %s: %m", CONF_FILE);
+        if (errno == ENOENT && !conf_file_set_by_user)
+            return PAM_SUCCESS; /* file is not there and it has not been set by the conf= argument */
+
+        pam_syslog(pamh, LOG_WARNING,
+                   "cannot read settings from %s: %s", pl->conf_file,
+                   strerror(errno));
         return PAM_SERVICE_ERR;
     }
 
     /* start the show */
-    while (fgets(buf, LINE_LENGTH, fil) != NULL) {
-        char domain[LINE_LENGTH];
-        char ltype[LINE_LENGTH];
-        char item[LINE_LENGTH];
-        char value[LINE_LENGTH];
+    while (getline(&buf, &n, fil) != -1) {
+        char *domain, *ltype, *item, *value, *tptr, *line;
         int i;
         int rngtype;
         size_t j;
-        char *tptr,*line;
         uid_t min_uid = (uid_t)-1, max_uid = (uid_t)-1;
+
+        lineno++;
 
         line = buf;
         /* skip the leading white space */
-        while (*line && isspace(*line))
+        while (*line && isspace((unsigned char)*line))
             line++;
 
         /* Rip off the comments */
@@ -850,14 +1000,12 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
         if (!strlen(line))
             continue;
 
-	domain[0] = ltype[0] = item[0] = value[0] = '\0';
-
-	i = sscanf(line,"%s%s%s%s", domain, ltype, item, value);
+	i = split(line, &domain, &ltype, &item, &value);
 	D(("scanned line[%d]: domain[%s], ltype[%s], item[%s], value[%s]",
 	   i, domain, ltype, item, value));
 
         for(j=0; j < strlen(ltype); j++)
-            ltype[j]=tolower(ltype[j]);
+            ltype[j]=tolower((unsigned char)ltype[j]);
 
 	if ((rngtype=parse_uid_range(pamh, domain, &min_uid, &max_uid)) < 0) {
 	    pam_syslog(pamh, LOG_WARNING, "invalid uid range '%s' - skipped", domain);
@@ -866,11 +1014,11 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 
         if (i == 4) { /* a complete line */
 	    for(j=0; j < strlen(item); j++)
-		item[j]=tolower(item[j]);
+		item[j]=tolower((unsigned char)item[j]);
 	    for(j=0; j < strlen(value); j++)
-		value[j]=tolower(value[j]);
+		value[j]=tolower((unsigned char)value[j]);
 
-            if (strcmp(uname, domain) == 0) /* this user have a limit */
+            if (strcmp(uname, domain) == 0) /* this user has a limit */
                 process_limit(pamh, LIMITS_DEF_USER, ltype, item, value, ctrl, pl);
             else if (domain[0]=='@') {
 		if (ctrl & PAM_DEBUG_ARG) {
@@ -910,7 +1058,8 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 			    process_limit(pamh, LIMITS_DEF_ALL, ltype, item, value, ctrl,
 					  pl);
 			else if (pam_modutil_user_in_group_nam_nam(pamh, uname, domain+1)) {
-			    strcpy(pl->login_group, domain+1);
+			    free(pl->login_group);
+			    pl->login_group = strdup(domain+1);
 			    process_limit(pamh, LIMITS_DEF_ALLGROUP, ltype, item, value, ctrl,
 					  pl);
 			}
@@ -919,8 +1068,8 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 			if (pam_modutil_user_in_group_nam_gid(pamh, uname, (gid_t)max_uid)) {
 			    struct group *grp;
 			    grp = pam_modutil_getgrgid(pamh, (gid_t)max_uid);
-			    strncpy(pl->login_group, grp->gr_name, sizeof(pl->login_group));
-			    pl->login_group[sizeof(pl->login_group)-1] = '\0';
+			    free(pl->login_group);
+			    pl->login_group = strdup(grp->gr_name);
 			    process_limit(pamh, LIMITS_DEF_ALLGROUP, ltype, item, value, ctrl,
 					  pl);
 			}
@@ -998,12 +1147,15 @@ parse_config_file(pam_handle_t *pamh, const char *uname, uid_t uid, gid_t gid,
 		    pam_syslog(pamh, LOG_DEBUG, "no limits for '%s'", uname);
 		}
 	    }
+	    free(buf);
 	    fclose(fil);
 	    return PAM_IGNORE;
         } else {
-            pam_syslog(pamh, LOG_WARNING, "invalid line '%s' - skipped", line);
+            pam_syslog(pamh, LOG_WARNING, "invalid line %llu in '%s' - skipped",
+		       lineno, pl->conf_file);
 	}
     }
+    free(buf);
     fclose(fil);
     return PAM_SUCCESS;
 }
@@ -1065,13 +1217,107 @@ static int setup_limits(pam_handle_t *pamh,
     }
 
     if (pl->nonewprivs) {
+#ifdef __linux__
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
 	    pam_syslog(pamh, LOG_ERR, "Could not set prctl(PR_SET_NO_NEW_PRIVS): %m");
 	    retval |= LIMIT_ERR;
 	}
+#else
+	pam_syslog(pamh, LOG_INFO, "Setting 'nonewprivs' not supported on this OS");
+#endif
     }
 
     return retval;
+}
+
+/* --- evaluating all files in VENDORDIR/security/limits.d and /etc/security/limits.d --- */
+static const char *
+base_name(const char *path)
+{
+    const char *base = strrchr(path, '/');
+    return base ? base+1 : path;
+}
+
+static int
+compare_filename(const void *a, const void *b)
+{
+	return strcmp(base_name(* (const char * const *) a),
+		      base_name(* (const char * const *) b));
+}
+
+/* Evaluating a list of files which have to be parsed in the right order:
+ *
+ * - If etc/security/limits.d/@filename@.conf exists, then
+ *   %vendordir%/security/limits.d/@filename@.conf should not be used.
+ * - All files in both limits.d directories are sorted by their @filename@.conf in
+ *   lexicographic order regardless of which of the directories they reside in. */
+static char **
+read_limits_dir(pam_handle_t *pamh)
+{
+	glob_t globbuf;
+	size_t i=0;
+	int glob_rv = glob(LIMITS_CONF_GLOB, GLOB_ERR | GLOB_NOSORT, NULL, &globbuf);
+	char **file_list;
+	size_t file_list_size = glob_rv == 0 ? globbuf.gl_pathc : 0;
+
+#ifdef VENDOR_LIMITS_CONF_GLOB
+	glob_t globbuf_vendor;
+	int glob_rv_vendor = glob(VENDOR_LIMITS_CONF_GLOB, GLOB_ERR | GLOB_NOSORT, NULL, &globbuf_vendor);
+	if (glob_rv_vendor == 0)
+	    file_list_size += globbuf_vendor.gl_pathc;
+#endif
+	file_list = malloc((file_list_size + 1) * sizeof(char*));
+	if (file_list == NULL) {
+	    pam_syslog(pamh, LOG_ERR, "Cannot allocate memory for file list: %m");
+#ifdef VENDOR_ACCESS_CONF_GLOB
+            if (glob_rv_vendor == 0)
+                globfree(&globbuf_vendor);
+#endif
+            if (glob_rv == 0)
+                globfree(&globbuf);
+	    return NULL;
+	}
+
+	if (glob_rv == 0) {
+	    for (i = 0; i < globbuf.gl_pathc; i++) {
+	        file_list[i] = strdup(globbuf.gl_pathv[i]);
+		if (file_list[i] == NULL) {
+		    pam_syslog(pamh, LOG_ERR, "strdup failed: %m");
+		    break;
+		}
+	    }
+	}
+#ifdef VENDOR_LIMITS_CONF_GLOB
+	if (glob_rv_vendor == 0) {
+	    for (size_t j = 0; j < globbuf_vendor.gl_pathc; j++) {
+		if (glob_rv == 0 && globbuf.gl_pathc > 0) {
+		    int double_found = 0;
+		    for (size_t k = 0; k < globbuf.gl_pathc; k++) {
+			if (strcmp(base_name(globbuf.gl_pathv[k]),
+				   base_name(globbuf_vendor.gl_pathv[j])) == 0) {
+				double_found = 1;
+				break;
+			}
+		    }
+		    if (double_found)
+			continue;
+		}
+		file_list[i] = strdup(globbuf_vendor.gl_pathv[j]);
+		if (file_list[i] == NULL) {
+		    pam_syslog(pamh, LOG_ERR, "strdup failed: %m");
+		    break;
+		}
+		i++;
+	    }
+	    globfree(&globbuf_vendor);
+	}
+#endif
+	file_list[i] = NULL;
+	qsort(file_list, i, sizeof(char *), compare_filename);
+        if (glob_rv == 0)
+	    globfree(&globbuf);
+
+	return file_list;
 }
 
 /* now the session stuff */
@@ -1079,28 +1325,38 @@ int
 pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
 		     int argc, const char **argv)
 {
-    int retval;
-    int i;
-    int glob_rc;
+    int retval, i;
     char *user_name;
     struct passwd *pwd;
     int ctrl;
     struct pam_limit_s plstruct;
     struct pam_limit_s *pl = &plstruct;
-    glob_t globbuf;
-    const char *oldlocale;
+    char *free_filename = NULL;
 
     D(("called."));
 
     memset(pl, 0, sizeof(*pl));
-    memset(&globbuf, 0, sizeof(globbuf));
 
     ctrl = _pam_parse(pamh, argc, argv, pl);
     retval = pam_get_item( pamh, PAM_USER, (void*) &user_name );
     if ( user_name == NULL || retval != PAM_SUCCESS ) {
         pam_syslog(pamh, LOG_ERR, "open_session - error recovering username");
         return PAM_SESSION_ERR;
-     }
+    }
+
+    int conf_file_set_by_user = (pl->conf_file != NULL);
+    if (pl->conf_file == NULL) {
+        pl->conf_file = LIMITS_FILE;
+#ifdef VENDOR_LIMITS_FILE
+        /*
+         * Check whether LIMITS_FILE file is available.
+         * If it does not exist, fall back to VENDOR_LIMITS_FILE file.
+         */
+        struct stat buffer;
+        if (stat(pl->conf_file, &buffer) != 0 && errno == ENOENT)
+            pl->conf_file = VENDOR_LIMITS_FILE;
+#endif
+    }
 
     pwd = pam_modutil_getpwnam(pamh, user_name);
     if (!pwd) {
@@ -1116,50 +1372,54 @@ pam_sm_open_session (pam_handle_t *pamh, int flags UNUSED,
         return PAM_ABORT;
     }
 
-    retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid, ctrl, pl);
+    retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid,
+			       ctrl, pl, conf_file_set_by_user);
     if (retval == PAM_IGNORE) {
-	D(("the configuration file ('%s') has an applicable '<domain> -' entry", CONF_FILE));
+	D(("the configuration file ('%s') has an applicable '<domain> -' entry", pl->conf_file));
+	free(pl->login_group);
 	return PAM_SUCCESS;
     }
-    if (retval != PAM_SUCCESS || pl->conf_file != NULL)
+    if (retval != PAM_SUCCESS || conf_file_set_by_user)
 	/* skip reading limits.d if config file explicitly specified */
 	goto out;
 
     /* Read subsequent *.conf files, if they exist. */
-
-    /* set the LC_COLLATE so the sorting order doesn't depend
-	on system locale */
-
-    oldlocale = setlocale(LC_COLLATE, "C");
-    glob_rc = glob(LIMITS_CONF_GLOB, GLOB_ERR, NULL, &globbuf);
-
-    if (oldlocale != NULL)
-	setlocale (LC_COLLATE, oldlocale);
-
-    if (!glob_rc) {
-	/* Parse the *.conf files. */
-	for (i = 0; globbuf.gl_pathv[i] != NULL; i++) {
-	    pl->conf_file = globbuf.gl_pathv[i];
-	    retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid, ctrl, pl);
-	    if (retval == PAM_IGNORE) {
-		D(("the configuration file ('%s') has an applicable '<domain> -' entry", pl->conf_file));
-		globfree(&globbuf);
-		return PAM_SUCCESS;
-	    }
-	    if (retval != PAM_SUCCESS)
-		goto out;
+    char **filename_list = read_limits_dir(pamh);
+    if (filename_list != NULL) {
+        for (i = 0; filename_list[i] != NULL; i++) {
+            pl->conf_file = filename_list[i];
+            retval = parse_config_file(pamh, pwd->pw_name, pwd->pw_uid, pwd->pw_gid, ctrl, pl, 0);
+            if (retval != PAM_SUCCESS)
+                break;
         }
+        for (i = 0; filename_list[i] != NULL; i++) {
+	    if (filename_list[i] == pl->conf_file)
+		free_filename = filename_list[i];
+	    else
+		free(filename_list[i]);
+	}
+        free(filename_list);
+    }
+
+    if (retval == PAM_IGNORE) {
+        D(("the configuration file ('%s') has an applicable '<domain> -' entry", pl->conf_file));
+        free(free_filename);
+        free(pl->login_group);
+        return PAM_SUCCESS;
     }
 
 out:
-    globfree(&globbuf);
     if (retval != PAM_SUCCESS)
     {
-	pam_syslog(pamh, LOG_ERR, "error parsing the configuration file: '%s' ",CONF_FILE);
+	pam_syslog(pamh, LOG_ERR, "error parsing the configuration file: '%s' ", pl->conf_file);
+	free(free_filename);
+	free(pl->login_group);
 	return retval;
     }
 
     retval = setup_limits(pamh, pwd->pw_name, pwd->pw_uid, ctrl, pl);
+    free(free_filename);
+    free(pl->login_group);
     if (retval & LOGIN_ERR)
 	pam_error(pamh, _("There were too many logins for '%s'."),
 		  pwd->pw_name);

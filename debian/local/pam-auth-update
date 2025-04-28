@@ -56,14 +56,11 @@ my %md5sums = (
         	'f297c731a467822cbd86e1283263e8a3',
 		'240fb92986c885b327cdb21dd641da8c',
 		'4a25673e8b36f1805219027d3be02cd2',
-		'73144a2f4e609a922a51e301cd66a57e',
-		'd38511a6ce8324742c151eed9fb57ba1',
+                '9e633425b1878897695217ecaf75e204',
 	],
 	'session-noninteractive' => [
 		'ad2b78ce1498dd637ef36469430b6ac6',
-		'a20e8df3469bfe25c13a3b39161b30f0',
-		'4680011710cfff2f80367ab93dc615fd',
-		'a20e8df3469bfe25c13a3b39161b30f0',
+                '53c1ede0bf4c07879d3582d875917545',
 	],
 );
 my @invalid_modules = ('pam_tally');
@@ -740,7 +737,7 @@ sub parse_pam_profile
 		}
 	}
 	close(PROFILE);
-	if (!defined($profile{'Session-Interactive-Only'})) {
+	if (!defined($profile{'Session-Interactive-Only'}) or $profile{'Session-Interactive-Only'} ne 'yes') {
 			$profile{'Session-noninteractive-Type'} = $profile{'Session-Type'};
 			$profile{'Session-noninteractive'} = $profile{'Session'};
 			$profile{'Session-noninteractive-Initial'} = $profile{'Session-Initial'};

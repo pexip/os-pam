@@ -31,9 +31,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <unistd.h>
@@ -66,6 +64,8 @@ main (void)
       fprintf (stderr, "pam_fail_delay (pamh, 60) returned %d\n", retval);
       return 1;
     }
+
+  pam_end (pamh, retval);
 
   /* 2: use NULL pam handle */
   retval = pam_fail_delay (NULL, 60);

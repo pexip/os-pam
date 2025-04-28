@@ -6,7 +6,9 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -79,7 +81,6 @@ static int perform_check(pam_handle_t *pamh, struct opt_s *opts)
 
     if (fd >= 0) {
 
-	char *mtmp=NULL;
 	int msg_style = PAM_TEXT_INFO;
 	struct passwd *user_pwd;
 	struct stat st;
@@ -99,21 +100,41 @@ static int perform_check(pam_handle_t *pamh, struct opt_s *opts)
 	    goto clean_up_fd;
 	}
 
-	mtmp = malloc(st.st_size+1);
-	if (!mtmp) {
-	    pam_syslog(pamh, LOG_CRIT, "out of memory");
-	    retval = PAM_BUF_ERR;
+	/*
+	 * on some OSes (e.g. Hurd) reading a directory succeeds,
+	 * instead of failing with EISDIR; hence, work as if
+	 * pam_modutil_read later on would fail
+	 */
+	if (S_ISDIR(st.st_mode)) {
+	    retval = PAM_SYSTEM_ERR;
 	    goto clean_up_fd;
 	}
 
-	if (pam_modutil_read(fd, mtmp, st.st_size) == st.st_size) {
-		mtmp[st.st_size] = '\0';
-		(void) pam_prompt (pamh, msg_style, NULL, "%s", mtmp);
-	}
-	else
-	    retval = PAM_SYSTEM_ERR;
+	/* Don't print anything if the message is empty, will only
+	   disturb the output with empty lines */
+	if (st.st_size > 0) {
+	    char *mtmp;
+	    if ((uintmax_t)st.st_size > (uintmax_t)INT_MAX) {
+	        pam_syslog(pamh, LOG_CRIT, "file too large");
+	        retval = PAM_SYSTEM_ERR;
+	        goto clean_up_fd;
+	    }
+	    mtmp = malloc(st.st_size+1);
+	    if (!mtmp) {
+	        pam_syslog(pamh, LOG_CRIT, "out of memory");
+	        retval = PAM_BUF_ERR;
+	        goto clean_up_fd;
+	    }
 
-	free(mtmp);
+	    if (pam_modutil_read(fd, mtmp, st.st_size) == st.st_size) {
+	        mtmp[st.st_size] = '\0';
+	        (void) pam_prompt (pamh, msg_style, NULL, "%s", mtmp);
+	    }
+	    else
+	        retval = PAM_SYSTEM_ERR;
+
+	    free(mtmp);
+	}
 
     clean_up_fd:
 

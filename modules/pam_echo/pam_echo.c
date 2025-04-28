@@ -33,14 +33,13 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(HAVE_CONFIG_H)
 #include "config.h"
-#endif
 
 #include <errno.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -182,6 +181,12 @@ pam_echo (pam_handle_t *pamh, int flags, int argc, const char **argv)
 	  return PAM_IGNORE;
 	}
 
+      if ((uintmax_t) st.st_size > (uintmax_t) INT_MAX)
+	{
+	  close (fd);
+	  return PAM_BUF_ERR;
+	}
+
       mtmp = malloc (st.st_size + 1);
       if (!mtmp)
 	{
@@ -189,7 +194,7 @@ pam_echo (pam_handle_t *pamh, int flags, int argc, const char **argv)
 	  return PAM_BUF_ERR;
 	}
 
-      if (pam_modutil_read (fd, mtmp, st.st_size) == -1)
+      if (pam_modutil_read (fd, mtmp, st.st_size) != st.st_size)
 	{
 	  pam_syslog (pamh, LOG_ERR, "Error while reading %s: %m", file);
 	  free (mtmp);

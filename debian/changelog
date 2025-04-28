@@ -1,3 +1,181 @@
+pam (1.7.0-3) unstable; urgency=high
+
+  * Disable HURD suid patch for now because it breaks on Linux, Closes:
+    #1095194
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 11 Feb 2025 05:19:04 -0700
+
+pam (1.7.0-2) unstable; urgency=medium
+
+  * Release to unstable
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 29 Jan 2025 18:58:07 -0700
+
+pam (1.7.0-1) experimental; urgency=medium
+
+  * New upstream version, Closes: #1088923
+    - ChangeLog removed upstream, do not install it.
+    - Upstream claims CVE-2024-10041 is fixed by PAM 1.6.0, Closes:
+      #1086038
+  * Build depend on meson
+  * Depend on fop
+  * Use installed faillock and namespace man page rather than source man page.
+  * Install text module documentation in libpam-doc/txt
+  * Build and install pdf documentation
+  * Remove Steve from uploaders, thanks for all your contributions; you
+    will be missed.
+  * In response to lintian complaint, clarify that PAM can be distributed under any version of the GPL.
+  * Pdf files are compressed; update doc-base
+  * Properly handle environment.5 manpage, Closes: #1081181
+  * Move pam module man pages into libpam-runtime to avoid  multi-arch uninstallability
+  * Move libpam0g-dev man pages into libpam-doc
+  * Build depend on pkgconf rather than pkg-config
+  * Only build-depend on documentation tools for arch-indep builds; do not build docs for arch all builds, Closes: #1093222
+  * pam_limits: do not override systemd's limits by default; add the set_all option to restore previous behavior, Closes: #995236
+  * Document pam_limits change in news
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 16 Jan 2025 15:59:23 -0700
+
+pam (1.5.3-7) unstable; urgency=medium
+
+  * Correct Build depends for docbook5, Closes: #1065064
+  * Regenerate patches to capture date change in pam_getitem.3
+  * Depend on libdb-dev again, bringing back pam_userdb, Closes: #1065088
+  * Document pam_umask change, Closes: #1065806
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 08 Apr 2024 16:35:07 -0600
+
+pam (1.5.3-6) unstable; urgency=medium
+
+  [ Dan Bungert ]
+  * Fix FTBFS when built with -Werror=implicit-function-declaration
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Thu, 29 Feb 2024 12:56:32 -0800
+
+pam (1.5.3-5) unstable; urgency=medium
+
+  * Revert renaming libpam0g to libpam0t64 for time_t transition: apt
+    sometimes removes libpam0g rather than simply letting libpam0t64
+    replace libpam0g (and deconfiguring libpam0g), leaving a system where
+    essential packages are broken,  Closes: #1065017
+    * Since libpam0t64 is going away, we do not need dpkg-diversions for it.
+    * As a consequence libpam_misc has an ABI break without a package name
+    change.  We believe nothing in the archive depends on this ABI, and at
+    least until we come up with a better solution this is the least bad option.
+  * For now remove libdb-dev so that libdb-dev can undergo time_t
+    transition.  That means this version of pam does not include
+    pam_userdb, which makes pam unsuitable for release.
+  * Replace/break libpam0t64
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 29 Feb 2024 09:46:54 -0700
+
+pam (1.5.3-4) unstable; urgency=medium
+
+  * Upload to unstable
+  * Revert 1.5.2-9.1 changes to debian/rules now that we use
+    debian/patches properly.
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 27 Feb 2024 21:30:52 -0700
+
+pam (1.5.3-3) experimental; urgency=medium
+
+  [ Helmut Grohne ]
+  * Mitigate /usr-move file loss. (Closes: #1062802)
+
+ -- Helmut Grohne <helmut@subdivi.de>  Sat, 03 Feb 2024 12:18:52 +0100
+
+pam (1.5.3-2) experimental; urgency=medium
+
+  * Rename libpam0g to libpamt64 for time_t transition
+  * New Swedish Translations, Thanks Martin Bagge / brother, Closes: #1057775
+  * pam_namespace: protect_dir(): use O_DIRECTORY to prevent local DoS
+    situations (CVE-2024-22365) (Closes: #1061097)
+
+ -- Sam Hartman <hartmans@debian.org>  Fri, 02 Feb 2024 11:27:45 -0700
+
+pam (1.5.3-1) experimental; urgency=medium
+
+  [ Sam Hartman ]
+  * New upstream version
+  * Since we no longer build with NIS support, drop Debian patches related
+    to NIS
+  [ Debian Janitor]
+  * Update lintian override info to new format:
+    + debian/libpam-runtime.lintian-overrides: line 5, 7, 9-13
+    + debian/libpam-modules.lintian-overrides: line 5-10, 14
+  * Trim trailing whitespace.
+  * Move source package lintian overrides to debian/source.
+  * Update renamed lintian tag names in lintian overrides.
+  * Set upstream metadata fields: Bug-Database, Bug-Submit, Repository-Browse.
+  * Drop unnecessary dependency on dh-autoreconf.
+  * Update standards version to 4.6.2, no changes needed.
+
+  [ Andreas Henriksson ]
+  * debian/rules: use --enable-usergroups configure flag (Closes: #583958)
+  * Use pam_umask.so in common-session{-noninteractive} (Closes: #711104)
+
+  [ Debian Janitor ]
+  * Apply multi-arch hints. + libpam-doc: Add Multi-Arch: foreign.
+
+  [ Sam Hartman ]
+  * Drop NIS patches and rearrange other patches.
+  * Update patch to move pam manpage to section 7: docbook tools now take
+    the man page output name from the xml so we need to update the
+    Makefile.
+  * Now PAM.7 is actually installed as pam.7 so update packaging
+  * pam-auth-update: Session-Interactive-Only set to anything other than
+    yes counts as undefined/no, thanks Lucas Nussbaum, Closes: #982309
+  * Use logind instead of utmp in pam_issue and pam_timestamp; utmp is not
+    y2038-safe.
+
+  [ Sam Hartman ]
+  * Add new common-session-* templates to pam-auth-update.
+
+  [ Chris Hofstaedtler ]
+  * Install into /usr/{lib,sbin} instead of /{lib,sbin}. Assumes
+    usrmerge aliasing symlinks are in place since bookworm to keep
+    compatibility with PAM modules still installing into /lib.
+    (DEP17 M2) (Closes: #1060160).
+  * Update lintian override for setgid binary.
+
+ -- Sam Hartman <hartmans@debian.org>  Mon, 15 Jan 2024 15:45:50 -0700
+
+pam (1.5.2-9.1) unstable; urgency=medium
+
+  * Non-maintainer upload acked by Sam Hartman.
+  * Really fix quilt-related FTBFS: (Closes: #1054505)
+    pam is a 3.0 (quilt) source package and has a .pc directory after unpack
+    despite having no debian/patches. Even when setting QUILT_PATCH_DIR or
+    QUILT_PATCHES, quilt is now mislead to using the non-existent
+    debian/patches and this makes dh_quilt_unpatch fail, so we delete that
+    directory unless it corresponds to the real debian/patches-applied that we
+    want to be used.
+
+ -- Helmut Grohne <helmut@subdivi.de>  Tue, 24 Oct 2023 19:38:53 +0200
+
+pam (1.5.2-9) unstable; urgency=low
+
+  * Revert 1.5.2-8 upload; as far as I can tell the change is incorrect,
+    Closes: #1054493
+
+ -- Sam Hartman <hartmans@debian.org>  Tue, 24 Oct 2023 09:19:43 -0600
+
+pam (1.5.2-7) unstable; urgency=medium
+
+  [ Steve Langasek ]
+  * Drop reference to stale package version in libpam-modules.postinst;
+    thanks, Gioele Barabucci <gioele@svario.it>.
+
+  [ Sam Hartman ]
+  * Fix pam-auth-update --disable logic error, Closes: #1039873
+  * Set myself as maintainer; thanks Steve for past and future work.
+  * Fix watch file, thanks Daniel Lewart, Closes: #1040310
+  * Install upstream NEWS file as main upstream changelog; detailed
+    CHANGELOG only  in libpam-doc, Closes: #1040315
+  * Updated Turkish Debconf translations, Thanks Atila KOÇ, Closes: #1029002
+
+ -- Sam Hartman <hartmans@debian.org>  Wed, 16 Aug 2023 17:22:53 -0600
+
 pam (1.5.2-6+deb12u1+pexip24u3) pexip-bookworm; urgency=medium
 
   * New versioning scheme
@@ -15,14 +193,6 @@ pam (1.5.2-6+deb12u1pexip1) pexip-bookworm; urgency=medium
   * Initial bookworm build
 
  -- Mark Hymers <mark.hymers@pexip.com>  Thu, 16 Nov 2023 10:18:46 +0000
-
-pam (1.5.2-6+deb12u1) bookworm; urgency=medium
-
-  * Fix pam-auth-update --disable logic error, Closes: #1039873
-  * Set myself as maintainer; thanks Steve for past and future work.
-  * Updated Turkish Debconf translations, Thanks Atila KOÇ, Closes: #1029002
-
- -- Sam Hartman <hartmans@debian.org>  Thu, 21 Sep 2023 14:55:12 -0600
 
 pam (1.5.2-6) unstable; urgency=medium
 
@@ -287,7 +457,7 @@ pam (1.4.0-2) unstable; urgency=medium
   * Restart services on upgrade to 1.4.0.  Closes: #978555.
 
  -- Steve Langasek <steve.langasek@ubuntu.com>  Mon, 28 Dec 2020 19:20:38 -0800
-    
+
 pam (1.4.0-1) unstable; urgency=medium
 
   * New upstream release.  Closes: #948188.
@@ -2178,7 +2348,7 @@ pam (0.75-3) experimental; urgency=low
       * In pam_mail, don't complain about deleting environment variable if
     we never set it, Closes: #58429
       * Don't set default max procs limit in pam_limits, Closes: #116874
-        * libpam-runtime now arch all since it has no arch-specific files,
+      * libpam-runtime now arch all since it has no arch-specific files,
     Closes: #132545
       * Update mini policy to reflect confusion on debian-devel
 

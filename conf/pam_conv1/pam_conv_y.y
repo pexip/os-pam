@@ -9,9 +9,7 @@
  * distributed with this file.)
  */
 
-#ifdef HAVE_CONFIG_H
-#  include <config.h>
-#endif
+#include <config.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -24,7 +22,7 @@
 
     extern int yylex(void);
 
-    int current_line=1;
+    unsigned long long current_line=0;
     extern char *yytext;
 
 /* XXX - later we'll change this to be the specific conf file(s) */
@@ -72,14 +70,16 @@ line
 
     /* make sure we have lower case */
     for (i=0; $1[i]; ++i) {
-	$1[i] = tolower($1[i]);
+	$1[i] = tolower((unsigned char)$1[i]);
     }
 
     /* $1 = service-name */
     yyerror("Appending to " PAM_D "/%s", $1);
 
-    filename = malloc(strlen($1) + sizeof(PAM_D) + 6);
-    sprintf(filename, PAM_D_FILE_FMT, $1);
+    if (asprintf(&filename, PAM_D_FILE_FMT, $1) < 0) {
+	yyerror("unable to create filename - aborting");
+	exit(1);
+    }
     conf = fopen(filename, "r");
     if (conf == NULL) {
 	/* new file */
@@ -100,6 +100,7 @@ line
 	exit(1);
     }
     free(filename);
+    free($1);
 
     /* $2 = module-type */
     fprintf(conf, "%-10s", $2);
@@ -139,12 +140,11 @@ tokenls
     $$=NULL;
 }
 | tokenls tok {
-    int len;
-
     if ($1) {
-	len = strlen($1) + strlen($2) + 2;
-	$$ = malloc(len);
-	sprintf($$,"%s %s",$1,$2);
+	if (asprintf(&$$, "%s %s", $1, $2) < 0) {
+	    yyerror("failed to assemble tokenls");
+	    exit(1);
+	}
 	free($1);
 	free($2);
     } else {
@@ -157,18 +157,26 @@ path
 : TOK {
     /* XXX - this could be used to check if file present */
     $$ = strdup(yytext);
+    if ($$ == NULL) {
+	yyerror("failed to duplicate path");
+	exit(1);
+    }
 }
 
 tok
 : TOK {
     $$ = strdup(yytext);
+    if ($$ == NULL) {
+	yyerror("failed to duplicate token");
+	exit(1);
+    }
 }
 
 %%
 
 const char *old_to_new_ctrl_flag(const char *old)
 {
-    static const char *clist[] = {
+    static const char *const clist[] = {
 	"requisite",
 	"required",
 	"sufficient",
@@ -191,7 +199,7 @@ void yyerror(const char *format, ...)
 {
     va_list args;
 
-    fprintf(stderr, "line %d: ", current_line);
+    fprintf(stderr, "line %llu: ", current_line);
     va_start(args, format);
     vfprintf(stderr, format, args);
     va_end(args);
@@ -202,8 +210,8 @@ int main(void)
 {
     if (mkdir(PAM_D, PAM_D_MODE) != 0) {
 	yyerror(PAM_D " already exists.. aborting");
-	exit(1);
+	return 1;
     }
     yyparse();
-    exit(0);
+    return 0;
 }

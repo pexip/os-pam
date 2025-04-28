@@ -25,9 +25,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/utsname.h>
-#include <utmp.h>
 #include <time.h>
 #include <syslog.h>
+
+#ifdef USE_LOGIND
+#include <systemd/sd-login.h>
+#else
+#include <utmp.h>
+#endif
 
 #include <security/_pam_macros.h>
 #include <security/pam_modules.h>
@@ -35,98 +40,6 @@
 #include "pam_inline.h"
 
 static int _user_prompt_set = 0;
-
-static int read_issue_raw(pam_handle_t *pamh, FILE *fp, char **prompt);
-static int read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt);
-
-/* --- authentication management functions (only) --- */
-
-int
-pam_sm_authenticate (pam_handle_t *pamh, int flags UNUSED,
-		     int argc, const char **argv)
-{
-    int retval = PAM_SERVICE_ERR;
-    FILE *fp;
-    const char *issue_file = NULL;
-    int parse_esc = 1;
-    const void *item = NULL;
-    const char *cur_prompt;
-    char *issue_prompt = NULL;
-
-   /* If we've already set the prompt, don't set it again */
-    if(_user_prompt_set)
-	return PAM_IGNORE;
-
-    /* We set this here so if we fail below, we won't get further
-       than this next time around (only one real failure) */
-    _user_prompt_set = 1;
-
-    for ( ; argc-- > 0 ; ++argv ) {
-	const char *str;
-
-	if ((str = pam_str_skip_prefix(*argv, "issue=")) != NULL) {
-	    issue_file = str;
-	    D(("set issue_file to: %s", issue_file));
-	} else if (!strcmp(*argv,"noesc")) {
-	    parse_esc = 0;
-	    D(("turning off escape parsing by request"));
-	} else
-	    D(("unknown option passed: %s", *argv));
-    }
-
-    if (issue_file == NULL)
-	issue_file = "/etc/issue";
-
-    if ((fp = fopen(issue_file, "r")) == NULL) {
-	pam_syslog(pamh, LOG_ERR, "error opening %s: %m", issue_file);
-	return PAM_SERVICE_ERR;
-    }
-
-    if ((retval = pam_get_item(pamh, PAM_USER_PROMPT, &item)) != PAM_SUCCESS) {
-	fclose(fp);
-	return retval;
-    }
-
-    cur_prompt = item;
-    if (cur_prompt == NULL)
-	cur_prompt = "";
-
-    if (parse_esc)
-	retval = read_issue_quoted(pamh, fp, &issue_prompt);
-    else
-	retval = read_issue_raw(pamh, fp, &issue_prompt);
-
-    fclose(fp);
-
-    if (retval != PAM_SUCCESS)
-	goto out;
-
-    {
-	size_t size = strlen(issue_prompt) + strlen(cur_prompt) + 1;
-	char *new_prompt = realloc(issue_prompt, size);
-
-	if (new_prompt == NULL) {
-	    pam_syslog(pamh, LOG_CRIT, "out of memory");
-	    retval = PAM_BUF_ERR;
-	    goto out;
-	}
-	issue_prompt = new_prompt;
-    }
-
-    strcat(issue_prompt, cur_prompt);
-    retval = pam_set_item(pamh, PAM_USER_PROMPT,
-			      (const void *) issue_prompt);
-  out:
-    _pam_drop(issue_prompt);
-    return (retval == PAM_SUCCESS) ? PAM_IGNORE : retval;
-}
-
-int
-pam_sm_setcred (pam_handle_t *pamh UNUSED, int flags UNUSED,
-		int argc UNUSED, const char **argv UNUSED)
-{
-     return PAM_IGNORE;
-}
 
 static int
 read_issue_raw(pam_handle_t *pamh, FILE *fp, char **prompt)
@@ -251,6 +164,36 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
 	      case 'U':
 		{
 		    unsigned int users = 0;
+#ifdef USE_LOGIND
+		    char **sessions_list;
+		    int sessions = sd_get_sessions(&sessions_list);
+
+		    if (sessions < 0) {
+		      pam_syslog(pamh, LOG_ERR, "logind error: %s",
+				 strerror(-sessions));
+		      _pam_drop(issue);
+		      return PAM_SERVICE_ERR;
+		    } else if (sessions > 0 && sessions_list != NULL) {
+		      int i;
+
+		      for (i = 0; i < sessions; i++) {
+			char *class;
+
+			if (sd_session_get_class(sessions_list[i], &class) < 0 || class == NULL)
+			  continue;
+
+			if (strncmp(class, "user", 4) == 0) // user, user-early, user-incomplete
+			  users++;
+			free(class);
+		      }
+
+		      for (i = 0; i < sessions; i++)
+			free(sessions_list[i]);
+		      free(sessions_list);
+		    } else {
+		      users = sessions;
+		    }
+#else
 		    struct utmp *ut;
 		    setutent();
 		    while ((ut = getutent())) {
@@ -258,6 +201,7 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
 			    ++users;
 		    }
 		    endutent();
+#endif
 		    if (c == 'U')
 			snprintf (buf, sizeof buf, "%u %s", users,
 			          (users == 1) ? "user" : "users");
@@ -303,4 +247,84 @@ read_issue_quoted(pam_handle_t *pamh, FILE *fp, char **prompt)
     return PAM_SUCCESS;
 }
 
-/* end of module definition */
+/* --- authentication management functions (only) --- */
+
+int
+pam_sm_authenticate(pam_handle_t *pamh, int flags UNUSED,
+		    int argc, const char **argv)
+{
+    int retval = PAM_SERVICE_ERR;
+    FILE *fp;
+    const char *issue_file = NULL;
+    int parse_esc = 1;
+    const void *item = NULL;
+    char *issue_prompt = NULL;
+
+   /* If we've already set the prompt, don't set it again */
+    if(_user_prompt_set)
+	return PAM_IGNORE;
+
+    /* We set this here so if we fail below, we won't get further
+       than this next time around (only one real failure) */
+    _user_prompt_set = 1;
+
+    for ( ; argc-- > 0 ; ++argv ) {
+	const char *str;
+
+	if ((str = pam_str_skip_prefix(*argv, "issue=")) != NULL) {
+	    issue_file = str;
+	    D(("set issue_file to: %s", issue_file));
+	} else if (!strcmp(*argv,"noesc")) {
+	    parse_esc = 0;
+	    D(("turning off escape parsing by request"));
+	} else
+	    D(("unknown option passed: %s", *argv));
+    }
+
+    if (issue_file == NULL)
+	issue_file = "/etc/issue";
+
+    if ((fp = fopen(issue_file, "r")) == NULL) {
+	pam_syslog(pamh, LOG_ERR, "error opening %s: %m", issue_file);
+	return PAM_SERVICE_ERR;
+    }
+
+    if ((retval = pam_get_item(pamh, PAM_USER_PROMPT, &item)) != PAM_SUCCESS) {
+	fclose(fp);
+	return retval;
+    }
+
+    if (parse_esc)
+	retval = read_issue_quoted(pamh, fp, &issue_prompt);
+    else
+	retval = read_issue_raw(pamh, fp, &issue_prompt);
+
+    fclose(fp);
+
+    if (retval != PAM_SUCCESS)
+	goto out;
+
+    if (item != NULL) {
+	const char *cur_prompt = item;
+	char *new_prompt;
+	if (asprintf(&new_prompt, "%s%s", issue_prompt, cur_prompt) < 0) {
+	    pam_syslog(pamh, LOG_CRIT, "out of memory");
+	    retval = PAM_BUF_ERR;
+	    goto out;
+	}
+	issue_prompt = new_prompt;
+    }
+
+    retval = pam_set_item(pamh, PAM_USER_PROMPT,
+			      (const void *) issue_prompt);
+  out:
+    _pam_drop(issue_prompt);
+    return (retval == PAM_SUCCESS) ? PAM_IGNORE : retval;
+}
+
+int
+pam_sm_setcred(pam_handle_t *pamh UNUSED, int flags UNUSED,
+	       int argc UNUSED, const char **argv UNUSED)
+{
+     return PAM_IGNORE;
+}

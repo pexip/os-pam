@@ -26,25 +26,266 @@
 #include <security/pam_ext.h>
 #include <security/pam_modutil.h>
 
+struct dir_spec {
+   int fd;
+   char *path;
+};
+
 static unsigned long u_mask = 0022;
-static unsigned long home_mode = 0;
-static char skeldir[BUFSIZ] = "/etc/skel";
+static const char *skeldir = "/etc/skel";
+
+static int create_homedir(struct dir_spec *, const struct passwd *, mode_t,
+			  const char *, const char *);
+
+static int
+dir_spec_open(struct dir_spec *spec, const char *path)
+{
+   spec->path = strdup(path);
+   if (spec->path == NULL)
+      goto fail;
+
+   spec->fd = open(spec->path, O_DIRECTORY);
+   if (spec->fd == -1)
+   {
+      free(spec->path);
+      goto fail;
+   }
+
+   return 0;
+fail:
+   spec->path = NULL;
+   spec->fd = -1;
+   return -1;
+}
+
+static int
+dir_spec_at(struct dir_spec *spec, struct dir_spec *parent, const char *path)
+{
+   if (asprintf(&spec->path, "%s/%s", parent->path, path) < 0)
+      goto fail;
+   spec->fd = openat(parent->fd, path, O_DIRECTORY | O_NOFOLLOW);
+   if (spec->fd == -1)
+   {
+      free(spec->path);
+      goto fail;
+   }
+
+   return 0;
+fail:
+   spec->path = NULL;
+   spec->fd = -1;
+   return -1;
+}
+
+static void
+dir_spec_close(struct dir_spec *spec)
+{
+   if (spec->fd != -1)
+      close(spec->fd);
+   free(spec->path);
+}
+
+static int
+copy_entry(struct dir_spec *parent, const struct passwd *pwd, mode_t dir_mode,
+	   const char *source, struct dirent *dent)
+{
+   char remark[BUFSIZ];
+   int srcfd = -1, destfd = -1;
+   int res;
+   int retval = PAM_SESSION_ERR;
+   struct stat st;
+   char *newsource = NULL;
+
+   /* Determine what kind of file it is. */
+   if (asprintf(&newsource, "%s/%s", source, dent->d_name) < 0)
+   {
+      pam_syslog(NULL, LOG_CRIT, "asprintf failed for 'newsource'");
+      retval = PAM_BUF_ERR;
+      goto go_out;
+   }
+
+   if (lstat(newsource, &st) != 0)
+   {
+      retval = PAM_SUCCESS;
+      goto go_out;
+   }
+
+   /* If it's a directory, recurse. */
+   if (S_ISDIR(st.st_mode))
+   {
+      retval = create_homedir(parent, pwd, dir_mode & (~u_mask), newsource,
+			      dent->d_name);
+      goto go_out;
+   }
+
+   /* If it's a symlink, create a new link. */
+   if (S_ISLNK(st.st_mode))
+   {
+      int pointedlen = 0;
+#ifndef PATH_MAX
+      char *pointed = NULL;
+      {
+	 int size = 100;
+
+	 while (1)
+	 {
+	    pointed = malloc(size);
+	    if (pointed == NULL)
+	    {
+	       retval = PAM_BUF_ERR;
+	       goto go_out;
+	    }
+	    pointedlen = readlink(newsource, pointed, size);
+	    if (pointedlen < 0) break;
+	    if (pointedlen < size) break;
+	    free(pointed);
+	    size *= 2;
+	 }
+      }
+      if (pointedlen < 0)
+	 free(pointed);
+      else
+	 pointed[pointedlen] = 0;
+#else
+      char pointed[PATH_MAX] = {};
+
+      pointedlen = readlink(newsource, pointed, sizeof(pointed) - 1);
+#endif
+
+      if (pointedlen >= 0)
+      {
+	 if (symlinkat(pointed, parent->fd, dent->d_name) != 0)
+         {
+	    retval = errno == EEXIST ? PAM_SUCCESS : PAM_PERM_DENIED;
+
+	    if (retval != PAM_SUCCESS)
+	       pam_syslog(NULL, LOG_DEBUG, "unable to create link %s/%s: %m",
+			  parent->path, dent->d_name);
+#ifndef PATH_MAX
+	    free(pointed);
+#endif
+	    goto go_out;
+	 }
+
+	 if (fchownat(parent->fd, dent->d_name, pwd->pw_uid, pwd->pw_gid,
+		      AT_SYMLINK_NOFOLLOW) != 0)
+	 {
+	    pam_syslog(NULL, LOG_DEBUG,
+		       "unable to change perms on link %s/%s: %m",
+		       parent->path, dent->d_name);
+#ifndef PATH_MAX
+	    free(pointed);
+#endif
+	    retval = PAM_PERM_DENIED;
+	    goto go_out;
+	 }
+#ifndef PATH_MAX
+	 free(pointed);
+#endif
+      }
+      retval = PAM_SUCCESS;
+      goto go_out;
+   }
+
+   /* If it's not a regular file, it's probably not a good idea to create
+    * the new device node, FIFO, or whatever it is. */
+   if (!S_ISREG(st.st_mode))
+   {
+      retval = PAM_SUCCESS;
+      goto go_out;
+   }
+
+   /* Open the source file */
+   if ((srcfd = open(newsource, O_RDONLY)) < 0 || fstat(srcfd, &st) != 0)
+   {
+      pam_syslog(NULL, LOG_DEBUG,
+		 "unable to open or stat src file %s: %m", newsource);
+      retval = PAM_PERM_DENIED;
+      goto go_out;
+   }
+
+   /* Open the dest file */
+   if ((destfd = openat(parent->fd, dent->d_name,
+			O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0600)) < 0)
+   {
+      retval = errno == EEXIST ? PAM_SUCCESS : PAM_PERM_DENIED;
+      if (retval != PAM_SUCCESS)
+         pam_syslog(NULL, LOG_DEBUG, "unable to open dest file %s/%s: %m",
+		    parent->path, dent->d_name);
+      goto go_out;
+   }
+
+   /* Set the proper ownership and permissions for the module. We make
+      the file a+w and then mask it with the set mask. This preserves
+      execute bits */
+   if (fchmod(destfd, (st.st_mode | 0222) & (~u_mask)) != 0 ||
+       fchown(destfd, pwd->pw_uid, pwd->pw_gid) != 0)
+   {
+      pam_syslog(NULL, LOG_DEBUG, "unable to change perms on copy %s/%s: %m",
+		 parent->path, dent->d_name);
+      retval = PAM_PERM_DENIED;
+      goto go_out;
+   }
+
+   /* Copy the file */
+   do
+   {
+      res = pam_modutil_read(srcfd, remark, sizeof(remark));
+
+      if (res == 0)
+	 continue;
+
+      if (res > 0)
+      {
+	 if (pam_modutil_write(destfd, remark, res) == res)
+	    continue;
+      }
+
+      /* If we get here, pam_modutil_read returned a -1 or
+	 pam_modutil_write returned something unexpected. */
+      pam_syslog(NULL, LOG_DEBUG, "unable to perform IO: %m");
+      retval = PAM_PERM_DENIED;
+      goto go_out;
+   }
+   while (res != 0);
+
+   retval = PAM_SUCCESS;
+
+ go_out:
+   if (srcfd >= 0)
+      close(srcfd);
+   if (destfd >= 0)
+      close(destfd);
+
+   free(newsource);
+
+   return retval;
+}
 
 /* Do the actual work of creating a home dir */
 static int
-create_homedir(const struct passwd *pwd,
-	       const char *source, const char *dest)
+create_homedir(struct dir_spec *parent, const struct passwd *pwd,
+	       mode_t dir_mode, const char *source, const char *dest)
 {
-   char remark[BUFSIZ];
-   DIR *d;
+   DIR *d = NULL;
    struct dirent *dent;
+   struct dir_spec base;
    int retval = PAM_SESSION_ERR;
 
    /* Create the new directory */
-   if (mkdir(dest, 0700) && errno != EEXIST)
+   if (mkdirat(parent->fd, dest, 0700))
    {
-      pam_syslog(NULL, LOG_ERR, "unable to create directory %s: %m", dest);
+      if (errno == EEXIST)
+	 return PAM_SUCCESS;
+      pam_syslog(NULL, LOG_ERR, "unable to create directory %s/%s: %m",
+		 parent->path, dest);
       return PAM_PERM_DENIED;
+   }
+
+   if (dir_spec_at(&base, parent, dest) < 0)
+   {
+      retval = PAM_PERM_DENIED;
+      goto go_out;
    }
 
    /* See if we need to copy the skel dir over. */
@@ -65,290 +306,60 @@ create_homedir(const struct passwd *pwd,
 
    for (dent = readdir(d); dent != NULL; dent = readdir(d))
    {
-      int srcfd;
-      int destfd;
-      int res;
-      struct stat st;
-#ifndef PATH_MAX
-      char *newsource = NULL, *newdest = NULL;
-      /* track length of buffers */
-      int nslen = 0, ndlen = 0;
-      int slen = strlen(source), dlen = strlen(dest);
-#else
-      char newsource[PATH_MAX], newdest[PATH_MAX];
-#endif
-
       /* Skip some files.. */
       if (strcmp(dent->d_name,".") == 0 ||
 	  strcmp(dent->d_name,"..") == 0)
 	 continue;
 
-      /* Determine what kind of file it is. */
-#ifndef PATH_MAX
-      nslen = slen + strlen(dent->d_name) + 2;
-
-      if (nslen <= 0)
-	{
-	  retval = PAM_BUF_ERR;
-	  goto go_out;
-	}
-
-      if ((newsource = malloc(nslen)) == NULL)
-	{
-	  retval = PAM_BUF_ERR;
-	  goto go_out;
-	}
-
-      sprintf(newsource, "%s/%s", source, dent->d_name);
-#else
-      snprintf(newsource, sizeof(newsource), "%s/%s", source, dent->d_name);
-#endif
-
-      if (lstat(newsource, &st) != 0)
-#ifndef PATH_MAX
-      {
-	      free(newsource);
-	      newsource = NULL;
-         continue;
-      }
-#else
-      continue;
-#endif
-
-
-      /* We'll need the new file's name. */
-#ifndef PATH_MAX
-      ndlen = dlen + strlen(dent->d_name)+2;
-
-      if (ndlen <= 0)
-	{
-	  retval = PAM_BUF_ERR;
-	  goto go_out;
-	}
-
-      if ((newdest = malloc(ndlen)) == NULL)
-	{
-	  free (newsource);
-	  retval = PAM_BUF_ERR;
-	  goto go_out;
-	}
-
-      sprintf (newdest, "%s/%s", dest, dent->d_name);
-#else
-      snprintf (newdest, sizeof (newdest), "%s/%s", dest, dent->d_name);
-#endif
-
-      /* If it's a directory, recurse. */
-      if (S_ISDIR(st.st_mode))
-      {
-         retval = create_homedir(pwd, newsource, newdest);
-
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-
-         if (retval != PAM_SUCCESS)
-	   {
-	     closedir(d);
-	     goto go_out;
-	   }
-         continue;
-      }
-
-      /* If it's a symlink, create a new link. */
-      if (S_ISLNK(st.st_mode))
-      {
-	 int pointedlen = 0;
-#ifndef PATH_MAX
-	 char *pointed = NULL;
-           {
-		   int size = 100;
-
-		   while (1) {
-			   pointed = malloc(size);
-			   if (pointed == NULL) {
-				   free(newsource);
-				   free(newdest);
-				   return PAM_BUF_ERR;
-			   }
-			   pointedlen = readlink(newsource, pointed, size);
-			   if (pointedlen < 0) break;
-			   if (pointedlen < size) break;
-			   free(pointed);
-			   size *= 2;
-		   }
-	   }
-	   if (pointedlen < 0)
-		   free(pointed);
-	   else
-		   pointed[pointedlen] = 0;
-#else
-         char pointed[PATH_MAX];
-         memset(pointed, 0, sizeof(pointed));
-
-         pointedlen = readlink(newsource, pointed, sizeof(pointed) - 1);
-#endif
-
-	 if (pointedlen >= 0) {
-            if(symlink(pointed, newdest) == 0)
-            {
-               if (lchown(newdest, pwd->pw_uid, pwd->pw_gid) != 0)
-               {
-                   pam_syslog(NULL, LOG_DEBUG,
-			      "unable to change perms on link %s: %m", newdest);
-                   closedir(d);
-#ifndef PATH_MAX
-		   free(pointed);
-		   free(newsource);
-		   free(newdest);
-#endif
-                   return PAM_PERM_DENIED;
-               }
-            }
-#ifndef PATH_MAX
-	    free(pointed);
-#endif
-         }
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-         continue;
-      }
-
-      /* If it's not a regular file, it's probably not a good idea to create
-       * the new device node, FIFO, or whatever it is. */
-      if (!S_ISREG(st.st_mode))
-      {
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-         continue;
-      }
-
-      /* Open the source file */
-      if ((srcfd = open(newsource, O_RDONLY)) < 0 || fstat(srcfd, &st) != 0)
-      {
-         pam_syslog(NULL, LOG_DEBUG,
-		    "unable to open or stat src file %s: %m", newsource);
-         if (srcfd >= 0)
-            close(srcfd);
-         closedir(d);
-
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-
-	 return PAM_PERM_DENIED;
-      }
-
-      /* Open the dest file */
-      if ((destfd = open(newdest, O_WRONLY | O_TRUNC | O_CREAT, 0600)) < 0)
-      {
-         pam_syslog(NULL, LOG_DEBUG,
-		    "unable to open dest file %s: %m", newdest);
-	 close(srcfd);
-	 closedir(d);
-
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-	 return PAM_PERM_DENIED;
-      }
-
-      /* Set the proper ownership and permissions for the module. We make
-         the file a+w and then mask it with the set mask. This preserves
-	 execute bits */
-      if (fchmod(destfd, (st.st_mode | 0222) & (~u_mask)) != 0 ||
-	  fchown(destfd, pwd->pw_uid, pwd->pw_gid) != 0)
-      {
-         pam_syslog(NULL, LOG_DEBUG,
-		    "unable to change perms on copy %s: %m", newdest);
-         close(srcfd);
-         close(destfd);
-         closedir(d);
-
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-
-	 return PAM_PERM_DENIED;
-      }
-
-      /* Copy the file */
-      do
-      {
-	 res = pam_modutil_read(srcfd, remark, sizeof(remark));
-
-	 if (res == 0)
-	     continue;
-
-	 if (res > 0) {
-	     if (pam_modutil_write(destfd, remark, res) == res)
-		continue;
-	 }
-
-	 /* If we get here, pam_modutil_read returned a -1 or
-	    pam_modutil_write returned something unexpected. */
-	 pam_syslog(NULL, LOG_DEBUG, "unable to perform IO: %m");
-	 close(srcfd);
-	 close(destfd);
-	 closedir(d);
-
-#ifndef PATH_MAX
-	 free(newsource); newsource = NULL;
-	 free(newdest); newdest = NULL;
-#endif
-
-	 return PAM_PERM_DENIED;
-      }
-      while (res != 0);
-      close(srcfd);
-      close(destfd);
-
-#ifndef PATH_MAX
-      free(newsource); newsource = NULL;
-      free(newdest); newdest = NULL;
-#endif
-
+      retval = copy_entry(&base, pwd, dir_mode, source, dent);
+      if (retval != PAM_SUCCESS)
+	 goto go_out;
    }
-   closedir(d);
 
    retval = PAM_SUCCESS;
 
  go_out:
+   if (d != NULL)
+      closedir(d);
 
-   if (chmod(dest, 0777 & (~u_mask)) != 0 ||
-       chown(dest, pwd->pw_uid, pwd->pw_gid) != 0)
+   if (fchmodat(parent->fd, dest, dir_mode, AT_SYMLINK_NOFOLLOW) != 0 ||
+       fchownat(parent->fd, dest, pwd->pw_uid, pwd->pw_gid,
+		AT_SYMLINK_NOFOLLOW) != 0)
    {
       pam_syslog(NULL, LOG_DEBUG,
-		 "unable to change perms on directory %s: %m", dest);
-      return PAM_PERM_DENIED;
+		 "unable to change perms on directory %s/%s: %m",
+		 parent->path, dest);
+      retval = PAM_PERM_DENIED;
    }
+
+   dir_spec_close(&base);
 
    return retval;
 }
 
 static int
-create_homedir_helper(const struct passwd *_pwd,
+create_homedir_helper(const struct passwd *_pwd, mode_t home_mode,
 		      const char *_skeldir, const char *_homedir)
 {
    int retval = PAM_SESSION_ERR;
+   struct dir_spec base;
+   char *cp = strrchr(_homedir, '/');
 
-   retval = create_homedir(_pwd, _skeldir, _homedir);
-
-   if (chmod(_homedir, home_mode) != 0)
+   *cp = '\0';
+   retval = dir_spec_open(&base, cp == _homedir ? "/" : _homedir);
+   if (retval < 0)
    {
       pam_syslog(NULL, LOG_DEBUG,
-		 "unable to change perms on home directory %s: %m", _homedir);
-      return PAM_PERM_DENIED;
+                 "unable to open parent of home directory %s: %m", _homedir);
+      retval = PAM_PERM_DENIED;
+      goto go_out;
    }
+   *cp = '/';
 
+   retval = create_homedir(&base, _pwd, home_mode, _skeldir, cp + 1);
+
+ go_out:
+   dir_spec_close(&base);
    return retval;
 }
 
@@ -386,6 +397,7 @@ main(int argc, char *argv[])
    struct passwd *pwd;
    struct stat st;
    char *eptr;
+   unsigned long home_mode = 0;
 
    if (argc < 2) {
 	fprintf(stderr, "Usage: %s <username> [<umask> [<skeldir> [<home_mode>]]]\n", argv[0]);
@@ -408,11 +420,7 @@ main(int argc, char *argv[])
    }
 
    if (argc >= 4) {
-	if (strlen(argv[3]) >= sizeof(skeldir)) {
-		pam_syslog(NULL, LOG_ERR, "Too long skeldir path.");
-		return PAM_SESSION_ERR;
-	}
-	strcpy(skeldir, argv[3]);
+	skeldir = argv[3];
    }
 
    if (argc >= 5) {
@@ -427,6 +435,11 @@ main(int argc, char *argv[])
    if (home_mode == 0)
       home_mode = 0777 & ~u_mask;
 
+   if (pwd->pw_dir[0] != '/') {
+      pam_syslog(NULL, LOG_ERR, "Relative user home directory %s", pwd->pw_dir);
+      return PAM_SESSION_ERR;
+   }
+
    /* Stat the home directory, if something exists then we assume it is
       correct and return a success */
    if (stat(pwd->pw_dir, &st) == 0)
@@ -435,5 +448,5 @@ main(int argc, char *argv[])
    if (make_parent_dirs(pwd->pw_dir, 0) != PAM_SUCCESS)
 	return PAM_PERM_DENIED;
 
-   return create_homedir_helper(pwd, skeldir, pwd->pw_dir);
+   return create_homedir_helper(pwd, home_mode, skeldir, pwd->pw_dir);
 }

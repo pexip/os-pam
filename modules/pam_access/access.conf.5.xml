@@ -1,8 +1,4 @@
-<?xml version="1.0" encoding='UTF-8'?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
-        "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
-
-<refentry id="access.conf">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="access.conf">
 
   <refmeta>
     <refentrytitle>access.conf</refentrytitle>
@@ -16,7 +12,7 @@
   </refnamediv>
 
 
-  <refsect1 id='access.conf-description'>
+  <refsect1 xml:id="access.conf-description">
     <title>DESCRIPTION</title>
     <para>
       The <filename>/etc/security/access.conf</filename> file specifies
@@ -67,10 +63,10 @@
     <para>
       The second field, the
       <replaceable>users</replaceable>/<replaceable>group</replaceable>
-      field, should be a list of one or more login names, group names, or
+      field, should be a list of one or more login names, group names, uid, gid, or
       <emphasis>ALL</emphasis> (which always matches). To differentiate
       user entries from group entries, group entries should be written
-      with brackets, e.g. <emphasis>(group)</emphasis>.
+      with brackets, e.g. <emphasis>(group)</emphasis> or <emphasis>(gid)</emphasis>.
     </para>
 
     <para>
@@ -83,17 +79,12 @@
       with network mask (where network mask can be a decimal number or an
       internet address also), <emphasis>ALL</emphasis> (which always matches)
       or <emphasis>LOCAL</emphasis>. The <emphasis>LOCAL</emphasis>
-      keyword matches if and only if
-      <citerefentry><refentrytitle>pam_get_item</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
-      when called with an <parameter>item_type</parameter> of
-      <emphasis>PAM_RHOST</emphasis>, returns <code>NULL</code> or an
-      empty string (and therefore the
-      <replaceable>origins</replaceable> field is compared against the
-      return value of
-      <citerefentry><refentrytitle>pam_get_item</refentrytitle><manvolnum>3</manvolnum></citerefentry>
-      called with an <parameter>item_type</parameter> of
-      <emphasis>PAM_TTY</emphasis> or, absent that,
-      <emphasis>PAM_SERVICE</emphasis>).
+      keyword matches when the user connects without a network
+      connection (e.g., <emphasis>su</emphasis>,
+      <emphasis>login</emphasis>). A connection through the loopback
+      device (e.g., <command>ssh user@localhost</command>) is
+      considered a network connection, and thus, the
+      <emphasis>LOCAL</emphasis> keyword does not match.
     </para>
 
     <para>
@@ -126,7 +117,7 @@
 
   </refsect1>
 
-  <refsect1 id="access.conf-examples">
+  <refsect1 xml:id="access.conf-examples">
     <title>EXAMPLES</title>
     <para>
       These are some example lines which might be specified in
@@ -135,7 +126,7 @@
 
     <para>
       User <emphasis>root</emphasis> should be allowed to get access via
-      <emphasis>cron</emphasis>, X11 terminal <emphasis remap='I'>:0</emphasis>,
+      <emphasis>cron</emphasis>, X11 terminal <emphasis remap="I">:0</emphasis>,
       <emphasis>tty1</emphasis>, ..., <emphasis>tty5</emphasis>,
       <emphasis>tty6</emphasis>.
     </para>
@@ -180,6 +171,12 @@
     <para>-:root:ALL</para>
 
     <para>
+      A user with uid <emphasis>1003</emphasis> and a group with gid
+      <emphasis>1000</emphasis> should be allowed to get access
+      from all other sources.
+    </para>
+    <para>+:(1000) 1003:ALL</para>
+    <para>
       User <emphasis>foo</emphasis> and members of netgroup
       <emphasis>admins</emphasis> should be allowed to get access
       from all sources. This will only work if netgroup service is available.
@@ -191,6 +188,12 @@
       should get access from IPv6 host address.
     </para>
     <para>+:john foo:2001:db8:0:101::1</para>
+
+    <para>
+      User <emphasis>john</emphasis> and <emphasis>foo</emphasis>
+      should get access from IPv6 link local host address.
+    </para>
+    <para>+:john foo:fe80::de95:818c:1b55:7e42%eth1</para>
 
     <para>
       User <emphasis>john</emphasis> should get access from IPv6 net/mask.
@@ -216,7 +219,7 @@
 
   </refsect1>
 
-  <refsect1 id="access.conf-notes">
+  <refsect1 xml:id="access.conf-notes">
     <title>NOTES</title>
     <para>
       The default separators of list items in a field are space, ',', and tabulator
@@ -226,9 +229,13 @@
       item and the line will be most probably ignored. For this reason, it is not
       recommended to put spaces around the ':' characters.
     </para>
+    <para>
+      An IPv6 link local host address must contain the interface
+      identifier. IPv6 link local network/netmask is not supported.
+    </para>
   </refsect1>
 
-  <refsect1 id="access.conf-see_also">
+  <refsect1 xml:id="access.conf-see_also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry><refentrytitle>pam_access</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -237,7 +244,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="access.conf-author">
+  <refsect1 xml:id="access.conf-author">
     <title>AUTHORS</title>
     <para>
       Original <citerefentry><refentrytitle>login.access</refentrytitle><manvolnum>5</manvolnum></citerefentry>

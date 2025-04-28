@@ -5,6 +5,7 @@
  */
 
 #include "pam_private.h"
+#include "pam_inline.h"
 
 #include <stdlib.h>
 
@@ -12,9 +13,9 @@ int pam_end(pam_handle_t *pamh, int pam_status)
 {
     int ret;
 
-    D(("entering pam_end()"));
+    D(("called."));
 
-    IF_NO_PAMH("pam_end", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from module!?"));
@@ -25,7 +26,7 @@ int pam_end(pam_handle_t *pamh, int pam_status)
     _pam_audit_end(pamh, pam_status);
 #endif
 
-    /* first liberate the modules (it is not inconcevible that the
+    /* first liberate the modules (it is not inconceivable that the
        modules may need to use the service_name etc. to clean up) */
 
     _pam_free_data(pamh, pam_status);
@@ -41,34 +42,34 @@ int pam_end(pam_handle_t *pamh, int pam_status)
 
     _pam_drop_env(pamh);                      /* purge the environment */
 
-    _pam_overwrite(pamh->authtok);            /* blank out old token */
+    pam_overwrite_string(pamh->authtok);      /* blank out old token */
     _pam_drop(pamh->authtok);
 
-    _pam_overwrite(pamh->oldauthtok);         /* blank out old token */
+    pam_overwrite_string(pamh->oldauthtok);   /* blank out old token */
     _pam_drop(pamh->oldauthtok);
 
-    _pam_overwrite(pamh->former.prompt);
+    pam_overwrite_string(pamh->former.prompt);
     _pam_drop(pamh->former.prompt);           /* drop saved prompt */
 
-    _pam_overwrite(pamh->service_name);
+    pam_overwrite_string(pamh->service_name);
     _pam_drop(pamh->service_name);
 
-    _pam_overwrite(pamh->user);
+    pam_overwrite_string(pamh->user);
     _pam_drop(pamh->user);
 
-    _pam_overwrite(pamh->confdir);
+    pam_overwrite_string(pamh->confdir);
     _pam_drop(pamh->confdir);
 
-    _pam_overwrite(pamh->prompt);
+    pam_overwrite_string(pamh->prompt);
     _pam_drop(pamh->prompt);                  /* prompt for pam_get_user() */
 
-    _pam_overwrite(pamh->tty);
+    pam_overwrite_string(pamh->tty);
     _pam_drop(pamh->tty);
 
-    _pam_overwrite(pamh->rhost);
+    pam_overwrite_string(pamh->rhost);
     _pam_drop(pamh->rhost);
 
-    _pam_overwrite(pamh->ruser);
+    pam_overwrite_string(pamh->ruser);
     _pam_drop(pamh->ruser);
 
     _pam_drop(pamh->pam_conversation);
@@ -76,23 +77,23 @@ int pam_end(pam_handle_t *pamh, int pam_status)
 
     _pam_drop(pamh->former.substates);
 
-    _pam_overwrite(pamh->xdisplay);
+    pam_overwrite_string(pamh->xdisplay);
     _pam_drop(pamh->xdisplay);
 
-    _pam_overwrite(pamh->xauth.name);
+    pam_overwrite_string(pamh->xauth.name);
     _pam_drop(pamh->xauth.name);
-    _pam_overwrite_n(pamh->xauth.data, (unsigned int)pamh->xauth.datalen);
+    pam_overwrite_n(pamh->xauth.data, (unsigned int)pamh->xauth.datalen);
     _pam_drop(pamh->xauth.data);
-    _pam_overwrite_n((char *)&pamh->xauth, sizeof(pamh->xauth));
+    pam_overwrite_object(&pamh->xauth);
 
-    _pam_overwrite(pamh->authtok_type);
+    pam_overwrite_string(pamh->authtok_type);
     _pam_drop(pamh->authtok_type);
 
     /* and finally liberate the memory for the pam_handle structure */
 
     _pam_drop(pamh);
 
-    D(("exiting pam_end() successfully"));
+    D(("exiting successfully"));
 
     return PAM_SUCCESS;
 }

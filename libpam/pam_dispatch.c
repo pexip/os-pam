@@ -18,8 +18,8 @@
 
 /* impression codes - this gives some sense to the logical choices */
 #define _PAM_UNDEF     0
-#define _PAM_POSITIVE +1
-#define _PAM_NEGATIVE -1
+#define _PAM_POSITIVE (+1)
+#define _PAM_NEGATIVE (-1)
 
 /* frozen chain required codes */
 #define _PAM_PLEASE_FREEZE  0
@@ -28,7 +28,7 @@
 
 /*
  * walk a stack of modules.  Interpret the administrator's instructions
- * when combining the return code of each module.
+ * when combining the return codes of each module.
  */
 
 static int _pam_dispatch_aux(pam_handle_t *pamh, int flags, struct handler *h,
@@ -37,7 +37,7 @@ static int _pam_dispatch_aux(pam_handle_t *pamh, int flags, struct handler *h,
     int depth, impression, status, skip_depth, prev_level, stack_level;
     struct _pam_substack_state *substates = NULL;
 
-    IF_NO_PAMH("_pam_dispatch_aux", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (h == NULL) {
         const void *service=NULL;
@@ -240,7 +240,7 @@ static int _pam_dispatch_aux(pam_handle_t *pamh, int flags, struct handler *h,
 	    if ( impression != _PAM_NEGATIVE ) {
 		impression = _PAM_NEGATIVE;
 	        /* Don't return with PAM_IGNORE as status */
-	        if ( retval == PAM_IGNORE )
+		if ( retval == PAM_IGNORE )
 		    status = PAM_MUST_FAIL_CODE;
 		else
 		    status = retval;
@@ -299,7 +299,7 @@ static int _pam_dispatch_aux(pam_handle_t *pamh, int flags, struct handler *h,
 	}
 	continue;
 
-decision_made:     /* by getting  here we have made a decision */
+decision_made:     /* by getting here we have made a decision */
 	while (h->next != NULL && h->next->stack_level >= stack_level) {
 	    h = h->next;
 	    ++depth;
@@ -337,7 +337,7 @@ int _pam_dispatch(pam_handle_t *pamh, int flags, int choice)
     int retval = PAM_SYSTEM_ERR, use_cached_chain;
     _pam_boolean resumed;
 
-    IF_NO_PAMH("_pam_dispatch", pamh, PAM_SYSTEM_ERR);
+    IF_NO_PAMH(pamh, PAM_SYSTEM_ERR);
 
     if (__PAM_FROM_MODULE(pamh)) {
 	D(("called from a module!?"));
@@ -429,7 +429,8 @@ int _pam_dispatch(pam_handle_t *pamh, int flags, int choice)
 
     /* Should we recall where to resume next time? */
     if (retval == PAM_INCOMPLETE) {
-	D(("module [%d] returned PAM_INCOMPLETE"));
+	D(("module [%s] returned PAM_INCOMPLETE",
+	   pamh->mod_name ? pamh->mod_name : "(NULL)"));
 	pamh->former.choice = choice;
     } else {
 	pamh->former.choice = PAM_NOT_STACKED;

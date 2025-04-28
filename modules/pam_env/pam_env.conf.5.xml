@@ -1,13 +1,10 @@
-<?xml version="1.0" encoding='UTF-8'?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
-        "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
-
-<refentry id="pam_env.conf">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="pam_env.conf">
 
   <refmeta>
     <refentrytitle>pam_env.conf</refentrytitle>
     <manvolnum>5</manvolnum>
-    <refmiscinfo class="sectdesc">Linux-PAM Manual</refmiscinfo>
+    <refmiscinfo class="source">Linux-PAM</refmiscinfo>
+    <refmiscinfo class="manual">Linux-PAM Manual</refmiscinfo>
   </refmeta>
 
   <refnamediv>
@@ -17,10 +14,18 @@
   </refnamediv>
 
 
-  <refsect1 id='pam_env.conf-description'>
+  <refsect1 xml:id="pam_env.conf-description">
     <title>DESCRIPTION</title>
 
-    <para>
+    <para condition="with_vendordir">
+      The <filename>%vendordir%/security/pam_env.conf</filename> and
+      <filename>/etc/security/pam_env.conf</filename> files specify
+      the environment variables to be set, unset or modified by
+      <citerefentry><refentrytitle>pam_env</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+      When someone logs in, these files are read and the environment
+      variables are set according.
+    </para>
+    <para condition="without_vendordir">
       The <filename>/etc/security/pam_env.conf</filename> file specifies
       the environment variables to be set, unset or modified by
       <citerefentry><refentrytitle>pam_env</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
@@ -33,7 +38,7 @@
       administrator to set the value of the variable  to some default
       value, if none is supplied then the empty string is assumed. The
       OVERRIDE option tells pam_env that it should enter in its value
-      (overriding the default value) if there is one to use. OVERRIDE is
+      (overriding the default value) if there is one to use. When OVERRIDE is
       not used, "" is assumed and no override will be done.
     </para>
     <para>
@@ -53,7 +58,7 @@
       For example, ${HOME} is used below several times, but
       many PAM applications don't make it available by the time you need it.
       The special variables @{HOME} and @{SHELL} are expanded to the values
-      for the user from his <emphasis>passwd</emphasis> entry.
+      for the user from the corresponding <emphasis>passwd</emphasis> entry.
     </para>
 
     <para>
@@ -61,7 +66,15 @@
       at front) can be used to mark this line as a comment line.
     </para>
 
-    <para>
+    <para condition="with_vendordir">
+      The <filename>%vendordir%/environment</filename> and <filename>/etc/environment</filename> files specify
+      the environment variables to be set. These files must consist of simple
+      <emphasis>NAME=VALUE</emphasis> pairs on separate lines.
+      The <citerefentry><refentrytitle>pam_env</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      module will read these files after the <filename>pam_env.conf</filename>
+      file.
+    </para>
+    <para condition="without_vendordir">
       The <filename>/etc/environment</filename> file specifies
       the environment variables to be set. The file must consist of simple
       <emphasis>NAME=VALUE</emphasis> pairs on separate lines.
@@ -71,7 +84,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="pam_env.conf-examples">
+  <refsect1 xml:id="pam_env.conf-examples">
     <title>EXAMPLES</title>
     <para>
       These are some example lines which might be specified in
@@ -117,7 +130,7 @@
     </programlisting>
   </refsect1>
 
-  <refsect1 id="pam_env.conf-see_also">
+  <refsect1 xml:id="pam_env.conf-see_also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry><refentrytitle>pam_env</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -127,7 +140,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="pam_env.conf-author">
+  <refsect1 xml:id="pam_env.conf-author">
     <title>AUTHOR</title>
     <para>
       pam_env was written by Dave Kinchlea &lt;kinch@kinch.ark.com&gt;.

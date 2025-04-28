@@ -31,9 +31,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
 
 #include <stdio.h>
 #include <unistd.h>
@@ -78,7 +76,7 @@ main (void)
     {
       fprintf (stderr,
 	       "pam_getenvlist (pamh) does not return pointer to NULL\n");
-      temp = *ptr;
+      temp = ptr ? *ptr : NULL;
       var = 0;
       while (temp)
 	{
@@ -129,6 +127,8 @@ main (void)
 	}
       free (ptr);
     }
+
+  pam_end (pamh, retval);
 
   return 0;
 }

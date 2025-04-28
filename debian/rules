@@ -13,26 +13,36 @@ DEB_HOST_MULTIARCH	?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 LC_COLLATE=C
 export LC_COLLATE
 
-export QUILT_PATCH_DIR = debian/patches-applied
 
 d = $(CURDIR)/debian
 dl = $(d)/local
 
 %:
-	dh $@ --with quilt,autoreconf
+	dh $@
 
-# avoid libaudit-dev when bootstrapping
+
+# avoid libaudit-dev and libsystemd-dev when bootstrapping
 ifneq (,$(filter stage1,$(DEB_BUILD_PROFILES)))
-  CONFIGURE_OPTS += --disable-audit
-endif  
+  meson_OPTS += -Daudit=disabled -Dlogind=disabled
+endif
+packages := $(shell dh_listpackages)
+
+ifneq (,$(filter libpam-doc libpam-runtime,$(packages)))
+meson_OPTS += -Ddocs=enabled
+endif
+
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-static --enable-shared \
-		--libdir=/lib/$(DEB_HOST_MULTIARCH) \
-		--enable-isadir=/lib/security \
-		--with-systemdunitdir=/usr/lib/systemd/system \
-		--disable-nis \
-		$(CONFIGURE_OPTS)
+	# Explicitly set libdir, sbindir to avoid upstream's override logic.
+	dh_auto_configure  -- \
+--default-library=both \
+		--libdir=/usr/lib/$(DEB_HOST_MULTIARCH) \
+		--sbindir=/usr/sbin \
+		-Disadir=/usr/lib/security \
+		-Dsystemdunitdir=/usr/lib/systemd/system \
+		-Dnis=disabled \
+		-Dusergroups=true \
+		$(meson_OPTS)
 
 # .install files don't have "except for" handling, so we need to exclude
 # our module that doesn't match right here
@@ -66,6 +76,9 @@ override_dh_installman:
 override_dh_fixperms:
 	dh_fixperms
 ifneq (,$(findstring libpam-modules, $(shell dh_listpackages)))
-	chgrp shadow $(d)/libpam-modules-bin/sbin/unix_chkpwd
-	chmod 02755 $(d)/libpam-modules-bin/sbin/unix_chkpwd
+	chgrp shadow $(d)/libpam-modules-bin/usr/sbin/unix_chkpwd
+	chmod 02755 $(d)/libpam-modules-bin/usr/sbin/unix_chkpwd
 endif
+
+override_dh_installchangelogs:
+	dh_installchangelogs NEWS

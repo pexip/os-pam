@@ -53,11 +53,10 @@ static int
 PAM_FORMAT((printf, 2, 3))
 log_callback (int type UNUSED, const char *fmt, ...)
 {
-    int audit_fd;
     va_list ap;
 
 #ifdef HAVE_LIBAUDIT
-    audit_fd = audit_open();
+    int audit_fd = audit_open();
 
     if (audit_fd >= 0) {
 	char *buf;
@@ -67,13 +66,13 @@ log_callback (int type UNUSED, const char *fmt, ...)
 	ret = vasprintf (&buf, fmt, ap);
 	va_end(ap);
 	if (ret < 0) {
+		audit_close(audit_fd);
 		return 0;
 	}
-	audit_log_user_avc_message(audit_fd, AUDIT_USER_AVC, buf, NULL, NULL,
-				   NULL, 0);
+	(void) !audit_log_user_avc_message(audit_fd, AUDIT_USER_AVC, buf,
+					   NULL, NULL, NULL, 0);
 	audit_close(audit_fd);
 	free(buf);
-	va_end(ap);
 	return 0;
     }
 
