@@ -26,7 +26,7 @@ Index: pam/modules/pam_motd/pam_motd.c
 +    struct stat s;
 +    int f;
 +    /* Get the user name to determine if we need to print the disclaimer */
-+    rc = pam_get_item(pamh, PAM_USER, &user);
++    rc = pam_get_item(pamh, PAM_USER, (const void**)&user);
 +    if (rc == PAM_SUCCESS && user != NULL && *(const char *)user != '\0')
 +    {
 +        PAM_MODUTIL_DEF_PRIVS(privs);
