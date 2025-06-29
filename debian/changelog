@@ -1,3 +1,24 @@
+pam (1.7.0-5) unstable; urgency=high
+
+  * pam_access: backport upstream commit to implement nodns option to allow people to work around #1087019
+
+ -- Sam Hartman <hartmans@debian.org>  Sun, 29 Jun 2025 11:40:46 -0600
+
+pam (1.7.0-4) experimental; urgency=high
+
+  [ Gioele Barabucci ]
+  * d/control: Update standards version to 4.7.0, no changes needed
+  * d/TODO: Remove outdated item about fop (Closes: #629438)
+
+  [ Sam Hartman ]
+  * Fix CVE-2025-6020: local privilege escalation in pam_namespace, Closes: 1107919
+
+  [ James Morris ]
+  * pam_access improperly checks for group membership of a user.
+    (Closes: #1103339)
+
+ -- Sam Hartman <hartmans@debian.org>  Thu, 26 Jun 2025 11:42:58 -0600
+
 pam (1.7.0-3) unstable; urgency=high
 
   * Disable HURD suid patch for now because it breaks on Linux, Closes:

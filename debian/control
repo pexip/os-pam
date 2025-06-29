@@ -2,7 +2,7 @@ Source: pam
 Section: libs
 Priority: optional
 Maintainer: Sam Hartman <hartmans@debian.org>
-Standards-Version: 4.6.2
+Standards-Version: 4.7.0
 Build-Depends: debhelper-compat (= 13), dh-exec,  flex,  libcrypt-dev, libdb-dev, libselinux1-dev [linux-any], libsystemd-dev [linux-any] <!stage1>, po-debconf, meson, libaudit-dev [linux-any] <!stage1>, pkgconf, libfl-dev, libfl-dev:native
 Build-Depends-Indep: docbook-xsl-ns, docbook5-xml, xsltproc, libxml2-utils, w3m, fop
 Build-Conflicts: libdb4.2-dev, libxcrypt-dev

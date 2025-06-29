@@ -8,8 +8,8 @@ Subject: pam_unix: obscure checks
  modules/pam_unix/obscure.c         | 199 +++++++++++++++++++++++++++++++++++++
  modules/pam_unix/pam_unix.8.xml    |  75 +++++++++++++-
  modules/pam_unix/pam_unix_passwd.c |  10 +-
- modules/pam_unix/support.h         |  79 ++++++++-------
- 5 files changed, 324 insertions(+), 40 deletions(-)
+ modules/pam_unix/support.h         |  77 +++++++-------
+ 5 files changed, 323 insertions(+), 39 deletions(-)
  create mode 100644 modules/pam_unix/obscure.c
 
 diff --git a/modules/module-meson.build b/modules/module-meson.build
@@ -382,7 +382,9 @@ index e8f629d..425ff66 100644
  {
 -/* symbol                      token name          ctrl mask                  ctrl             *
 - * --------------------------- -------------------- ------------------------- ---------------- */
--
++/* symbol                      token name          ctrl mask                  ctrl         *
++ * --------------------------- -------------------- ------------------------- ------------ */
+ 
 -/* UNIX__OLD_PASSWD */         {NULL,               _ALL_ON_,                              01, 0},
 -/* UNIX__VERIFY_PASSWD */      {NULL,               _ALL_ON_,                              02, 0},
 -/* UNIX__IAMROOT */            {NULL,               _ALL_ON_,                              04, 0},
@@ -417,9 +419,6 @@ index e8f629d..425ff66 100644
 -/* UNIX_GOST_YESCRYPT_PASS */  {"gost_yescrypt",    _ALL_ON_^(015660420000ULL),   04000000000, 1},
 -/* UNIX_YESCRYPT_PASS */       {"yescrypt",         _ALL_ON_^(015660420000ULL),  010000000000, 1},
 -/* UNIX_NULLRESETOK */         {"nullresetok",      _ALL_ON_,                    020000000000, 0},
-+/* symbol                      token name          ctrl mask                  ctrl         *
-+ * --------------------------- -------------------- ------------------------- ------------ */
-+
 +/* UNIX__OLD_PASSWD */         {NULL,               _ALL_ON_,                         0x1, 0},
 +/* UNIX__VERIFY_PASSWD */      {NULL,               _ALL_ON_,                         0x2, 0},
 +/* UNIX__IAMROOT */            {NULL,               _ALL_ON_,                         0x4, 0},
