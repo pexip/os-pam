@@ -1,3 +1,11 @@
+pam (1.5.2-6+deb12u2) bookworm; urgency=medium
+
+  * Fix CVE-2025-6020: local privilege escalation in pam_namespace, Closes: #1107919
+  * Check for explicit_bzero and memset_explicit so pam_namespace can
+    use them
+
+ -- Sam Hartman <hartmans@debian.org>  Sun, 10 Aug 2025 09:54:02 -0600
+
 pam (1.5.2-6+deb12u1) bookworm; urgency=medium
 
   * Fix pam-auth-update --disable logic error, Closes: #1039873

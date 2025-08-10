@@ -1,0 +1,4 @@
+upstream/0001-pam_inline-introduce-pam_asprintf-pam_snprintf-and-p.patch
+upstream/0002-pam_namespace-from-v1.7.1.patch
+0003-pam_namespace-adjust-paths-back-to-bookworm.patch
+0004-configure.ac-secure-memory-erasure.patch

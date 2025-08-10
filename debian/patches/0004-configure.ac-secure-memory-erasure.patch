@@ -1,0 +1,23 @@
+From: =?utf-8?q?Bastien_Roucari=C3=A8s?= <rouca@debian.org>
+Date: Wed, 23 Jul 2025 23:33:26 +0200
+Subject: configure.ac: secure memory erasure
+
+Check for non-optimized memory erase functions introduced in the
+pam_namespace fix.  These are not used by the rest of the code at this
+time.
+---
+ configure.ac | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/configure.ac b/configure.ac
+index c06bc7d..2b4d05c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -559,6 +559,7 @@ AC_CHECK_FUNCS(getutent_r getpwnam_r getpwuid_r getgrnam_r getgrgid_r getspnam_r
+ AC_CHECK_FUNCS(getgrouplist getline getdelim)
+ AC_CHECK_FUNCS(inet_ntop inet_pton innetgr)
+ AC_CHECK_FUNCS(quotactl)
++AC_CHECK_FUNCS(explicit_bzero memset_explicit)
+ AC_CHECK_FUNCS(unshare)
+ AC_CHECK_FUNCS([ruserok_af ruserok], [break])
+ BACKUP_LIBS=$LIBS
