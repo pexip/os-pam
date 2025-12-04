@@ -1,3 +1,9 @@
+pam (1.7.0-5+pexip25u2) pexip-trixie; urgency=medium
+
+  * Trixie build for product distribution
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 04 Dec 2025 13:43:51 +0000
+
 pam (1.7.0-5+pexip25u1) pexip-trixie; urgency=medium
 
   * New upstream release
