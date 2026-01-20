@@ -1,3 +1,17 @@
+pam (1.5.2-6+deb12u2+pexip24u1) pexip; urgency=medium
+
+  * New upstream release with security fix
+
+ -- Steve McIntyre <steve.mcintyre@pexip.com>  Tue, 20 Jan 2026 16:00:12 +0000
+
+pam (1.5.2-6+deb12u2) bookworm; urgency=medium
+
+  * Fix CVE-2025-6020: local privilege escalation in pam_namespace, Closes: #1107919
+  * Check for explicit_bzero and memset_explicit so pam_namespace can
+    use them
+
+ -- Sam Hartman <hartmans@debian.org>  Sun, 10 Aug 2025 09:54:02 -0600
+
 pam (1.5.2-6+deb12u1+pexip24u3) pexip-bookworm; urgency=medium
 
   * New versioning scheme
