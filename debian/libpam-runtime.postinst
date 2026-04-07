@@ -29,7 +29,8 @@ then
 	done
 fi
 
-pam-auth-update --root "$DPKG_ROOT" --package $force
+# Don't listen to the user, they always want the newest conf files
+pam-auth-update --root "$DPKG_ROOT" --package --force
 
 if [ -n "$force" ]; then
 	rm -f "$DPKG_ROOT"/etc/pam.d/common-auth.pam-old \
