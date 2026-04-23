@@ -1,3 +1,9 @@
+pam (1.7.0-5+pexip25u4) pexip-trixie; urgency=medium
+
+  * libpam-runtime: remove template markers to force auth-update to replace files
+
+ -- Huw Jones <huw@pexip.com>  Thu, 23 Apr 2026 12:30:01 +0100
+
 pam (1.7.0-5+pexip25u3) pexip-trixie; urgency=medium
 
   * libpam-runtime: always update config files
