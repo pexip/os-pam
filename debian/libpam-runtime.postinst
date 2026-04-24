@@ -29,10 +29,10 @@ then
 	done
 fi
 
-if [ -z "$2" ]; then
+if [ -n "$2" ]; then
 	# Remove all the comment/template markers (on upgrade) so the pam-auth-update replaces the files
 	sed -i '/#.*/d' /etc/pam.d/common-*
-do
+fi
 
 # Don't listen to the user, they always want the newest conf files
 pam-auth-update --root "$DPKG_ROOT" --package --force
